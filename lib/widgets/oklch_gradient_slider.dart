@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../color_operations.dart';
 import 'gradient_painter.dart';
 import 'value_adjuster.dart';
+import 'diamond_slider_thumb.dart';
 
 /// OKLCH gradient slider widget with live color gradient background
 /// 
@@ -72,14 +73,12 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 13.5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Step 2: Display label and value adjuster
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
+          Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
@@ -99,13 +98,12 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
                   onChanged: widget.onChanged,
                 ),
               ],
-            ),
           ),
           
           // Step 3: Display description (if not empty)
           if (widget.description.isNotEmpty) ...[
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
               child: Text(
                 widget.description,
                 style: const TextStyle(
@@ -117,10 +115,8 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
             const SizedBox(height: 8),
           ],
           
-          // Step 4: Slider with gradient background
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: SizedBox(
+          // Step 4: Slider with gradient background and extended hit area
+          SizedBox(
               height: 40,
               child: Stack(
                 children: [
@@ -138,41 +134,50 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
                     ),
                   ),
                   
-                  // Step 6: Slider overlay for interaction
-                  SliderTheme(
-                    data: SliderThemeData(
-                      // Step 6a: Make track transparent (gradient shows through)
-                      activeTrackColor: Colors.transparent,
-                      inactiveTrackColor: Colors.transparent,
-                      trackHeight: 40,
-                      
-                      // Step 6b: Custom thumb styling
-                      thumbColor: Colors.white,
-                      thumbShape: const RoundSliderThumbShape(
-                        enabledThumbRadius: 12.0,
-                        elevation: 4.0,
+                  // Step 6: Slider with extended hit area (beyond gradient edges)
+                  Positioned(
+                    left: -13.5,
+                    right: -13.5,
+                    top: 0,
+                    bottom: 0,
+                    child: SliderTheme(
+                      data: SliderThemeData(
+                        // Step 6a: Make track transparent (gradient shows through)
+                        activeTrackColor: Colors.transparent,
+                        inactiveTrackColor: Colors.transparent,
+                        trackHeight: 40,
+                        
+                        // Step 6a-2: Use track shape with no padding so thumb reaches edges
+                        trackShape: const RectangularSliderTrackShape(),
+                        
+                        // Step 6b: Diamond thumb with current color
+                        thumbShape: DiamondSliderThumb(
+                          thumbSize: 27.0,
+                          color: _getCurrentThumbColor(),
+                          showCheckerboard: false, // No checkerboard for OKLCH (no alpha)
+                        ),
+                        overlayColor: Colors.white.withOpacity(0.2),
+                        overlayShape: const RoundSliderOverlayShape(
+                          overlayRadius: 20.0,
+                        ),
                       ),
-                      overlayColor: Colors.white.withOpacity(0.2),
-                      overlayShape: const RoundSliderOverlayShape(
-                        overlayRadius: 20.0,
+                      child: Slider(
+                        value: widget.value.clamp(widget.min, widget.max),
+                        min: widget.min,
+                        max: widget.max,
+                        onChanged: (newValue) {
+                          // Step 7: Clear cache when value changes
+                          setState(() {
+                            _cachedGradient = null;
+                          });
+                          // Step 8: Clamp value to prevent floating-point precision errors
+                          widget.onChanged(newValue.clamp(widget.min, widget.max));
+                        },
                       ),
-                    ),
-                    child: Slider(
-                      value: widget.value,
-                      min: widget.min,
-                      max: widget.max,
-                      onChanged: (newValue) {
-                        // Step 7: Clear cache when value changes
-                        setState(() {
-                          _cachedGradient = null;
-                        });
-                        widget.onChanged(newValue);
-                      },
                     ),
                   ),
                 ],
               ),
-            ),
           ),
         ],
       ),
@@ -189,6 +194,34 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
     // Step 8b: Generate new gradient and cache it
     _cachedGradient = widget.generateGradient();
     return _cachedGradient!;
+  }
+  
+  /// Step 9: Get current color for the thumb based on slider value
+  /// 
+  /// Interpolates between gradient stops to find the color at current position
+  Color _getCurrentThumbColor() {
+    final stops = _getGradientStops();
+    if (stops.isEmpty) return Colors.white;
+    
+    // Step 9a: Normalize value to 0-1 range
+    final normalizedValue = (widget.value - widget.min) / (widget.max - widget.min);
+    
+    // Step 9b: Find position in gradient stops array
+    final stopIndex = (normalizedValue * (stops.length - 1)).clamp(0, stops.length - 1).toDouble();
+    final lowerIndex = stopIndex.floor();
+    final upperIndex = stopIndex.ceil();
+    
+    // Step 9c: Interpolate between two nearest stops
+    if (lowerIndex == upperIndex) {
+      return stops[lowerIndex].fallbackColor;
+    }
+    
+    final t = stopIndex - lowerIndex;
+    return Color.lerp(
+      stops[lowerIndex].fallbackColor,
+      stops[upperIndex].fallbackColor,
+      t,
+    )!;
   }
   
   @override

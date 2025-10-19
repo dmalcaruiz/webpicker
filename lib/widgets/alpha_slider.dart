@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pie_menu/pie_menu.dart';
+import 'diamond_slider_thumb.dart';
 
 /// Mixed channel slider widget with dot-based extreme control
 /// 
@@ -72,14 +73,12 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 13.5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Label and value
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
+          Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
@@ -99,16 +98,13 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
                   ),
                 ),
               ],
-            ),
           ),
           
           
           const SizedBox(height: 8),
           
-          // Slider with gradient
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: SizedBox(
+          // Slider with gradient and extended hit area
+          SizedBox(
               height: 40,
               child: Stack(
                 children: [
@@ -124,39 +120,51 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
                       ),
                     ),
                   ),
-                  // Slider with touch detection
-                  SliderTheme(
-                    data: SliderThemeData(
-                      activeTrackColor: Colors.transparent,
-                      inactiveTrackColor: Colors.transparent,
-                      trackHeight: 40,
-                      thumbColor: Colors.white,
-                      thumbShape: const RoundSliderThumbShape(
-                        enabledThumbRadius: 12.0,
-                        elevation: 4.0,
+                  // Slider with extended hit area (beyond gradient edges)
+                  Positioned(
+                    left: -13.5,
+                    right: -13.5,
+                    top: 0,
+                    bottom: 0,
+                    child: SliderTheme(
+                      data: SliderThemeData(
+                        activeTrackColor: Colors.transparent,
+                        inactiveTrackColor: Colors.transparent,
+                        trackHeight: 40,
+                        
+                        // Use track shape with no padding so thumb reaches edges
+                        trackShape: const RectangularSliderTrackShape(),
+                        
+                        thumbShape: DiamondSliderThumb(
+                          thumbSize: 27.0,
+                          color: _getCurrentThumbColor(),
+                          showCheckerboard: true,
+                        ),
+                        overlayColor: Colors.white.withOpacity(0.2),
+                        overlayShape: const RoundSliderOverlayShape(
+                          overlayRadius: 20.0,
+                        ),
                       ),
-                      overlayColor: Colors.white.withOpacity(0.2),
-                      overlayShape: const RoundSliderOverlayShape(
-                        overlayRadius: 20.0,
+                      child: Slider(
+                        value: widget.value.clamp(0.0, 1.0),
+                        min: 0.0,
+                        max: 1.0,
+                        onChanged: (value) {
+                          // Step 1: Clamp value to prevent floating-point precision errors
+                          widget.onChanged(value.clamp(0.0, 1.0));
+                        },
+                        onChangeStart: (_) => widget.onSliderTouchStart(),
+                        onChangeEnd: (_) => widget.onSliderTouchEnd(),
                       ),
-                    ),
-                    child: Slider(
-                      value: widget.value.clamp(0.0, 1.0),
-                      min: 0.0,
-                      max: 1.0,
-                      onChanged: widget.onChanged,
-                      onChangeStart: (_) => widget.onSliderTouchStart(),
-                      onChangeEnd: (_) => widget.onSliderTouchEnd(),
                     ),
                   ),
                 ],
               ),
-            ),
           ),
           
           // Dot buttons below slider
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -298,6 +306,18 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
         ),
       ),
     );
+  }
+  
+  /// Step 1: Get current color for the thumb based on slider value
+  /// 
+  /// Interpolates between left and right extreme colors
+  Color _getCurrentThumbColor() {
+    // Step 2: Interpolate between left and right extreme colors
+    return Color.lerp(
+      widget.leftExtremeColor,
+      widget.rightExtremeColor,
+      widget.value,
+    )!;
   }
   
   List<Color> _generateMixGradient() {

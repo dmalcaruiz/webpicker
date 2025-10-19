@@ -26,9 +26,10 @@ class ColorBox {
   Color get color => colorFromOklch(lightness, chroma, hue);
   
   /// Step 3: Update method to respect both lock and focus states
-  void updateFromGlobal(double l, double c, double h) {
-    // Only update if not locked AND either focused or no box is focused
-    if (!isLocked) {
+  /// Step 4: UX override - if this box is focused, allow editing even if locked
+  void updateFromGlobal(double l, double c, double h, bool isThisBoxFocused) {
+    // Update if: not locked OR this specific box is focused (UX override)
+    if (!isLocked || isThisBoxFocused) {
       lightness = l;
       chroma = c;
       hue = h;
@@ -97,12 +98,16 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
   
   // Step 4: Add focus state management
   String? focusedBoxId;  // Track which box is currently focused
+  
+  // Clipboard preview for paste buttons
+  Color? clipboardPreviewColor;
 
   @override
   void initState() {
     super.initState();
     _updateColor();
     bgColor = colorFromOklch(bgLightness, bgChroma, bgHue);
+    _updateClipboardPreview();
     
     // Initialize with one unlocked color box
     colorBoxes.add(ColorBox(
@@ -153,7 +158,13 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
         for (final box in colorBoxes) {
           // Only update if no box is focused, OR this box is focused
           if (focusedBoxId == null || box.id == focusedBoxId) {
-            box.updateFromGlobal(lightness, chroma, hue);
+            // Step 6: Pass whether this specific box is focused (for UX override of lock)
+            box.updateFromGlobal(lightness, chroma, hue, box.id == focusedBoxId);
+            
+            // Step 7: Auto-lock focused box when color changes
+            if (box.id == focusedBoxId && !sliderIsActive) {
+              box.isLocked = true;
+            }
           }
         }
 
@@ -164,6 +175,37 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
         errorMessage = 'Error: $e';
       });
     }
+  }
+
+  /// Step 1: Read clipboard and preview color for paste buttons
+  void _updateClipboardPreview() async {
+    try {
+      // Step 2: Get clipboard data
+      final data = await Clipboard.getData('text/plain');
+      if (data?.text != null) {
+        String hex = data!.text!.trim();
+        
+        // Step 3: Remove # if present
+        if (hex.startsWith('#')) {
+          hex = hex.substring(1);
+        }
+        
+        // Step 4: Parse hex color
+        if (hex.length == 6) {
+          setState(() {
+            clipboardPreviewColor = Color(int.parse('FF$hex', radix: 16));
+          });
+          return;
+        }
+      }
+    } catch (e) {
+      // Ignore parsing errors
+    }
+    
+    // Step 5: Clear preview if no valid color in clipboard
+    setState(() {
+      clipboardPreviewColor = null;
+    });
   }
 
   void _handleLeftExtremeAction(String action) {
@@ -236,39 +278,6 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
     });
   }
 
-  /// Apply hex color from clipboard
-  /// 
-  /// Step 1: Read clipboard, parse hex (with or without #), convert to OKLCH
-  void _applyHexFromClipboard() async {
-    try {
-      final data = await Clipboard.getData('text/plain');
-      if (data?.text != null) {
-        String hex = data!.text!.trim();
-        
-        // Step 2: Remove # if present
-        if (hex.startsWith('#')) {
-          hex = hex.substring(1);
-        }
-        
-        // Step 3: Parse hex and convert to color
-        if (hex.length == 6) {
-          final color = Color(int.parse('FF$hex', radix: 16));
-          final oklch = srgbToOklch(color);
-          
-          // Step 4: Apply to global OKLCH state
-          setState(() {
-            lightness = oklch.l;
-            chroma = oklch.c;
-            hue = oklch.h;
-            _updateColor();
-          });
-        }
-      }
-    } catch (e) {
-      // Ignore parsing errors
-    }
-  }
-
   /// Apply preset color from pie menu
   /// 
   /// Step 1: Convert color to OKLCH and apply to global state
@@ -297,39 +306,35 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
     }
   }
 
-  /// Remove a color box (but keep at least one unlocked)
+  /// Remove a color box
+  /// 
+  /// Step 1: Remove the last box
+  /// Step 2: If only one box remains, ensure it's unlocked
   void _removeColorBox() {
     if (colorBoxes.length > 1) {
       setState(() {
-        // Find first unlocked box to keep
-        final unlockedBox = colorBoxes.firstWhere(
-          (box) => !box.isLocked,
-          orElse: () => colorBoxes.first,
-        );
+        colorBoxes.removeLast();
         
-        // Remove the last box if it's not the only unlocked one
-        if (colorBoxes.last.id != unlockedBox.id) {
-          colorBoxes.removeLast();
-        } else {
-          // If removing the only unlocked box, unlock another one
-          final otherBox = colorBoxes.firstWhere(
-            (box) => box.id != unlockedBox.id,
-            orElse: () => colorBoxes.first,
-          );
-          otherBox.isLocked = false;
-          colorBoxes.removeLast();
+        // If only one box remains, ensure it's unlocked
+        if (colorBoxes.length == 1) {
+          colorBoxes[0].isLocked = false;
         }
       });
     }
   }
 
   /// Toggle lock state of a color box
+  /// 
+  /// Step 1: Allow locking all boxes when 2+ boxes exist
+  /// Step 2: Single box cannot be locked
   void _toggleBoxLock(ColorBox box) {
     setState(() {
-      // Ensure at least one box remains unlocked
-      final unlockedCount = colorBoxes.where((b) => !b.isLocked).length;
-      if (box.isLocked || unlockedCount > 1) {
+      // Only enforce "at least one unlocked" rule when there are 2+ boxes
+      if (colorBoxes.length >= 2) {
         box.isLocked = !box.isLocked;
+      } else {
+        // Single box cannot be locked
+        box.isLocked = false;
       }
     });
   }
@@ -351,31 +356,48 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
     });
   }
 
-  /// Apply hex color to specific box or all unlocked boxes
+  /// Apply hex color to specific box
+  /// 
+  /// Step 1: Parse hex from clipboard
+  /// Step 2: Apply to target box
+  /// Step 3: Auto-lock the target box
+  /// Step 4: Auto-focus the target box (removing focus from others)
   void _applyHexToBox(ColorBox? targetBox) async {
     try {
       final data = await Clipboard.getData('text/plain');
       if (data?.text != null) {
         String hex = data!.text!.trim();
         
-        // Remove # if present
+        // Step 1: Remove # if present
         if (hex.startsWith('#')) {
           hex = hex.substring(1);
         }
         
-        // Parse hex and convert to color
+        // Step 2: Parse hex and convert to color
         if (hex.length == 6) {
           final color = Color(int.parse('FF$hex', radix: 16));
           final oklch = srgbToOklch(color);
           
           setState(() {
-            if (targetBox != null && targetBox.isLocked) {
-              // Apply only to locked box
+            if (targetBox != null) {
+              // Step 3: Apply color to the specific target box
               targetBox.lightness = oklch.l;
               targetBox.chroma = oklch.c;
               targetBox.hue = oklch.h;
+              
+              // Step 4: Auto-lock the target box
+              targetBox.isLocked = true;
+              
+              // Step 5: Auto-focus the target box (removing focus from all others)
+              focusedBoxId = targetBox.id;
+              for (final box in colorBoxes) {
+                box.isFocused = (box.id == targetBox.id);
+              }
+              
+              // Step 6: Update clipboard preview
+              _updateClipboardPreview();
             } else {
-              // Apply to global and all unlocked boxes
+              // Fallback: Apply to global and all unlocked boxes
               lightness = oklch.l;
               chroma = oklch.c;
               hue = oklch.h;
@@ -468,17 +490,14 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () {
-                // Copy hex to clipboard
-                final hex = box.color.value.toRadixString(16).substring(2).toUpperCase();
-                Clipboard.setData(ClipboardData(text: '#$hex'));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Copied #$hex to clipboard'),
-                    duration: const Duration(seconds: 1),
-                  ),
-                );
+                // Step 1: Copy this box's OKLCH values to global sliders
+                setState(() {
+                  lightness = box.lightness;
+                  chroma = box.chroma;
+                  hue = box.hue;
+                  _updateColor();
+                });
               },
-              onLongPress: () => _applyHexToBox(box),
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return Container(
@@ -499,6 +518,43 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
               ),
             ),
             
+            // Step 1: Copy button (top left) - copies hex to system clipboard
+            Positioned(
+              top: 4,
+              left: 4,
+              child: GestureDetector(
+                onTap: () {
+                  // Step 2: Get hex and copy to clipboard
+                  final hex = box.color.value.toRadixString(16).substring(2).toUpperCase();
+                  Clipboard.setData(ClipboardData(text: '#$hex'));
+                  
+                  // Step 3: Update clipboard preview for paste buttons
+                  _updateClipboardPreview();
+                  
+                  // Step 4: Show feedback to user
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Copied #$hex'),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.content_copy,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+            
             // Lock/unlock button (only show if more than one box)
             if (colorBoxes.length > 1)
               Positioned(
@@ -507,8 +563,8 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
                 child: GestureDetector(
                   onTap: () => _toggleBoxLock(box),
                   child: Container(
-                    width: 20,
-                    height: 20,
+                    width: 24,
+                    height: 24,
                     decoration: BoxDecoration(
                       // Step 2: White background for locked, semi-transparent for unlocked
                       color: box.isLocked ? Colors.white : Colors.white24,
@@ -517,13 +573,43 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
                     ),
                     child: Icon(
                       box.isLocked ? Icons.lock : Icons.lock_open,
-                      size: 12,
+                      size: 16,
                       // Step 2: Black icon for locked, white for unlocked
                       color: box.isLocked ? Colors.black : Colors.white,
                     ),
                   ),
                 ),
               ),
+            
+            // Step 1: Paste button (bottom left) with color preview - pastes from system clipboard
+            Positioned(
+              bottom: 4,
+              left: 4,
+              child: GestureDetector(
+                onTap: () => _applyHexToBox(box),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    // Step 2: Show clipboard color preview, or default background
+                    color: clipboardPreviewColor ?? Colors.white24,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white54,
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.content_paste,
+                    size: 16,
+                    // Step 3: Use contrasting icon color based on preview color luminance
+                    color: clipboardPreviewColor != null
+                        ? (clipboardPreviewColor!.computeLuminance() > 0.5 ? Colors.black : Colors.white)
+                        : Colors.white,
+                  ),
+                ),
+              ),
+            ),
             
             // Step 7: Focus button (bottom right) - only show if more than one box
             if (colorBoxes.length > 1)
@@ -533,8 +619,8 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
                 child: GestureDetector(
                   onTap: () => _toggleBoxFocus(box),
                   child: Container(
-                    width: 20,
-                    height: 20,
+                    width: 24,
+                    height: 24,
                     decoration: BoxDecoration(
                       color: box.isFocused ? const Color(0xFFFF9800) : Colors.white24,
                       shape: BoxShape.circle,
@@ -542,7 +628,7 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
                     ),
                     child: Icon(
                       Icons.center_focus_strong,
-                      size: 12,
+                      size: 16,
                       color: Colors.white,
                     ),
                   ),
@@ -562,9 +648,7 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
+              child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
               // Preset color picker with pie menu and color box controls
@@ -749,9 +833,12 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
               
               const SizedBox(height: 20),
               
-              // Split main color box into flexbox rows
-              Column(
-                children: _buildSplitColorBoxRows(),
+              // Split main color box into flexbox rows with padding to match sliders
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 13.5),
+                child: Column(
+                  children: _buildSplitColorBoxRows(),
+                ),
               ),
               
               const SizedBox(height: 30),
@@ -879,14 +966,12 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
               
               const SizedBox(height: 30),
                   ],
-                ),
               ),
             ),
           ),
           // Bottom button for Edit Background/Edit Colors
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20.0),
             child: ElevatedButton.icon(
               onPressed: () {
                 setState(() {
@@ -898,7 +983,7 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black.withOpacity(0.3),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 textStyle: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

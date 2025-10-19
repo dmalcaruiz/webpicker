@@ -17,3 +17,4 @@ echo.
 echo To deploy later, run: deploy.bat
 echo.
 pause
+
