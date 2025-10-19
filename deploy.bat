@@ -1,6 +1,12 @@
 @echo off
 echo Copying Flutter web build files to repository root...
 
+REM Temporarily move flutter.js to avoid PATH conflicts during development
+if exist "flutter.js" (
+    echo Moving flutter.js to avoid PATH conflicts...
+    move "flutter.js" "flutter.js.deploy"
+)
+
 REM Copy all files from build/web to current directory
 xcopy "build\web\*" "." /E /Y /I
 
