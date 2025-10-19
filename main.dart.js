@@ -23982,7 +23982,7 @@ $S:2}
 A.ajY.prototype={
 $1(a){var s=A.cY().b
 s=s==null?null:s.canvasKitBaseUrl
-return(s==null?"https://www.gstatic.com/flutter-canvaskit/ddf47dd3ff96dbde6d9c614db0d7f019d7c7a2b7/":s)+a},
+return(s==null?"https://www.gstatic.com/flutter-canvaskit/d2913632a4578ee4d0b8b1c4a69888c8a0672c4b/":s)+a},
 $S:158}
 A.VG.prototype={
 ev(a,b){var s,r=this.a
@@ -62527,7 +62527,7 @@ r=l.p4
 r.toString
 j.yH(s,r,m)
 break
-case 2:l.qi()
+case 2:if(l.a.d.gbi())l.qi()
 if(l.p2!=null&&l.p4!=null){l.id.sp(0,0)
 j=l.id
 j.z=B.ar
