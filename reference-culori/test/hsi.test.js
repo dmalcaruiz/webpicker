@@ -1,0 +1,125 @@
+import test from 'node:test';
+import assert from 'node:assert';
+import { hsi, rgb, formatCss } from '../src/index.js';
+
+test('rgb() converts from HSI to RGB', t => {
+	assert.deepEqual(
+		rgb(hsi({ h: 0, s: 0, i: 0 })),
+		{ r: 0, g: 0, b: 0, mode: 'rgb' },
+		'lightness 0 should yield black'
+	);
+
+	assert.deepEqual(
+		rgb(hsi({ h: 60, s: 0.25, i: 0 })),
+		{ r: 0, g: 0, b: 0, mode: 'rgb' },
+		'...regardless of hue and saturation'
+	);
+
+	assert.deepEqual(
+		rgb(hsi({ h: 0, s: 0, i: 0.5 })),
+		{ r: 0.5, g: 0.5, b: 0.5, mode: 'rgb' },
+		'saturation 0 should yield gray'
+	);
+
+	assert.deepEqual(
+		rgb(hsi({ h: 60, s: 0, i: 0.25 })),
+		{ r: 0.25, g: 0.25, b: 0.25, mode: 'rgb' },
+		'...regardless of the hue'
+	);
+
+	assert.deepEqual(
+		rgb(hsi({ h: 100, s: 0, i: 0.5 })),
+		{ r: 0.5, g: 0.5, b: 0.5, mode: 'rgb' },
+		'...or the lightness'
+	);
+});
+
+test('hsi() converts RGB to HSI', t => {
+	assert.deepEqual(
+		hsi(rgb({ r: 0, g: 0, b: 0 })),
+		{ s: 0, i: 0, mode: 'hsi' },
+		'black'
+	);
+
+	assert.deepEqual(
+		hsi(rgb({ r: 0.25, g: 0.25, b: 0.25 })),
+		{ s: 0, i: 0.25, mode: 'hsi' },
+		'R = G = B yields undefined hue'
+	);
+
+	assert.deepEqual(
+		hsi(rgb({ r: 0.6, g: 0.6, b: 0.6 })),
+		{ s: 0, i: 0.6, mode: 'hsi' },
+		'R = G = B yields zero saturation'
+	);
+
+	assert.deepEqual(
+		hsi(rgb({ r: 1, g: 0, b: 0 })),
+		{ h: 0, s: 1, i: 0.3333333333333333, mode: 'hsi' },
+		'red'
+	);
+
+	assert.deepEqual(
+		hsi(rgb({ r: 1, g: 1, b: 0 })),
+		{ h: 60, s: 1, i: 0.6666666666666666, mode: 'hsi' },
+		'yellow'
+	);
+
+	assert.deepEqual(
+		hsi(rgb({ r: 0, g: 1, b: 0 })),
+		{ h: 120, s: 1, i: 0.3333333333333333, mode: 'hsi' },
+		'green'
+	);
+
+	assert.deepEqual(
+		hsi(rgb({ r: 0, g: 1, b: 1 })),
+		{ h: 180, s: 1, i: 0.6666666666666666, mode: 'hsi' },
+		'cyan'
+	);
+
+	assert.deepEqual(
+		hsi(rgb({ r: 0, g: 0, b: 1 })),
+		{ h: 240, s: 1, i: 0.3333333333333333, mode: 'hsi' },
+		'blue'
+	);
+
+	assert.deepEqual(
+		hsi(rgb({ r: 1, g: 0, b: 1 })),
+		{ h: 300, s: 1, i: 0.6666666666666666, mode: 'hsi' },
+		'magenta'
+	);
+});
+
+test('color(--hsi)', t => {
+	assert.deepEqual(hsi('color(--hsi 30 0.5 1 / 0.25)'), {
+		h: 30,
+		s: 0.5,
+		i: 1,
+		alpha: 0.25,
+		mode: 'hsi'
+	});
+	assert.deepEqual(hsi('color(--hsi 0 50% 0.5 / 25%)'), {
+		h: 0,
+		s: 0.5,
+		i: 0.5,
+		alpha: 0.25,
+		mode: 'hsi'
+	});
+});
+
+test('formatCss', t => {
+	assert.equal(
+		formatCss('color(--hsi 0 50% 0.5 / 25%)'),
+		'color(--hsi 0 0.5 0.5 / 0.25)'
+	);
+});
+
+test('missing components', t => {
+	assert.ok(rgb('color(--hsi none 0.5 none)'), 'hsi to rgb is ok');
+	assert.deepEqual(
+		rgb('color(--hsi none 0.5 none)'),
+		rgb('color(--hsi 0 0.5 0')
+	);
+	assert.ok(hsi('rgb(none 100 20)'), 'rgb to hsi is ok');
+	assert.deepEqual(hsi('rgb(none 100 20)'), hsi('rgb(0 100 20)'));
+});
