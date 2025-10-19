@@ -5,13 +5,14 @@ import 'color_operations.dart';
 import 'widgets/oklch_gradient_slider.dart';
 import 'widgets/alpha_slider.dart' show MixedChannelSlider;
 
-/// Represents a color box with its own OKLCH values and lock state
+/// Represents a color box with its own OKLCH values, lock state, and focus state
 class ColorBox {
   final String id;
   double lightness;
   double chroma;
   double hue;
   bool isLocked;
+  bool isFocused;  // Step 1: Add focus state to ColorBox class
   
   ColorBox({
     required this.id,
@@ -19,11 +20,14 @@ class ColorBox {
     required this.chroma,
     required this.hue,
     this.isLocked = false,
+    this.isFocused = false,  // Step 2: Initialize focus state as false
   });
   
   Color get color => colorFromOklch(lightness, chroma, hue);
   
+  /// Step 3: Update method to respect both lock and focus states
   void updateFromGlobal(double l, double c, double h) {
+    // Only update if not locked AND either focused or no box is focused
     if (!isLocked) {
       lightness = l;
       chroma = c;
@@ -90,6 +94,9 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
   // Color boxes management
   List<ColorBox> colorBoxes = [];
   int maxBoxes = 15;
+  
+  // Step 4: Add focus state management
+  String? focusedBoxId;  // Track which box is currently focused
 
   @override
   void initState() {
@@ -142,9 +149,12 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
           currentColor = globalColor;
         }
 
-        // Update all unlocked color boxes
+        // Step 5: Update color boxes based on focus state
         for (final box in colorBoxes) {
-          box.updateFromGlobal(lightness, chroma, hue);
+          // Only update if no box is focused, OR this box is focused
+          if (focusedBoxId == null || box.id == focusedBoxId) {
+            box.updateFromGlobal(lightness, chroma, hue);
+          }
         }
 
         errorMessage = '';
@@ -323,6 +333,23 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
       }
     });
   }
+  
+  /// Step 6: Toggle focus state of a color box
+  void _toggleBoxFocus(ColorBox box) {
+    setState(() {
+      if (focusedBoxId == box.id) {
+        // If this box is focused, unfocus it
+        focusedBoxId = null;
+        box.isFocused = false;
+      } else {
+        // Focus this box and unfocus all others
+        focusedBoxId = box.id;
+        for (final otherBox in colorBoxes) {
+          otherBox.isFocused = (otherBox.id == box.id);
+        }
+      }
+    });
+  }
 
   /// Apply hex color to specific box or all unlocked boxes
   void _applyHexToBox(ColorBox? targetBox) async {
@@ -433,10 +460,7 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
         decoration: BoxDecoration(
           color: box.color,
           borderRadius: BorderRadius.circular(8),
-          border: box.isLocked ? Border.all(
-            color: Colors.orange,
-            width: 3,
-          ) : null,
+          // Step 1: Remove stroke creation when box is locked
         ),
         child: Stack(
           children: [
@@ -486,12 +510,38 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
                     width: 20,
                     height: 20,
                     decoration: BoxDecoration(
-                      color: box.isLocked ? Colors.orange : Colors.white24,
+                      // Step 2: White background for locked, semi-transparent for unlocked
+                      color: box.isLocked ? Colors.white : Colors.white24,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.black26, width: 1),
+                      // Step 3: Remove all borders completely
                     ),
                     child: Icon(
                       box.isLocked ? Icons.lock : Icons.lock_open,
+                      size: 12,
+                      // Step 2: Black icon for locked, white for unlocked
+                      color: box.isLocked ? Colors.black : Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            
+            // Step 7: Focus button (bottom right) - only show if more than one box
+            if (colorBoxes.length > 1)
+              Positioned(
+                bottom: 4,
+                right: 4,
+                child: GestureDetector(
+                  onTap: () => _toggleBoxFocus(box),
+                  child: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: box.isFocused ? const Color(0xFFFF9800) : Colors.white24,
+                      shape: BoxShape.circle,
+                      // Remove border from focus icon too
+                    ),
+                    child: Icon(
+                      Icons.center_focus_strong,
                       size: 12,
                       color: Colors.white,
                     ),
