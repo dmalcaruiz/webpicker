@@ -35,6 +35,58 @@ class ColorBox {
       hue = h;
     }
   }
+  
+  /// Create a copy of this color box
+  ColorBox copy() {
+    return ColorBox(
+      id: id,
+      lightness: lightness,
+      chroma: chroma,
+      hue: hue,
+      isLocked: isLocked,
+      isFocused: isFocused,
+    );
+  }
+}
+
+/// Represents a snapshot of the app's color state for undo/redo
+class ColorState {
+  final double lightness;
+  final double chroma;
+  final double hue;
+  final double bgLightness;
+  final double bgChroma;
+  final double bgHue;
+  final bool isBgEditMode;
+  final List<ColorBox> colorBoxes;
+  final String? focusedBoxId;
+  
+  ColorState({
+    required this.lightness,
+    required this.chroma,
+    required this.hue,
+    required this.bgLightness,
+    required this.bgChroma,
+    required this.bgHue,
+    required this.isBgEditMode,
+    required this.colorBoxes,
+    required this.focusedBoxId,
+  });
+  
+  /// Create a copy of current state
+  ColorState copy() {
+    return ColorState(
+      lightness: lightness,
+      chroma: chroma,
+      hue: hue,
+      bgLightness: bgLightness,
+      bgChroma: bgChroma,
+      bgHue: bgHue,
+      isBgEditMode: isBgEditMode,
+      colorBoxes: colorBoxes.map((box) => box.copy()).toList(),
+      focusedBoxId: focusedBoxId,
+    );
+  }
 }
 
 void main() {
@@ -101,6 +153,12 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
   
   // Clipboard preview for paste buttons
   Color? clipboardPreviewColor;
+  
+  // History management for undo/redo
+  List<ColorState> history = [];
+  int historyIndex = -1;
+  final int maxHistory = 50;
+  bool isRestoringState = false; // Prevent saving state while restoring
 
   @override
   void initState() {
@@ -117,6 +175,84 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
       hue: hue,
       isLocked: false,
     ));
+    
+    // Save initial state to history
+    _saveState();
+  }
+  
+  /// Save current state to history
+  void _saveState() {
+    // Don't save if we're restoring state (prevents loops)
+    if (isRestoringState) return;
+    
+    // Create snapshot of current state
+    final state = ColorState(
+      lightness: lightness,
+      chroma: chroma,
+      hue: hue,
+      bgLightness: bgLightness,
+      bgChroma: bgChroma,
+      bgHue: bgHue,
+      isBgEditMode: isBgEditMode,
+      colorBoxes: colorBoxes.map((box) => box.copy()).toList(),
+      focusedBoxId: focusedBoxId,
+    );
+    
+    // Remove any states after current index (when undoing then making new change)
+    if (historyIndex < history.length - 1) {
+      history.removeRange(historyIndex + 1, history.length);
+    }
+    
+    // Add new state
+    history.add(state);
+    
+    // Limit history size
+    if (history.length > maxHistory) {
+      history.removeAt(0);
+    } else {
+      historyIndex++;
+    }
+  }
+  
+  /// Undo to previous state
+  void _undo() {
+    if (historyIndex > 0) {
+      historyIndex--;
+      _restoreState(history[historyIndex]);
+    }
+  }
+  
+  /// Redo to next state
+  void _redo() {
+    if (historyIndex < history.length - 1) {
+      historyIndex++;
+      _restoreState(history[historyIndex]);
+    }
+  }
+  
+  /// Restore a state from history
+  void _restoreState(ColorState state) {
+    isRestoringState = true;
+    
+    setState(() {
+      // Restore global values
+      lightness = state.lightness;
+      chroma = state.chroma;
+      hue = state.hue;
+      bgLightness = state.bgLightness;
+      bgChroma = state.bgChroma;
+      bgHue = state.bgHue;
+      isBgEditMode = state.isBgEditMode;
+      focusedBoxId = state.focusedBoxId;
+      
+      // Restore color boxes
+      colorBoxes = state.colorBoxes.map((box) => box.copy()).toList();
+      
+      // Update colors
+      _updateColor();
+    });
+    
+    isRestoringState = false;
   }
 
   void _updateColor() {
@@ -170,6 +306,9 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
 
         errorMessage = '';
       });
+      
+      // Save state after color update (but not while restoring from history)
+      _saveState();
     } catch (e) {
       setState(() {
         errorMessage = 'Error: $e';
@@ -302,6 +441,7 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
           hue: hue,
           isLocked: false,
         ));
+        _saveState();
       });
     }
   }
@@ -319,6 +459,8 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
         if (colorBoxes.length == 1) {
           colorBoxes[0].isLocked = false;
         }
+        
+        _saveState();
       });
     }
   }
@@ -336,6 +478,7 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
         // Single box cannot be locked
         box.isLocked = false;
       }
+      _saveState();
     });
   }
   
@@ -353,6 +496,7 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
           otherBox.isFocused = (otherBox.id == box.id);
         }
       }
+      _saveState();
     });
   }
 
@@ -396,6 +540,9 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
               
               // Step 6: Update clipboard preview
               _updateClipboardPreview();
+              
+              // Step 7: Save state after paste
+              _saveState();
             } else {
               // Fallback: Apply to global and all unlocked boxes
               lightness = oklch.l;
@@ -655,7 +802,21 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Remove color box button (left side)
+                  // Back button (undo)
+                  IconButton(
+                    onPressed: historyIndex > 0 ? _undo : null,
+                    icon: const Icon(Icons.arrow_back),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white30, width: 1),
+                    ),
+                    tooltip: 'Undo',
+                  ),
+                  
+                  const SizedBox(width: 12),
+                  
+                  // Remove color box button
                   IconButton(
                     onPressed: colorBoxes.length > 1 ? _removeColorBox : null,
                     icon: const Icon(Icons.remove),
@@ -667,7 +828,7 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
                     tooltip: 'Remove Color Box',
                   ),
                   
-                  const SizedBox(width: 20),
+                  const SizedBox(width: 12),
                   
                   // Pie menu
                   PieMenu(
@@ -815,9 +976,9 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
                     ),
                   ),
                   
-                  const SizedBox(width: 20),
+                  const SizedBox(width: 12),
                   
-                  // Add color box button (right side)
+                  // Add color box button
                   IconButton(
                     onPressed: colorBoxes.length < maxBoxes ? _addColorBox : null,
                     icon: const Icon(Icons.add),
@@ -827,6 +988,20 @@ class _OklchPickerScreenState extends State<OklchPickerScreen> {
                       side: const BorderSide(color: Colors.white30, width: 1),
                     ),
                     tooltip: 'Add Color Box',
+                  ),
+                  
+                  const SizedBox(width: 12),
+                  
+                  // Forward button (redo)
+                  IconButton(
+                    onPressed: historyIndex < history.length - 1 ? _redo : null,
+                    icon: const Icon(Icons.arrow_forward),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white30, width: 1),
+                    ),
+                    tooltip: 'Redo',
                   ),
                 ],
               ),
