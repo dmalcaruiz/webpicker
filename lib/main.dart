@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cyclop/cyclop.dart';
 import 'screens/home_screen.dart';
 
 void main() {
@@ -12,7 +13,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const HomeScreen(),
+      home: EyeDrop(child: const HomeScreen()),
     );
   }
 }

@@ -9,6 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  cyclop: ^0.7.0
+  snapping_sheet_2: ^3.1.5
+  reorderable_grid_view: ^2.2.8
 
 dev_dependencies:
   flutter_test:
