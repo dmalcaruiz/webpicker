@@ -25,11 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
   // Scroll controller for the sheet content
   final ScrollController scrollController = ScrollController();
   
-  // Track when user is interacting with sliders to block sheet dragging
-  bool _isInteractingWithSlider = false;
-  
-  // Track if sheet is pinned (locked in place)
-  bool _isSheetPinned = false;
+  // Track chip selection states
+  List<bool> _chipSelections = [false, false, false, false];
 
   @override
   void initState() {
@@ -49,15 +46,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
   
-  void _onSliderInteractionChanged(bool isInteracting) {
+  void _toggleChip(int index) {
     setState(() {
-      _isInteractingWithSlider = isInteracting;
-    });
-  }
-  
-  void _toggleSheetPin() {
-    setState(() {
-      _isSheetPinned = !_isSheetPinned;
+      _chipSelections[index] = !_chipSelections[index];
     });
   }
 
@@ -114,30 +105,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Color Picker',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  IconButton(
-                    onPressed: _toggleSheetPin,
-                    icon: Icon(
-                      _isSheetPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                      color: _isSheetPinned ? Colors.blue : Colors.grey,
-                      size: 20,
-                    ),
-                    tooltip: _isSheetPinned ? 'Unpin sheet' : 'Pin sheet',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
+              const Text(
+                'Color Picker',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
               ),
               const SizedBox(height: 12),
             ],
@@ -146,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
         
         // Sheet content below the grabbing widget
         sheetBelow: SnappingSheetContent(
-          draggable: (details) => !_isInteractingWithSlider && !_isSheetPinned,
+          draggable: (details) => false, // Always pinned - no dragging
           childScrollController: scrollController,
           child: SingleChildScrollView(
             controller: scrollController,
@@ -161,7 +135,27 @@ class _HomeScreenState extends State<HomeScreen> {
                     bgColor: bgColor,
                     onBgEditModeChanged: _onBgEditModeChanged,
                     onColorChanged: _onColorChanged,
-                    onSliderInteractionChanged: _onSliderInteractionChanged,
+                  ),
+                  
+                  const SizedBox(height: 20),
+                  
+                  // Chips section
+                  Wrap(
+                    spacing: 8.0,
+                    runSpacing: 8.0,
+                    children: List.generate(4, (index) {
+                      return FilterChip(
+                        label: Text('Chip ${index + 1}'),
+                        selected: _chipSelections[index],
+                        onSelected: (_) => _toggleChip(index),
+                        selectedColor: Colors.black,
+                        checkmarkColor: Colors.white,
+                        labelStyle: TextStyle(
+                          color: _chipSelections[index] ? Colors.white : Colors.black87,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      );
+                    }),
                   ),
                   
                   const SizedBox(height: 20),
