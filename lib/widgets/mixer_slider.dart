@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'diamond_slider_thumb.dart';
+import 'invisible_slider.dart';
 
 /// Mixed channel slider widget with dot-based extreme control
 /// 
@@ -102,63 +102,29 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
           
           const SizedBox(height: 8),
           
-          // Slider with gradient and extended hit area
-          SizedBox(
-              height: 40,
-              child: Stack(
-                children: [
-                  // Gradient background
-                  Positioned.fill(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CustomPaint(
-                        painter: MixedChannelGradientPainter(
-                          gradientColors: _generateMixGradient(),
-                          borderRadius: 8.0,
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Slider with extended hit area (beyond gradient edges)
-                  Positioned(
-                    left: -13.5,
-                    right: -13.5,
-                    top: 0,
-                    bottom: 0,
-                    child: SliderTheme(
-                      data: SliderThemeData(
-                        activeTrackColor: Colors.transparent,
-                        inactiveTrackColor: Colors.transparent,
-                        trackHeight: 40,
-                        
-                        // Use track shape with no padding so thumb reaches edges
-                        trackShape: const RectangularSliderTrackShape(),
-                        
-                        thumbShape: DiamondSliderThumb(
-                          thumbSize: 27.0,
-                          color: _getCurrentThumbColor(),
-                          showCheckerboard: true,
-                        ),
-                        overlayColor: Colors.white.withOpacity(0.2),
-                        overlayShape: const RoundSliderOverlayShape(
-                          overlayRadius: 20.0,
-                        ),
-                      ),
-                      child: Slider(
-                        value: widget.value.clamp(0.0, 1.0),
-                        min: 0.0,
-                        max: 1.0,
-                        onChanged: (value) {
-                          // Step 1: Clamp value to prevent floating-point precision errors
-                          widget.onChanged(value.clamp(0.0, 1.0));
-                        },
-                        onChangeStart: (_) => widget.onSliderTouchStart(),
-                        onChangeEnd: (_) => widget.onSliderTouchEnd(),
-                      ),
-                    ),
-                  ),
-                ],
+          // Slider with gradient and external thumb
+          InvisibleSliderWithExternalThumb(
+            value: widget.value,
+            min: 0.0,
+            max: 1.0,
+            onChanged: (value) {
+              // Step 1: Clamp value to prevent floating-point precision errors
+              widget.onChanged(value.clamp(0.0, 1.0));
+            },
+            onChangeStart: widget.onSliderTouchStart,
+            onChangeEnd: widget.onSliderTouchEnd,
+            background: CustomPaint(
+              painter: MixedChannelGradientPainter(
+                gradientColors: _generateMixGradient(),
+                borderRadius: 8.0,
               ),
+            ),
+            thumbColor: _getCurrentThumbColor(),
+            showCheckerboard: true,
+            trackHeight: 40.0,
+            hitAreaExtension: 13.5,
+            thumbSize: 27.0,
+            thumbOffset: 8.0, // 8px below the slider
           ),
           
           // Dot buttons below slider

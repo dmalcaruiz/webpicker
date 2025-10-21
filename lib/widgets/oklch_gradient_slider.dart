@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../color_operations.dart';
 import 'gradient_painter.dart';
 import 'plus_minus_adjuster_buttons.dart';
-import 'diamond_slider_thumb.dart';
+import 'invisible_slider.dart';
 
 /// OKLCH gradient slider widget with live color gradient background
 /// 
@@ -115,69 +115,32 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
             const SizedBox(height: 8),
           ],
           
-          // Step 4: Slider with gradient background and extended hit area
-          SizedBox(
-              height: 40,
-              child: Stack(
-                children: [
-                  // Step 5: Gradient background
-                  Positioned.fill(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CustomPaint(
-                        painter: GradientPainter(
-                          stops: _getGradientStops(),
-                          showSplitView: widget.showSplitView,
-                          borderRadius: 8.0,
-                        ),
-                      ),
-                    ),
-                  ),
-                  
-                  // Step 6: Slider with extended hit area (beyond gradient edges)
-                  Positioned(
-                    left: -13.5,
-                    right: -13.5,
-                    top: 0,
-                    bottom: 0,
-                    child: SliderTheme(
-                      data: SliderThemeData(
-                        // Step 6a: Make track transparent (gradient shows through)
-                        activeTrackColor: Colors.transparent,
-                        inactiveTrackColor: Colors.transparent,
-                        trackHeight: 40,
-                        
-                        // Step 6a-2: Use track shape with no padding so thumb reaches edges
-                        trackShape: const RectangularSliderTrackShape(),
-                        
-                        // Step 6b: Diamond thumb with current color
-                        thumbShape: DiamondSliderThumb(
-                          thumbSize: 27.0,
-                          color: _getCurrentThumbColor(),
-                          showCheckerboard: false, // No checkerboard for OKLCH (no alpha)
-                        ),
-                        overlayColor: Colors.white.withOpacity(0.2),
-                        overlayShape: const RoundSliderOverlayShape(
-                          overlayRadius: 20.0,
-                        ),
-                      ),
-                      child: Slider(
-                        value: widget.value.clamp(widget.min, widget.max),
-                        min: widget.min,
-                        max: widget.max,
-                        onChanged: (newValue) {
-                          // Step 7: Clear cache when value changes
-                          setState(() {
-                            _cachedGradient = null;
-                          });
-                          // Step 8: Clamp value to prevent floating-point precision errors
-                          widget.onChanged(newValue.clamp(widget.min, widget.max));
-                        },
-                      ),
-                    ),
-                  ),
-                ],
+          // Step 4: Slider with gradient background and external thumb
+          InvisibleSliderWithExternalThumb(
+            value: widget.value,
+            min: widget.min,
+            max: widget.max,
+            onChanged: (newValue) {
+              // Step 7: Clear cache when value changes
+              setState(() {
+                _cachedGradient = null;
+              });
+              // Step 8: Clamp value to prevent floating-point precision errors
+              widget.onChanged(newValue.clamp(widget.min, widget.max));
+            },
+            background: CustomPaint(
+              painter: GradientPainter(
+                stops: _getGradientStops(),
+                showSplitView: widget.showSplitView,
+                borderRadius: 8.0,
               ),
+            ),
+            thumbColor: _getCurrentThumbColor(),
+            showCheckerboard: false, // No checkerboard for OKLCH (no alpha)
+            trackHeight: 40.0,
+            hitAreaExtension: 13.5,
+            thumbSize: 27.0,
+            thumbOffset: 8.0, // 8px below the slider
           ),
         ],
       ),
