@@ -80,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         
         // Grabbing widget (the handle)
-        grabbingHeight: 75,
+        grabbingHeight: 120, // Increased height to accommodate chips
         grabbing: Container(
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -114,6 +114,30 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 12),
+              
+              // Chips section in draggable area
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  children: List.generate(4, (index) {
+                    return FilterChip(
+                      label: Text('Chip ${index + 1}'),
+                      selected: _chipSelections[index],
+                      onSelected: (_) => _toggleChip(index),
+                      selectedColor: Colors.black,
+                      checkmarkColor: Colors.white,
+                      labelStyle: TextStyle(
+                        color: _chipSelections[index] ? Colors.white : Colors.black87,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    );
+                  }),
+                ),
+              ),
+              
+              const SizedBox(height: 12),
             ],
           ),
         ),
@@ -135,27 +159,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     bgColor: bgColor,
                     onBgEditModeChanged: _onBgEditModeChanged,
                     onColorChanged: _onColorChanged,
-                  ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Chips section
-                  Wrap(
-                    spacing: 8.0,
-                    runSpacing: 8.0,
-                    children: List.generate(4, (index) {
-                      return FilterChip(
-                        label: Text('Chip ${index + 1}'),
-                        selected: _chipSelections[index],
-                        onSelected: (_) => _toggleChip(index),
-                        selectedColor: Colors.black,
-                        checkmarkColor: Colors.white,
-                        labelStyle: TextStyle(
-                          color: _chipSelections[index] ? Colors.white : Colors.black87,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      );
-                    }),
                   ),
                   
                   const SizedBox(height: 20),
