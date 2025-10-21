@@ -30,6 +30,9 @@ class _HomeScreenState extends State<HomeScreen> {
   
   // Track if sheet is pinned (locked in place)
   bool _isSheetPinned = false;
+  
+  // Track when user is interacting with sliders to block sheet dragging
+  bool _isInteractingWithSlider = false;
 
   @override
   void initState() {
@@ -58,6 +61,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void _toggleSheetPin() {
     setState(() {
       _isSheetPinned = !_isSheetPinned;
+    });
+  }
+  
+  void _onSliderInteractionChanged(bool isInteracting) {
+    setState(() {
+      _isInteractingWithSlider = isInteracting;
     });
   }
 
@@ -89,10 +98,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         
         // Grabbing widget (the handle)
-        grabbingHeight: 120, // Increased height to accommodate chips
+        grabbingHeight: 140, // Increased height to accommodate chips and pin button
         grabbing: Container(
           decoration: const BoxDecoration(
-            color: Colors.white,
+        color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             boxShadow: [
               BoxShadow(
@@ -170,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
         
         // Sheet content below the grabbing widget
         sheetBelow: SnappingSheetContent(
-          draggable: (details) => !_isSheetPinned, // Allow dragging unless pinned
+          draggable: (details) => !_isInteractingWithSlider && !_isSheetPinned,
           childScrollController: scrollController,
           child: SingleChildScrollView(
             controller: scrollController,
@@ -185,6 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     bgColor: bgColor,
                     onBgEditModeChanged: _onBgEditModeChanged,
                     onColorChanged: _onColorChanged,
+                    onSliderInteractionChanged: _onSliderInteractionChanged,
                   ),
                   
                   const SizedBox(height: 20),
