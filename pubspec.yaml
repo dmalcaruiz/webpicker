@@ -9,7 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  pie_menu: ^3.3.2
 
 dev_dependencies:
   flutter_test:

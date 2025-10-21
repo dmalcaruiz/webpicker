@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../color_operations.dart';
 import 'gradient_painter.dart';
-import 'value_adjuster.dart';
+import 'plus_minus_adjuster_buttons.dart';
 import 'diamond_slider_thumb.dart';
 
 /// OKLCH gradient slider widget with live color gradient background

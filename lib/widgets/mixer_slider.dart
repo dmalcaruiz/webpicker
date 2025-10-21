@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pie_menu/pie_menu.dart';
 import 'diamond_slider_thumb.dart';
 
 /// Mixed channel slider widget with dot-based extreme control
@@ -226,33 +225,13 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
       );
     }
     
-    // If disconnected, show pie menu with take in/give to options
-    return PieMenu(
-      onPressed: () {},
-      theme: PieTheme(
-        brightness: Brightness.dark,
-        overlayColor: Colors.black45,
-        pointerSize: 15,
-        buttonSize: 40,
-        buttonTheme: const PieButtonTheme(
-          backgroundColor: Color(0xFF2A2A2A),
-          iconColor: Colors.white,
-        ),
-        leftClickShowsMenu: true,
-        rightClickShowsMenu: false,
-        delayDuration: const Duration(milliseconds: 50),
-        radius: 60,
-        customAngle: 180, // Half circle for vertical
-        customAngleAnchor: PieAnchor.center,
-        angleOffset: 90, // Vertical arrangement
-        menuAlignment: Alignment.center,
-        menuDisplacement: const Offset(0, -30),
-      ),
-      actions: [
-        // Take in global value (show global color)
-        PieAction(
-          tooltip: const Text('Take in global value'),
-          onSelect: () => isLeft 
+    // If disconnected, show simple buttons for take in/give to options
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Take in global value button
+        GestureDetector(
+          onTap: () => isLeft 
               ? widget.onLeftExtremeAction('takeIn')
               : widget.onRightExtremeAction('takeIn'),
           child: Container(
@@ -271,10 +250,11 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
           ),
         ),
         
-        // Give to global value (show extreme color)
-        PieAction(
-          tooltip: const Text('Give to global value'),
-          onSelect: () => isLeft
+        const SizedBox(width: 8),
+        
+        // Give to global value button
+        GestureDetector(
+          onTap: () => isLeft
               ? widget.onLeftExtremeAction('giveTo')
               : widget.onRightExtremeAction('giveTo'),
           child: Container(
@@ -293,18 +273,6 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
           ),
         ),
       ],
-      child: Container(
-        width: 20,
-        height: 20,
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.white54,
-            width: 2,
-          ),
-        ),
-      ),
     );
   }
   
