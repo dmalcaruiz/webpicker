@@ -159,6 +159,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     bgColor: bgColor,
                     onBgEditModeChanged: _onBgEditModeChanged,
                     onColorChanged: _onColorChanged,
+                    onSliderInteractionChanged: (isInteracting) {
+                      // Pass drag gestures to snapping sheet controller
+                      if (isInteracting) {
+                        // Start dragging the sheet
+                        snappingSheetController.snapToPosition(
+                          const SnappingPosition.factor(positionFactor: 0.3),
+                        );
+                      }
+                    },
                   ),
                   
                   const SizedBox(height: 20),

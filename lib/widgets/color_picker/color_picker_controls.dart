@@ -207,6 +207,9 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
           onInteractionChanged: widget.onSliderInteractionChanged,
         ),
         
+        // White block for drag gesture detection
+        _buildDragDetectionBlock(),
+        
         // Chroma slider with gradient
         OklchGradientSlider(
           value: widget.isBgEditMode ? bgChroma : chroma,
@@ -233,6 +236,9 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
           showSplitView: true,
           onInteractionChanged: widget.onSliderInteractionChanged,
         ),
+        
+        // White block for drag gesture detection
+        _buildDragDetectionBlock(),
         
         // Hue slider with gradient
         OklchGradientSlider(
@@ -307,6 +313,34 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
         
         const SizedBox(height: 30),
       ],
+    );
+  }
+  
+  /// Build white block for drag gesture detection
+  Widget _buildDragDetectionBlock() {
+    return Container(
+      height: 20,
+      margin: const EdgeInsets.symmetric(horizontal: 13.5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: GestureDetector(
+        onPanStart: (_) => widget.onSliderInteractionChanged?.call(true),
+        onPanEnd: (_) => widget.onSliderInteractionChanged?.call(false),
+        onPanCancel: () => widget.onSliderInteractionChanged?.call(false),
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+        ),
+      ),
     );
   }
 }
