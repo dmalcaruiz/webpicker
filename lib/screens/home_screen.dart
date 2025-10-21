@@ -27,6 +27,9 @@ class _HomeScreenState extends State<HomeScreen> {
   
   // Track chip selection states
   List<bool> _chipSelections = [false, false, false, false];
+  
+  // Track when user is interacting with sliders to block sheet dragging
+  bool _isInteractingWithSlider = false;
 
   @override
   void initState() {
@@ -49,6 +52,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void _toggleChip(int index) {
     setState(() {
       _chipSelections[index] = !_chipSelections[index];
+    });
+  }
+  
+  void _onSliderInteractionChanged(bool isInteracting) {
+    setState(() {
+      _isInteractingWithSlider = isInteracting;
     });
   }
 
@@ -144,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
         
         // Sheet content below the grabbing widget
         sheetBelow: SnappingSheetContent(
-          draggable: (details) => false, // Always pinned - no dragging
+          draggable: (details) => !_isInteractingWithSlider, // Allow dragging unless interacting with sliders
           childScrollController: scrollController,
           child: SingleChildScrollView(
             controller: scrollController,
@@ -159,15 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     bgColor: bgColor,
                     onBgEditModeChanged: _onBgEditModeChanged,
                     onColorChanged: _onColorChanged,
-                    onSliderInteractionChanged: (isInteracting) {
-                      // Pass drag gestures to snapping sheet controller
-                      if (isInteracting) {
-                        // Start dragging the sheet
-                        snappingSheetController.snapToPosition(
-                          const SnappingPosition.factor(positionFactor: 0.3),
-                        );
-                      }
-                    },
+                    onSliderInteractionChanged: _onSliderInteractionChanged,
                   ),
                   
                   const SizedBox(height: 20),
