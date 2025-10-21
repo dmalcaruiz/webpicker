@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'invisible_slider.dart';
 
 /// Mixed channel slider widget with dot-based extreme control
@@ -107,34 +108,39 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
           const SizedBox(height: 8),
           
           // Slider with gradient and external thumb
-          InvisibleSliderWithExternalThumb(
-            value: widget.value,
-            min: 0.0,
-            max: 1.0,
-            onChanged: (value) {
-              // Step 1: Clamp value to prevent floating-point precision errors
-              widget.onChanged(value.clamp(0.0, 1.0));
-            },
-            onChangeStart: () {
-              widget.onSliderTouchStart();
-              widget.onInteractionChanged?.call(true);
-            },
-            onChangeEnd: () {
-              widget.onSliderTouchEnd();
-              widget.onInteractionChanged?.call(false);
-            },
-            background: CustomPaint(
-              painter: MixedChannelGradientPainter(
-                gradientColors: _generateMixGradient(),
-                borderRadius: 8.0,
+          GestureDetector(
+            // Add mobile web gesture detection
+            onPanStart: kIsWeb ? (_) => widget.onInteractionChanged?.call(true) : null,
+            onPanEnd: kIsWeb ? (_) => widget.onInteractionChanged?.call(false) : null,
+            onPanCancel: kIsWeb ? () => widget.onInteractionChanged?.call(false) : null,
+            child: InvisibleSliderWithExternalThumb(
+              value: widget.value,
+              min: 0.0,
+              max: 1.0,
+              onChanged: (value) {
+                widget.onChanged(value.clamp(0.0, 1.0));
+              },
+              onChangeStart: () {
+                widget.onSliderTouchStart();
+                widget.onInteractionChanged?.call(true);
+              },
+              onChangeEnd: () {
+                widget.onSliderTouchEnd();
+                widget.onInteractionChanged?.call(false);
+              },
+              background: CustomPaint(
+                painter: MixedChannelGradientPainter(
+                  gradientColors: _generateMixGradient(),
+                  borderRadius: 8.0,
+                ),
               ),
+              thumbColor: _getCurrentThumbColor(),
+              showCheckerboard: true,
+              trackHeight: 50.0,
+              hitAreaExtension: 13.5,
+              thumbSize: 27.0,
+              thumbOffset: 8.0,
             ),
-            thumbColor: _getCurrentThumbColor(),
-            showCheckerboard: true,
-            trackHeight: 40.0,
-            hitAreaExtension: 13.5,
-            thumbSize: 27.0,
-            thumbOffset: 8.0, // 8px below the slider
           ),
           
           // Dot buttons below slider

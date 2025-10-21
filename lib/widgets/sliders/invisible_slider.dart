@@ -19,7 +19,7 @@ class InvisibleSlider extends StatefulWidget {
     required this.onChanged,
     this.onChangeStart,
     this.onChangeEnd,
-    this.trackHeight = 40.0,
+    this.trackHeight = 50.0,
     this.hitAreaExtension = 13.5,
   });
 
@@ -106,7 +106,7 @@ class ExternalThumb extends StatelessWidget {
     
     return Positioned(
       left: thumbPosition,
-      top: (40.0 - thumbSize) / 2, // Center vertically in 40px track
+      top: (50.0 - thumbSize) / 2, // Center vertically in 50px track
       child: CustomPaint(
         size: Size(thumbSize, thumbSize),
         painter: DiamondThumbPainter(
@@ -230,7 +230,7 @@ class InvisibleSliderWithExternalThumb extends StatefulWidget {
     this.onChangeStart,
     this.onChangeEnd,
     this.showCheckerboard = false,
-    this.trackHeight = 40.0,
+    this.trackHeight = 50.0,
     this.hitAreaExtension = 13.5,
     this.thumbSize = 27.0,
     this.thumbOffset = 8.0,

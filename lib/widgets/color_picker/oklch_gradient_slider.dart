@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../utils/color_operations.dart';
 import '../common/gradient_painter.dart';
 import '../common/plus_minus_adjuster_buttons.dart';
@@ -121,33 +122,37 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
           ],
           
           // Step 4: Slider with gradient background and external thumb
-          InvisibleSliderWithExternalThumb(
-            value: widget.value,
-            min: widget.min,
-            max: widget.max,
-            onChanged: (newValue) {
-              // Step 7: Clear cache when value changes
-              setState(() {
-                _cachedGradient = null;
-              });
-              // Step 8: Clamp value to prevent floating-point precision errors
-              widget.onChanged(newValue.clamp(widget.min, widget.max));
-            },
-            onChangeStart: () => widget.onInteractionChanged?.call(true),
-            onChangeEnd: () => widget.onInteractionChanged?.call(false),
-            background: CustomPaint(
-              painter: GradientPainter(
-                stops: _getGradientStops(),
-                showSplitView: widget.showSplitView,
-                borderRadius: 8.0,
+          GestureDetector(
+            // Add mobile web gesture detection
+            onPanStart: kIsWeb ? (_) => widget.onInteractionChanged?.call(true) : null,
+            onPanEnd: kIsWeb ? (_) => widget.onInteractionChanged?.call(false) : null,
+            onPanCancel: kIsWeb ? () => widget.onInteractionChanged?.call(false) : null,
+            child: InvisibleSliderWithExternalThumb(
+              value: widget.value,
+              min: widget.min,
+              max: widget.max,
+              onChanged: (newValue) {
+                setState(() {
+                  _cachedGradient = null;
+                });
+                widget.onChanged(newValue.clamp(widget.min, widget.max));
+              },
+              onChangeStart: () => widget.onInteractionChanged?.call(true),
+              onChangeEnd: () => widget.onInteractionChanged?.call(false),
+              background: CustomPaint(
+                painter: GradientPainter(
+                  stops: _getGradientStops(),
+                  showSplitView: widget.showSplitView,
+                  borderRadius: 8.0,
+                ),
               ),
+              thumbColor: _getCurrentThumbColor(),
+              showCheckerboard: false,
+              trackHeight: 50.0,
+              hitAreaExtension: 13.5,
+              thumbSize: 27.0,
+              thumbOffset: 8.0,
             ),
-            thumbColor: _getCurrentThumbColor(),
-            showCheckerboard: false, // No checkerboard for OKLCH (no alpha)
-            trackHeight: 40.0,
-            hitAreaExtension: 13.5,
-            thumbSize: 27.0,
-            thumbOffset: 8.0, // 8px below the slider
           ),
         ],
       ),

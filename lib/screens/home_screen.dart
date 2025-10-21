@@ -27,6 +27,9 @@ class _HomeScreenState extends State<HomeScreen> {
   
   // Track when user is interacting with sliders to block sheet dragging
   bool _isInteractingWithSlider = false;
+  
+  // Track if sheet is pinned (locked in place)
+  bool _isSheetPinned = false;
 
   @override
   void initState() {
@@ -49,6 +52,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onSliderInteractionChanged(bool isInteracting) {
     setState(() {
       _isInteractingWithSlider = isInteracting;
+    });
+  }
+  
+  void _toggleSheetPin() {
+    setState(() {
+      _isSheetPinned = !_isSheetPinned;
     });
   }
 
@@ -105,13 +114,30 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Color Picker',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Color Picker',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  IconButton(
+                    onPressed: _toggleSheetPin,
+                    icon: Icon(
+                      _isSheetPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                      color: _isSheetPinned ? Colors.blue : Colors.grey,
+                      size: 20,
+                    ),
+                    tooltip: _isSheetPinned ? 'Unpin sheet' : 'Pin sheet',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
             ],
@@ -120,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
         
         // Sheet content below the grabbing widget
         sheetBelow: SnappingSheetContent(
-          draggable: (details) => !_isInteractingWithSlider,
+          draggable: (details) => !_isInteractingWithSlider && !_isSheetPinned,
           childScrollController: scrollController,
           child: SingleChildScrollView(
             controller: scrollController,
