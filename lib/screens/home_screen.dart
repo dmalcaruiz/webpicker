@@ -27,6 +27,9 @@ class _HomeScreenState extends State<HomeScreen> {
   
   // Track chip selection states
   List<bool> _chipSelections = [false, false, false, false];
+  
+  // Track if sheet is pinned (locked in place)
+  bool _isSheetPinned = false;
 
   @override
   void initState() {
@@ -49,6 +52,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void _toggleChip(int index) {
     setState(() {
       _chipSelections[index] = !_chipSelections[index];
+    });
+  }
+  
+  void _toggleSheetPin() {
+    setState(() {
+      _isSheetPinned = !_isSheetPinned;
     });
   }
 
@@ -105,13 +114,30 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Color Picker',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Color Picker',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  IconButton(
+                    onPressed: _toggleSheetPin,
+                    icon: Icon(
+                      _isSheetPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                      color: _isSheetPinned ? Colors.blue : Colors.grey,
+                      size: 20,
+                    ),
+                    tooltip: _isSheetPinned ? 'Unpin sheet' : 'Pin sheet',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               
@@ -144,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
         
         // Sheet content below the grabbing widget
         sheetBelow: SnappingSheetContent(
-          draggable: (details) => false, // Always pinned - no dragging
+          draggable: (details) => !_isSheetPinned, // Allow dragging unless pinned
           childScrollController: scrollController,
           child: SingleChildScrollView(
             controller: scrollController,
