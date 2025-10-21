@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../color_operations.dart';
+import '../../utils/color_operations.dart';
 
 /// Custom painter that renders a color gradient with optional split-view
 /// for out-of-gamut colors
@@ -100,7 +100,7 @@ class GradientPainter extends CustomPainter {
     
     // Step 9: Draw edge indicators only on out-of-gamut regions
     final edgeIndicatorPaint = Paint()
-      ..color = Colors.black.withOpacity(0.4)
+      ..color = Colors.black.withValues(alpha: 0.4)
       ..style = PaintingStyle.fill;
     
     for (final region in outOfGamutRegions) {
@@ -119,7 +119,7 @@ class GradientPainter extends CustomPainter {
     
     // Step 10: Draw border around the gradient
     final borderPaint = Paint()
-      ..color = Colors.white.withOpacity(0.2)
+      ..color = Colors.white.withValues(alpha: 0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     
@@ -193,7 +193,7 @@ class AlphaGradientPainter extends CustomPainter {
     canvas.save();
     
     final borderPaint = Paint()
-      ..color = Colors.white.withOpacity(0.2)
+      ..color = Colors.white.withValues(alpha: 0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     

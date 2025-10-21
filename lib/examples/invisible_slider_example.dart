@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'widgets/invisible_slider.dart';
+import '../widgets/sliders/invisible_slider.dart';
 
 /// Example demonstrating the invisible slider with external thumb
 class InvisibleSliderExample extends StatefulWidget {

@@ -241,10 +241,10 @@ Color linearRgbToSrgb(LinearRgbColor color) {
 /// Converts sRGB to Linear RGB (gamma expansion)
 LinearRgbColor srgbToLinearRgb(Color color) {
   // Convert [0, 255] to [0, 1]
-  final double r = color.red / 255.0;
-  final double g = color.green / 255.0;
-  final double b = color.blue / 255.0;
-  final double a = color.alpha / 255.0;
+  final double r = color.r;
+  final double g = color.g;
+  final double b = color.b;
+  final double a = color.a;
   
   // Apply gamma expansion
   return LinearRgbColor(
@@ -601,7 +601,7 @@ List<Color> generateAlphaGradient(
     final double alpha = i / (samples - 1); // 0.0 to 1.0
     
     // Step 3: Create color with varying alpha
-    stops.add(baseColor.withOpacity(alpha));
+    stops.add(baseColor.withValues(alpha: alpha));
   }
   
   return stops;

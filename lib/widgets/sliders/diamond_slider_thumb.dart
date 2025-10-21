@@ -72,7 +72,7 @@ class DiamondSliderThumb extends SliderComponentShape {
     // Step 6: Draw shadow for depth
     canvas.drawShadow(
       diamondPath,
-      Colors.black.withOpacity(0.12),
+      Colors.black.withValues(alpha: 0.12),
       3.0,
       true,
     );

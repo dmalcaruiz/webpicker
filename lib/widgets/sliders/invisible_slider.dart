@@ -106,6 +106,7 @@ class ExternalThumb extends StatelessWidget {
     
     return Positioned(
       left: thumbPosition,
+      top: (40.0 - thumbSize) / 2, // Center vertically in 40px track
       child: CustomPaint(
         size: Size(thumbSize, thumbSize),
         painter: DiamondThumbPainter(
@@ -158,7 +159,7 @@ class DiamondThumbPainter extends CustomPainter {
     // Draw shadow
     canvas.drawShadow(
       diamondPath,
-      Colors.black.withOpacity(0.12),
+      Colors.black.withValues(alpha: 0.12),
       3.0,
       true,
     );
@@ -242,66 +243,47 @@ class InvisibleSliderWithExternalThumb extends StatefulWidget {
 class _InvisibleSliderWithExternalThumbState extends State<InvisibleSliderWithExternalThumb> {
   @override
   Widget build(BuildContext context) {
-    return ClipRect(
-      clipBehavior: Clip.none,
-      child: Column(
-        children: [
-          // Background with invisible slider overlay
-          SizedBox(
-            height: widget.trackHeight,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Background gradient/image
-                Positioned.fill(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: widget.background,
-                  ),
+    return SizedBox(
+      height: widget.trackHeight,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Background gradient/image
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: widget.background,
                 ),
-                
-                // Invisible slider for touch handling
-                InvisibleSlider(
-                  value: widget.value,
-                  min: widget.min,
-                  max: widget.max,
-                  onChanged: widget.onChanged,
-                  onChangeStart: widget.onChangeStart,
-                  onChangeEnd: widget.onChangeEnd,
-                  trackHeight: widget.trackHeight,
-                  hitAreaExtension: widget.hitAreaExtension,
-                ),
-              ],
-            ),
-          ),
-          
-          // Spacing for thumb
-          SizedBox(height: widget.thumbOffset),
-          
-          // External thumb positioned below slider
-          SizedBox(
-            height: widget.thumbSize,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    ExternalThumb(
-                      value: widget.value,
-                      min: widget.min,
-                      max: widget.max,
-                      color: widget.thumbColor,
-                      showCheckerboard: widget.showCheckerboard,
-                      thumbSize: widget.thumbSize,
-                      availableScreenWidth: constraints.maxWidth,
-                      halfThumbSize: widget.hitAreaExtension,
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
+              ),
+              
+              // Invisible slider for touch handling
+              InvisibleSlider(
+                value: widget.value,
+                min: widget.min,
+                max: widget.max,
+                onChanged: widget.onChanged,
+                onChangeStart: widget.onChangeStart,
+                onChangeEnd: widget.onChangeEnd,
+                trackHeight: widget.trackHeight,
+                hitAreaExtension: widget.hitAreaExtension,
+              ),
+              
+              // Thumb positioned on top
+              ExternalThumb(
+                value: widget.value,
+                min: widget.min,
+                max: widget.max,
+                color: widget.thumbColor,
+                showCheckerboard: widget.showCheckerboard,
+                thumbSize: widget.thumbSize,
+                availableScreenWidth: constraints.maxWidth,
+                halfThumbSize: widget.hitAreaExtension,
+              ),
+            ],
+          );
+        },
       ),
     );
   }

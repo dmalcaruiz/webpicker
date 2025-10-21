@@ -157,9 +157,9 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
   // Helper function to determine if text should be dark or light based on background
   Color _getContrastColor(Color background) {
     // Calculate relative luminance
-    final double luminance = (0.299 * background.red + 
-                             0.587 * background.green + 
-                             0.114 * background.blue) / 255;
+    final double luminance = (0.299 * (background.r * 255).round() + 
+                             0.587 * (background.g * 255).round() + 
+                             0.114 * (background.b * 255).round()) / 255;
     // Return black for light backgrounds, white for dark backgrounds
     return luminance > 0.5 ? Colors.black : Colors.white;
   }
@@ -294,7 +294,7 @@ class MixedChannelGradientPainter extends CustomPainter {
     
     // Border
     final borderPaint = Paint()
-      ..color = Colors.white.withOpacity(0.2)
+      ..color = Colors.white.withValues(alpha: 0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     
