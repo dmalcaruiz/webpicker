@@ -47,6 +47,9 @@ class MixedChannelSlider extends StatefulWidget {
   /// Number of color samples for smooth gradient (default 300)
   final int samples;
   
+  /// Callback when interaction with slider starts/ends
+  final Function(bool)? onInteractionChanged;
+  
   const MixedChannelSlider({
     super.key,
     required this.value,
@@ -62,6 +65,7 @@ class MixedChannelSlider extends StatefulWidget {
     required this.onSliderTouchStart,
     required this.onSliderTouchEnd,
     this.samples = 300,
+    this.onInteractionChanged,
   });
   
   @override
@@ -111,8 +115,14 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
               // Step 1: Clamp value to prevent floating-point precision errors
               widget.onChanged(value.clamp(0.0, 1.0));
             },
-            onChangeStart: widget.onSliderTouchStart,
-            onChangeEnd: widget.onSliderTouchEnd,
+            onChangeStart: () {
+              widget.onSliderTouchStart();
+              widget.onInteractionChanged?.call(true);
+            },
+            onChangeEnd: () {
+              widget.onSliderTouchEnd();
+              widget.onInteractionChanged?.call(false);
+            },
             background: CustomPaint(
               painter: MixedChannelGradientPainter(
                 gradientColors: _generateMixGradient(),
@@ -172,9 +182,15 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
     // If tracking, simple tap to disconnect (no pie menu)
     if (isTracking) {
       return InkWell(
-        onTap: () => isLeft
-            ? widget.onLeftExtremeAction('disconnect')
-            : widget.onRightExtremeAction('disconnect'),
+        onTap: () {
+          widget.onInteractionChanged?.call(true);
+          if (isLeft) {
+            widget.onLeftExtremeAction('disconnect');
+          } else {
+            widget.onRightExtremeAction('disconnect');
+          }
+          widget.onInteractionChanged?.call(false);
+        },
         borderRadius: BorderRadius.circular(10),
         child: Container(
           width: 20,
@@ -197,9 +213,15 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
       children: [
         // Take in global value button
         GestureDetector(
-          onTap: () => isLeft 
-              ? widget.onLeftExtremeAction('takeIn')
-              : widget.onRightExtremeAction('takeIn'),
+          onTap: () {
+            widget.onInteractionChanged?.call(true);
+            if (isLeft) {
+              widget.onLeftExtremeAction('takeIn');
+            } else {
+              widget.onRightExtremeAction('takeIn');
+            }
+            widget.onInteractionChanged?.call(false);
+          },
           child: Container(
             width: 35,
             height: 35,
@@ -220,9 +242,15 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
         
         // Give to global value button
         GestureDetector(
-          onTap: () => isLeft
-              ? widget.onLeftExtremeAction('giveTo')
-              : widget.onRightExtremeAction('giveTo'),
+          onTap: () {
+            widget.onInteractionChanged?.call(true);
+            if (isLeft) {
+              widget.onLeftExtremeAction('giveTo');
+            } else {
+              widget.onRightExtremeAction('giveTo');
+            }
+            widget.onInteractionChanged?.call(false);
+          },
           child: Container(
             width: 35,
             height: 35,

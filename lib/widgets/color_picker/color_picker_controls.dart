@@ -9,6 +9,7 @@ class ColorPickerControls extends StatefulWidget {
   final Color? bgColor;
   final Function(bool) onBgEditModeChanged;
   final Function(Color?) onColorChanged;
+  final Function(bool)? onSliderInteractionChanged;
 
   const ColorPickerControls({
     super.key,
@@ -16,6 +17,7 @@ class ColorPickerControls extends StatefulWidget {
     required this.bgColor,
     required this.onBgEditModeChanged,
     required this.onColorChanged,
+    this.onSliderInteractionChanged,
   });
 
   @override
@@ -202,6 +204,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
               ? generateLightnessGradient(bgChroma, bgHue, 300)
               : generateLightnessGradient(chroma, hue, 300),
           showSplitView: true,
+          onInteractionChanged: widget.onSliderInteractionChanged,
         ),
         
         // Chroma slider with gradient
@@ -228,6 +231,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
               ? generateChromaGradient(bgLightness, bgHue, 300)
               : generateChromaGradient(lightness, hue, 300),
           showSplitView: true,
+          onInteractionChanged: widget.onSliderInteractionChanged,
         ),
         
         // Hue slider with gradient
@@ -254,6 +258,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
               ? generateHueGradient(bgLightness, bgChroma, 300)
               : generateHueGradient(lightness, chroma, 300),
           showSplitView: true,
+          onInteractionChanged: widget.onSliderInteractionChanged,
         ),
         
         // Mixed channel slider with dot system (hidden in bg edit mode)
@@ -278,6 +283,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
             onRightExtremeAction: _handleRightExtremeAction,
             onSliderTouchStart: _handleSliderTouchStart,
             onSliderTouchEnd: _handleSliderTouchEnd,
+            onInteractionChanged: widget.onSliderInteractionChanged,
           ),
         
         if (errorMessage.isNotEmpty) ...[

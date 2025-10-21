@@ -24,6 +24,9 @@ class _HomeScreenState extends State<HomeScreen> {
   
   // Scroll controller for the sheet content
   final ScrollController scrollController = ScrollController();
+  
+  // Track when user is interacting with sliders to block sheet dragging
+  bool _isInteractingWithSlider = false;
 
   @override
   void initState() {
@@ -40,6 +43,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onBgEditModeChanged(bool isBgEditMode) {
     setState(() {
       this.isBgEditMode = isBgEditMode;
+    });
+  }
+  
+  void _onSliderInteractionChanged(bool isInteracting) {
+    setState(() {
+      _isInteractingWithSlider = isInteracting;
     });
   }
 
@@ -111,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
         
         // Sheet content below the grabbing widget
         sheetBelow: SnappingSheetContent(
-          draggable: (details) => true,
+          draggable: (details) => !_isInteractingWithSlider,
           childScrollController: scrollController,
           child: SingleChildScrollView(
             controller: scrollController,
@@ -126,6 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     bgColor: bgColor,
                     onBgEditModeChanged: _onBgEditModeChanged,
                     onColorChanged: _onColorChanged,
+                    onSliderInteractionChanged: _onSliderInteractionChanged,
                   ),
                   
                   const SizedBox(height: 20),

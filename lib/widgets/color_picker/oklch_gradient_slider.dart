@@ -44,6 +44,9 @@ class OklchGradientSlider extends StatefulWidget {
   /// Number of decimal places to display
   final int decimalPlaces;
   
+  /// Callback when interaction with slider starts/ends
+  final Function(bool)? onInteractionChanged;
+  
   /// Constructor
   /// 
   /// Step 1: Initialize slider with all required parameters
@@ -60,6 +63,7 @@ class OklchGradientSlider extends StatefulWidget {
     required this.decimalPlaces,
     this.showSplitView = true,
     this.samples = 300,
+    this.onInteractionChanged,
   });
   
   @override
@@ -96,6 +100,7 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
                   step: widget.step,
                   decimalPlaces: widget.decimalPlaces,
                   onChanged: widget.onChanged,
+                  onInteractionChanged: widget.onInteractionChanged,
                 ),
               ],
           ),
@@ -128,6 +133,8 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
               // Step 8: Clamp value to prevent floating-point precision errors
               widget.onChanged(newValue.clamp(widget.min, widget.max));
             },
+            onChangeStart: () => widget.onInteractionChanged?.call(true),
+            onChangeEnd: () => widget.onInteractionChanged?.call(false),
             background: CustomPaint(
               painter: GradientPainter(
                 stops: _getGradientStops(),
