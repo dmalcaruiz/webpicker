@@ -25,14 +25,14 @@ class _HomeScreenState extends State<HomeScreen> {
   // Scroll controller for the sheet content
   final ScrollController scrollController = ScrollController();
   
-  // Track chip selection states
-  List<bool> _chipSelections = [false, false, false, false];
+  // Track when user is interacting with sliders to block sheet dragging
+  bool _isInteractingWithSlider = false;
   
   // Track if sheet is pinned (locked in place)
   bool _isSheetPinned = false;
   
-  // Track when user is interacting with sliders to block sheet dragging
-  bool _isInteractingWithSlider = false;
+  // Track selected chips
+  List<bool> _selectedChips = [false, false, false, false];
 
   @override
   void initState() {
@@ -52,9 +52,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
   
-  void _toggleChip(int index) {
+  void _onSliderInteractionChanged(bool isInteracting) {
     setState(() {
-      _chipSelections[index] = !_chipSelections[index];
+      _isInteractingWithSlider = isInteracting;
     });
   }
   
@@ -64,9 +64,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
   
-  void _onSliderInteractionChanged(bool isInteracting) {
+  void _toggleChip(int index) {
     setState(() {
-      _isInteractingWithSlider = isInteracting;
+      _selectedChips[index] = !_selectedChips[index];
     });
   }
 
@@ -98,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         
         // Grabbing widget (the handle)
-        grabbingHeight: 140, // Increased height to accommodate chips and pin button
+        grabbingHeight: 95,
         grabbing: Container(
           decoration: const BoxDecoration(
         color: Colors.white,
@@ -148,30 +148,42 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               
-              // Chips section in draggable area
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Wrap(
-                  spacing: 8.0,
-                  runSpacing: 8.0,
-                  children: List.generate(4, (index) {
-                    return FilterChip(
-                      label: Text('Chip ${index + 1}'),
-                      selected: _chipSelections[index],
-                      onSelected: (_) => _toggleChip(index),
-                      selectedColor: Colors.black,
-                      checkmarkColor: Colors.white,
-                      labelStyle: TextStyle(
-                        color: _chipSelections[index] ? Colors.white : Colors.black87,
-                        fontWeight: FontWeight.w500,
+              // Toggleable chips
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(4, (index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: GestureDetector(
+                      onTap: () => _toggleChip(index),
+                      child: Container(
+                        width: 32,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: _selectedChips[index] ? Colors.black : Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _selectedChips[index] ? Colors.black : Colors.grey.shade400,
+                            width: 1,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${index + 1}',
+                            style: TextStyle(
+                              color: _selectedChips[index] ? Colors.white : Colors.grey.shade600,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                       ),
-                    );
-                  }),
-                ),
+                    ),
+                  );
+                }),
               ),
-              
               const SizedBox(height: 12),
             ],
           ),

@@ -247,11 +247,6 @@ class _InvisibleSliderWithExternalThumbState extends State<InvisibleSliderWithEx
       height: widget.trackHeight,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // Calculate thumb position
-          final trackPositionPercent = (widget.value - widget.min) / (widget.max - widget.min);
-          final actualTrackWidth = constraints.maxWidth;
-          final thumbPosition = (trackPositionPercent * actualTrackWidth) - widget.hitAreaExtension;
-          
           return Stack(
             clipBehavior: Clip.none,
             children: [
@@ -275,35 +270,16 @@ class _InvisibleSliderWithExternalThumbState extends State<InvisibleSliderWithEx
                 hitAreaExtension: widget.hitAreaExtension,
               ),
               
-              // Thumb positioned on top with gesture handling
-              Positioned(
-                left: thumbPosition,
-                top: (widget.trackHeight - widget.thumbSize) / 2,
-                child: GestureDetector(
-                  onPanStart: (_) => widget.onChangeStart?.call(),
-                  onPanUpdate: (details) {
-                    // Calculate new value based on pan position
-                    final RenderBox renderBox = context.findRenderObject() as RenderBox;
-                    final localPosition = renderBox.globalToLocal(details.globalPosition);
-                    final trackWidth = renderBox.size.width;
-                    final thumbRadius = widget.thumbSize / 2;
-                    
-                    // Clamp position to track bounds
-                    final clampedX = localPosition.dx.clamp(thumbRadius, trackWidth - thumbRadius);
-                    final normalizedValue = (clampedX - thumbRadius) / (trackWidth - widget.thumbSize);
-                    final newValue = widget.min + normalizedValue * (widget.max - widget.min);
-                    
-                    widget.onChanged(newValue.clamp(widget.min, widget.max));
-                  },
-                  onPanEnd: (_) => widget.onChangeEnd?.call(),
-                  child: CustomPaint(
-                    size: Size(widget.thumbSize, widget.thumbSize),
-                    painter: DiamondThumbPainter(
-                      color: widget.thumbColor,
-                      showCheckerboard: widget.showCheckerboard,
-                    ),
-                  ),
-                ),
+              // Thumb positioned on top
+              ExternalThumb(
+                value: widget.value,
+                min: widget.min,
+                max: widget.max,
+                color: widget.thumbColor,
+                showCheckerboard: widget.showCheckerboard,
+                thumbSize: widget.thumbSize,
+                availableScreenWidth: constraints.maxWidth,
+                halfThumbSize: widget.hitAreaExtension,
               ),
             ],
           );
