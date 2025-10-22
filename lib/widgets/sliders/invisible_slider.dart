@@ -107,11 +107,13 @@ class ExternalThumb extends StatelessWidget {
     return Positioned(
       left: thumbPosition,
       top: (50.0 - thumbSize) / 2, // Center vertically in 50px track
-      child: CustomPaint(
-        size: Size(thumbSize, thumbSize),
-        painter: DiamondThumbPainter(
-          color: color,
-          showCheckerboard: showCheckerboard,
+      child: IgnorePointer(
+        child: CustomPaint(
+          size: Size(thumbSize, thumbSize),
+          painter: DiamondThumbPainter(
+            color: color,
+            showCheckerboard: showCheckerboard,
+          ),
         ),
       ),
     );
