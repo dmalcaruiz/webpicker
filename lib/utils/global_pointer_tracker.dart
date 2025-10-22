@@ -21,7 +21,7 @@ class GlobalPointerTracker extends InheritedWidget {
   bool updateShouldNotify(GlobalPointerTracker oldWidget) => false;
 }
 
-class GlobalPointerTrackerState extends ChangeNotifier {
+class GlobalPointerTrackerState {
   Function(PointerMoveEvent)? _onPointerMove;
   Function(PointerUpEvent)? _onPointerUp;
   Function(PointerCancelEvent)? _onPointerCancel;
@@ -39,7 +39,6 @@ class GlobalPointerTrackerState extends ChangeNotifier {
     _onPointerUp = onUp;
     _onPointerCancel = onCancel;
     print('🌍 Global tracker ACTIVATED for pointer $pointerId');
-    notifyListeners(); // Notify that tracking state changed
   }
 
   /// Unregister the active slider
@@ -49,7 +48,6 @@ class GlobalPointerTrackerState extends ChangeNotifier {
     _onPointerMove = null;
     _onPointerUp = null;
     _onPointerCancel = null;
-    notifyListeners(); // Notify that tracking state changed
   }
 
   /// Handle global pointer move events
@@ -97,46 +95,17 @@ class _GlobalPointerTrackerProviderState
   final GlobalPointerTrackerState _trackerState = GlobalPointerTrackerState();
 
   @override
-  void initState() {
-    super.initState();
-    // Listen to tracking state changes to rebuild when needed
-    _trackerState.addListener(_onTrackingStateChanged);
-  }
-
-  @override
-  void dispose() {
-    _trackerState.removeListener(_onTrackingStateChanged);
-    super.dispose();
-  }
-
-  void _onTrackingStateChanged() {
-    setState(() {
-      // Rebuild when tracking state changes
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // Only wrap with Listener when actively tracking
-    // This prevents interference with SnappingSheet dragging
-    if (_trackerState.isTracking) {
-      return Listener(
-        behavior: HitTestBehavior.translucent,
-        onPointerMove: _trackerState.handlePointerMove,
-        onPointerUp: _trackerState.handlePointerUp,
-        onPointerCancel: _trackerState.handlePointerCancel,
-        child: GlobalPointerTracker(
-          state: _trackerState,
-          child: widget.child,
-        ),
-      );
-    } else {
-      // No Listener when not tracking - let SnappingSheet handle events normally
-      return GlobalPointerTracker(
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerMove: _trackerState.handlePointerMove,
+      onPointerUp: _trackerState.handlePointerUp,
+      onPointerCancel: _trackerState.handlePointerCancel,
+      child: GlobalPointerTracker(
         state: _trackerState,
         child: widget.child,
-      );
-    }
+      ),
+    );
   }
 }
 

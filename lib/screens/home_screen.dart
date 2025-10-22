@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:snapping_sheet_2/snapping_sheet.dart';
 import '../widgets/color_picker/color_preview_box.dart';
 import '../widgets/color_picker/color_picker_controls.dart';
+import '../widgets/color_picker/reorderable_color_grid_view.dart';
+import '../widgets/common/global_action_buttons.dart';
+import '../widgets/common/undo_redo_buttons.dart';
+import '../models/color_palette_item.dart';
+import '../models/app_state_snapshot.dart';
+import '../services/undo_redo_manager.dart';
 
 // Color Picker Home Screen
 class HomeScreen extends StatefulWidget {
@@ -33,16 +39,60 @@ class _HomeScreenState extends State<HomeScreen> {
   
   // Track selected chips
   List<bool> _selectedChips = [false, false, false, false];
+  
+  // Color palette management
+  List<ColorPaletteItem> _colorPalette = [];
+  ColorPaletteItem? _selectedPaletteItem;
+  
+  // Undo/Redo management
+  final UndoRedoManager _undoRedoManager = UndoRedoManager(maxHistorySize: 50);
+  bool _isRestoringState = false;
 
   @override
   void initState() {
     super.initState();
     bgColor = const Color(0xFF252525); // Default dark background
+    
+    // Initialize with some sample colors
+    _initializeSamplePalette();
+    
+    // Save initial state
+    _saveStateToHistory('Initial state');
+  }
+  
+  @override
+  void dispose() {
+    _undoRedoManager.dispose();
+    super.dispose();
+  }
+  
+  /// Initialize the palette with some sample colors
+  void _initializeSamplePalette() {
+    _colorPalette = [
+      ColorPaletteItem.fromColor(const Color(0xFFE74C3C), name: 'Red'),
+      ColorPaletteItem.fromColor(const Color(0xFF3498DB), name: 'Blue'),
+      ColorPaletteItem.fromColor(const Color(0xFF2ECC71), name: 'Green'),
+      ColorPaletteItem.fromColor(const Color(0xFFF39C12), name: 'Orange'),
+    ];
   }
 
   void _onColorChanged(Color? color) {
+    if (_isRestoringState) return;
+    
     setState(() {
       currentColor = color;
+      
+      // If a palette item is selected, update it with the new color
+      if (_selectedPaletteItem != null && color != null) {
+        final selectedIndex = _colorPalette.indexWhere((p) => p.id == _selectedPaletteItem!.id);
+        if (selectedIndex != -1) {
+          _colorPalette[selectedIndex] = _colorPalette[selectedIndex].copyWith(
+            color: color,
+            lastModified: DateTime.now(),
+          );
+          _saveStateToHistory('Modified ${_selectedPaletteItem!.name ?? "color"}');
+        }
+      }
     });
   }
 
@@ -69,11 +119,230 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedChips[index] = !_selectedChips[index];
     });
   }
+  
+  /// Handle palette item reordering
+  void _onPaletteReorder(int oldIndex, int newIndex) {
+    if (_isRestoringState) return;
+    
+    setState(() {
+      // Note: ReorderableGridView package provides the exact target index
+      // Unlike ReorderableListView, we do NOT need to adjust newIndex
+      // Simply remove from oldIndex and insert at newIndex
+      final item = _colorPalette.removeAt(oldIndex);
+      _colorPalette.insert(newIndex, item);
+      _saveStateToHistory('Reordered palette items');
+    });
+  }
+  
+  /// Handle palette item tap
+  void _onPaletteItemTap(ColorPaletteItem item) {
+    setState(() {
+      // Clear previous selection
+      _colorPalette = _colorPalette.map((paletteItem) => 
+        paletteItem.copyWith(isSelected: false)
+      ).toList();
+      
+      // Select the tapped item
+      final selectedIndex = _colorPalette.indexWhere((p) => p.id == item.id);
+      if (selectedIndex != -1) {
+        _colorPalette[selectedIndex] = _colorPalette[selectedIndex].copyWith(isSelected: true);
+        _selectedPaletteItem = _colorPalette[selectedIndex];
+        
+        // Update the current color to match the selected palette item
+        currentColor = item.color;
+      }
+    });
+  }
+  
+  /// Handle palette item long press
+  void _onPaletteItemLongPress(ColorPaletteItem item) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            ListTile(
+              leading: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: item.color,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              title: Text(item.name ?? 'Unnamed Color'),
+              subtitle: Text('#${item.color.toARGB32().toRadixString(16).substring(2).toUpperCase()}'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline),
+              title: const Text('Delete'),
+              onTap: () {
+                Navigator.pop(context);
+                _onPaletteItemDelete(item);
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  /// Handle palette item deletion
+  void _onPaletteItemDelete(ColorPaletteItem item) {
+    if (_isRestoringState) return;
+    
+    setState(() {
+      _colorPalette.removeWhere((paletteItem) => paletteItem.id == item.id);
+      if (_selectedPaletteItem?.id == item.id) {
+        _selectedPaletteItem = null;
+      }
+      _saveStateToHistory('Deleted ${item.name ?? "color"} from palette');
+    });
+  }
+  
+  /// Save current state to undo/redo history
+  void _saveStateToHistory(String actionDescription) {
+    final snapshot = AppStateSnapshot(
+      paletteItems: _colorPalette.map((item) => item).toList(),
+      currentColor: currentColor,
+      bgColor: bgColor,
+      isBgEditMode: isBgEditMode,
+      selectedPaletteItemId: _selectedPaletteItem?.id,
+      timestamp: DateTime.now(),
+      actionDescription: actionDescription,
+    );
+    _undoRedoManager.pushState(snapshot);
+  }
+  
+  /// Restore state from snapshot
+  void _restoreState(AppStateSnapshot snapshot) {
+    _isRestoringState = true;
+    
+    setState(() {
+      _colorPalette = snapshot.paletteItems.map((item) => item).toList();
+      currentColor = snapshot.currentColor;
+      bgColor = snapshot.bgColor;
+      isBgEditMode = snapshot.isBgEditMode;
+      
+      // Restore selection
+      if (snapshot.selectedPaletteItemId != null) {
+        _selectedPaletteItem = _colorPalette.firstWhere(
+          (item) => item.id == snapshot.selectedPaletteItemId,
+          orElse: () => _colorPalette.first,
+        );
+      } else {
+        _selectedPaletteItem = null;
+      }
+    });
+    
+    _isRestoringState = false;
+  }
+  
+  /// Handle undo action
+  void _handleUndo() {
+    if (_undoRedoManager.canUndo) {
+      final snapshot = _undoRedoManager.undo();
+      if (snapshot != null) {
+        _restoreState(snapshot);
+      }
+    }
+  }
+  
+  /// Handle redo action
+  void _handleRedo() {
+    if (_undoRedoManager.canRedo) {
+      final snapshot = _undoRedoManager.redo();
+      if (snapshot != null) {
+        _restoreState(snapshot);
+      }
+    }
+  }
+  
+  /// Handle color selection from eyedropper or paste
+  void _handleColorSelection(Color color) {
+    if (_isRestoringState) return;
+    
+    setState(() {
+      currentColor = color;
+      
+      // If a palette item is selected, update it
+      if (_selectedPaletteItem != null) {
+        final selectedIndex = _colorPalette.indexWhere((p) => p.id == _selectedPaletteItem!.id);
+        if (selectedIndex != -1) {
+          _colorPalette[selectedIndex] = _colorPalette[selectedIndex].copyWith(
+            color: color,
+            lastModified: DateTime.now(),
+          );
+        }
+      }
+      
+      _saveStateToHistory('Color selected from eyedropper/paste');
+    });
+  }
+  
+  /// Handle adding a new color to the palette
+  void _onAddColor() {
+    if (_isRestoringState) return;
+    
+    if (currentColor != null) {
+      setState(() {
+        // Deselect all current items
+        _colorPalette = _colorPalette.map((item) => 
+          item.copyWith(isSelected: false)
+        ).toList();
+        
+        // Add the new item as selected
+        final newItem = ColorPaletteItem.fromColor(currentColor!, name: null).copyWith(isSelected: true);
+        _colorPalette.add(newItem);
+        _selectedPaletteItem = newItem;
+        _saveStateToHistory('Added new color to palette');
+      });
+      
+      // Show a snackbar to confirm
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Color added to palette'),
+          duration: const Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.black87,
+        ),
+      );
+    } else {
+      // Show a message if no color is available
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please create a color first'),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: bgColor ?? const Color(0xFF252525),
+    return UndoRedoShortcuts(
+      onUndo: _handleUndo,
+      onRedo: _handleRedo,
+      child: Scaffold(
+        backgroundColor: bgColor ?? const Color(0xFF252525),
       body: SnappingSheet(
         controller: snappingSheetController,
         lockOverflowDrag: true,
@@ -289,6 +558,29 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               const SizedBox(height: 20),
               
+              // Global action buttons row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Copy/Paste/Eyedropper buttons
+                  Expanded(
+                    child: GlobalActionButtons(
+                      currentColor: currentColor,
+                      onColorSelected: _handleColorSelection,
+                    ),
+                  ),
+                  
+                  // Undo/Redo buttons
+                  UndoRedoButtons(
+                    undoRedoManager: _undoRedoManager,
+                    onUndo: _handleUndo,
+                    onRedo: _handleRedo,
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 20),
+              
               // Single color display box
               ColorPreviewBox(
                 color: currentColor,
@@ -296,28 +588,20 @@ class _HomeScreenState extends State<HomeScreen> {
               
               const SizedBox(height: 30),
               
-              // Placeholder for ReorderableGridView
+              // ReorderableColorGridView
               Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      width: 2,
-                    ),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'ReorderableGridView\n(To be implemented)',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
+                child: ReorderableColorGridView(
+                  items: _colorPalette,
+                  onReorder: _onPaletteReorder,
+                  onItemTap: _onPaletteItemTap,
+                  onItemLongPress: _onPaletteItemLongPress,
+                  onItemDelete: _onPaletteItemDelete,
+                  onAddColor: _onAddColor,
+                  crossAxisCount: 4,
+                  spacing: 12.0,
+                  itemSize: 80.0,
+                  showAddButton: true,
+                  emptyStateMessage: 'No colors in palette\nCreate a color above and tap + to add it',
                 ),
               ),
               
@@ -325,6 +609,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
