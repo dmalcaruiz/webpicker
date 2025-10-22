@@ -34,33 +34,38 @@ class _InvisibleSliderState extends State<InvisibleSlider> {
   Widget build(BuildContext context) {
     return SizedBox(
       height: widget.trackHeight,
-      child: GestureDetector(
+      child: Listener(
         behavior: HitTestBehavior.opaque,
-        // Pan events track ALL touch movement from start to finish
-        // regardless of direction (vertical, horizontal, diagonal)
-        onPanDown: (details) {
-          print('🎯 TOUCH DOWN at ${details.localPosition}');
+        // Listener uses pointer events with ZERO threshold
+        // Tracks every single pixel of movement instantly
+        onPointerDown: (event) {
+          print('🎯 TOUCH DOWN at ${event.localPosition}');
           _isTracking = true;
           widget.onChangeStart?.call();
-          _handlePositionChange(details.localPosition);
+          _handlePositionChange(event.localPosition);
         },
-        onPanUpdate: (details) {
+        onPointerMove: (event) {
           if (_isTracking) {
-            // Continue tracking and updating value as finger moves
-            _handlePositionChange(details.localPosition);
+            // Instant tracking on EVERY pixel movement - no threshold!
+            _handlePositionChange(event.localPosition);
           }
         },
-        onPanEnd: (details) {
-          print('🎯 TOUCH RELEASED');
-          _isTracking = false;
-          widget.onChangeEnd?.call();
+        onPointerUp: (event) {
+          print('🎯 TOUCH RELEASED at ${event.localPosition}');
+          if (_isTracking) {
+            _isTracking = false;
+            // Final position update before release
+            _handlePositionChange(event.localPosition);
+            widget.onChangeEnd?.call();
+          }
         },
-        onPanCancel: () {
+        onPointerCancel: (event) {
           print('🚨 TOUCH CANCELLED - Lost tracking!');
-          _isTracking = false;
-          widget.onChangeEnd?.call();
+          if (_isTracking) {
+            _isTracking = false;
+            widget.onChangeEnd?.call();
+          }
         },
-        // Empty container for the touch area
         child: Container(
           height: widget.trackHeight,
           color: Colors.transparent,
