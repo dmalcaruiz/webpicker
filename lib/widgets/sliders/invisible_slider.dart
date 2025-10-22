@@ -28,84 +28,43 @@ class InvisibleSlider extends StatefulWidget {
 }
 
 class _InvisibleSliderState extends State<InvisibleSlider> {
-  bool _isDragging = false;
+  bool _isTracking = false;
   
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: widget.trackHeight,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Extended touch area for easier interaction
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTapDown: (details) {
-                print('🎯 TAP DOWN at ${details.localPosition}');
-                _isDragging = false;
-                widget.onChangeStart?.call();
-                _handlePositionChange(details.localPosition);
-              },
-              onTapUp: (details) {
-                print('🎯 TAP UP - Finger released');
-                widget.onChangeEnd?.call();
-              },
-              onTapCancel: () {
-                print('🚨 TAP CANCELLED - Tracking lost!');
-                widget.onChangeEnd?.call();
-              },
-              onHorizontalDragStart: (details) {
-                print('🎯 HORIZONTAL DRAG START');
-                _isDragging = true;
-                widget.onChangeStart?.call();
-              },
-              onHorizontalDragUpdate: (details) {
-                if (_isDragging) {
-                  _handlePositionChange(details.localPosition);
-                }
-              },
-              onHorizontalDragEnd: (details) {
-                print('🎯 HORIZONTAL DRAG END');
-                _isDragging = false;
-                widget.onChangeEnd?.call();
-              },
-              onHorizontalDragCancel: () {
-                print('🚨 HORIZONTAL DRAG CANCELLED - Left bounds!');
-                _isDragging = false;
-                widget.onChangeEnd?.call();
-              },
-              child: SliderTheme(
-                data: SliderThemeData(
-                  activeTrackColor: Colors.transparent,
-                  inactiveTrackColor: Colors.transparent,
-                  trackHeight: widget.trackHeight,
-                  trackShape: const RectangularSliderTrackShape(),
-                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
-                  overlayColor: Colors.transparent,
-                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-                  thumbColor: Colors.transparent,
-                  activeTickMarkColor: Colors.transparent,
-                  inactiveTickMarkColor: Colors.transparent,
-                  valueIndicatorColor: Colors.transparent,
-                  valueIndicatorTextStyle: const TextStyle(color: Colors.transparent),
-                ),
-                child: Slider(
-                  value: widget.value.clamp(widget.min, widget.max),
-                  min: widget.min,
-                  max: widget.max,
-                  onChanged: (newValue) {
-                    // Slider is now passive, just for visual
-                  },
-                ),
-              ),
-            ),
-          ),
-        ],
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        // Pan events track ALL touch movement from start to finish
+        // regardless of direction (vertical, horizontal, diagonal)
+        onPanDown: (details) {
+          print('🎯 TOUCH DOWN at ${details.localPosition}');
+          _isTracking = true;
+          widget.onChangeStart?.call();
+          _handlePositionChange(details.localPosition);
+        },
+        onPanUpdate: (details) {
+          if (_isTracking) {
+            // Continue tracking and updating value as finger moves
+            _handlePositionChange(details.localPosition);
+          }
+        },
+        onPanEnd: (details) {
+          print('🎯 TOUCH RELEASED');
+          _isTracking = false;
+          widget.onChangeEnd?.call();
+        },
+        onPanCancel: () {
+          print('🚨 TOUCH CANCELLED - Lost tracking!');
+          _isTracking = false;
+          widget.onChangeEnd?.call();
+        },
+        // Empty container for the touch area
+        child: Container(
+          height: widget.trackHeight,
+          color: Colors.transparent,
+        ),
       ),
     );
   }
@@ -114,8 +73,12 @@ class _InvisibleSliderState extends State<InvisibleSlider> {
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox != null) {
       final width = renderBox.size.width;
+      
+      // Clamp percentage to 0.0-1.0 to keep value within slider bounds
+      // even if finger moves outside the slider area
       final percentage = (localPosition.dx / width).clamp(0.0, 1.0);
       final newValue = widget.min + (percentage * (widget.max - widget.min));
+      
       widget.onChanged(newValue.clamp(widget.min, widget.max));
     }
   }
