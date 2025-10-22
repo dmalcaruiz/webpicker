@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/global_gesture_manager.dart';
 
 /// Invisible slider that handles touch interactions but doesn't render a visible thumb
 class InvisibleSlider extends StatefulWidget {
@@ -28,6 +29,8 @@ class InvisibleSlider extends StatefulWidget {
 }
 
 class _InvisibleSliderState extends State<InvisibleSlider> {
+  final GlobalKey _sliderKey = GlobalKey();
+  
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -57,20 +60,51 @@ class _InvisibleSliderState extends State<InvisibleSlider> {
                 valueIndicatorTextStyle: const TextStyle(color: Colors.transparent),
               ),
               child: Slider(
+                key: _sliderKey,
                 value: widget.value.clamp(widget.min, widget.max),
                 min: widget.min,
                 max: widget.max,
                 onChanged: (newValue) {
                   widget.onChanged(newValue.clamp(widget.min, widget.max));
                 },
-                onChangeStart: (_) => widget.onChangeStart?.call(),
-                onChangeEnd: (_) => widget.onChangeEnd?.call(),
+                onChangeStart: (_) {
+                  widget.onChangeStart?.call();
+                  _registerWithGlobalManager();
+                },
+                onChangeEnd: (_) {
+                  widget.onChangeEnd?.call();
+                  GlobalGestureManager().unregisterActiveSlider();
+                },
               ),
             ),
           ),
         ],
       ),
     );
+  }
+  
+  void _registerWithGlobalManager() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final RenderBox? renderBox = _sliderKey.currentContext?.findRenderObject() as RenderBox?;
+      if (renderBox != null) {
+        final Offset position = renderBox.localToGlobal(Offset.zero);
+        final Size size = renderBox.size;
+        
+        GlobalGestureManager().registerActiveSlider(
+          sliderId: 'slider_${widget.hashCode}',
+          currentValue: widget.value,
+          min: widget.min,
+          max: widget.max,
+          sliderBounds: Rect.fromLTWH(position.dx, position.dy, size.width, size.height),
+          onChanged: (newValue) {
+            widget.onChanged(newValue.clamp(widget.min, widget.max));
+          },
+          onEnd: () {
+            widget.onChangeEnd?.call();
+          },
+        );
+      }
+    });
   }
 }
 
