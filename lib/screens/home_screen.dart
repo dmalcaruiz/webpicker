@@ -192,87 +192,94 @@ class _HomeScreenState extends State<HomeScreen> {
         // Sheet content below the grabbing widget
         sheetBelow: SnappingSheetContent(
           draggable: (details) => !_isInteractingWithSlider && !_isSheetPinned,
-          childScrollController: scrollController,
-          child: SingleChildScrollView(
-            controller: scrollController,
-            reverse: false,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  // Color picker controls
-                  ColorPickerControls(
-                    isBgEditMode: isBgEditMode,
-                    bgColor: bgColor,
-                    onBgEditModeChanged: _onBgEditModeChanged,
-                    onColorChanged: _onColorChanged,
-                    onSliderInteractionChanged: _onSliderInteractionChanged,
-                  ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Bottom button for Edit Background/Edit Colors
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          isBgEditMode = !isBgEditMode;
-                        });
-                      },
-                      icon: Icon(isBgEditMode ? Icons.palette : Icons.format_paint),
-                      label: Text(isBgEditMode ? 'Edit Colors' : 'Edit Background'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black.withValues(alpha: 0.3),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        textStyle: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+          child: Column(
+            children: [
+              // Fixed sliders area (no scrolling)
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: ColorPickerControls(
+                  isBgEditMode: isBgEditMode,
+                  bgColor: bgColor,
+                  onBgEditModeChanged: _onBgEditModeChanged,
+                  onColorChanged: _onColorChanged,
+                  onSliderInteractionChanged: _onSliderInteractionChanged,
+                ),
+              ),
+              
+              // Scrollable content area
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  reverse: false,
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                    child: Column(
+                      children: [
+                        // Bottom button for Edit Background/Edit Colors
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                isBgEditMode = !isBgEditMode;
+                              });
+                            },
+                            icon: Icon(isBgEditMode ? Icons.palette : Icons.format_paint),
+                            label: Text(isBgEditMode ? 'Edit Colors' : 'Edit Background'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black.withValues(alpha: 0.3),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              textStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                        
+                        const SizedBox(height: 10),
+                        
+                        // Sheet control buttons
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => snappingSheetController.snapToPosition(
+                                  const SnappingPosition.factor(positionFactor: 0.3),
+                                ),
+                                icon: const Icon(Icons.keyboard_arrow_down),
+                                label: const Text('Collapse'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.grey.shade200,
+                                  foregroundColor: Colors.black87,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => snappingSheetController.snapToPosition(
+                                  const SnappingPosition.factor(positionFactor: 1.0),
+                                ),
+                                icon: const Icon(Icons.keyboard_arrow_up),
+                                label: const Text('Expand'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.grey.shade200,
+                                  foregroundColor: Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: 20),
+                      ],
                     ),
                   ),
-                  
-                  const SizedBox(height: 10),
-                  
-                  // Sheet control buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => snappingSheetController.snapToPosition(
-                            const SnappingPosition.factor(positionFactor: 0.3),
-                          ),
-                          icon: const Icon(Icons.keyboard_arrow_down),
-                          label: const Text('Collapse'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey.shade200,
-                            foregroundColor: Colors.black87,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => snappingSheetController.snapToPosition(
-                            const SnappingPosition.factor(positionFactor: 1.0),
-                          ),
-                          icon: const Icon(Icons.keyboard_arrow_up),
-                          label: const Text('Expand'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey.shade200,
-                            foregroundColor: Colors.black87,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 20),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
         // Main content area (behind the sheet)
