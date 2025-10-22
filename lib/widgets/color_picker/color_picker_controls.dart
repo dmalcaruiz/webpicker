@@ -10,6 +10,9 @@ class ColorPickerControls extends StatefulWidget {
   final Function(bool) onBgEditModeChanged;
   final Function(Color?) onColorChanged;
   final Function(bool)? onSliderInteractionChanged;
+  
+  /// External color to set the sliders to (e.g., from palette selection)
+  final Color? externalColor;
 
   const ColorPickerControls({
     super.key,
@@ -18,6 +21,7 @@ class ColorPickerControls extends StatefulWidget {
     required this.onBgEditModeChanged,
     required this.onColorChanged,
     this.onSliderInteractionChanged,
+    this.externalColor,
   });
 
   @override
@@ -54,10 +58,46 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
   @override
   void initState() {
     super.initState();
+    
+    // Initialize from external color if provided
+    if (widget.externalColor != null) {
+      _setFromExternalColor(widget.externalColor!);
+    }
+    
     // Defer the initial color update to avoid setState during build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateColor();
     });
+  }
+  
+  @override
+  void didUpdateWidget(ColorPickerControls oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // If external color changed, update sliders (only in color edit mode)
+    if (!widget.isBgEditMode && 
+        widget.externalColor != null && 
+        widget.externalColor != oldWidget.externalColor) {
+      setState(() {
+        _setFromExternalColor(widget.externalColor!);
+        // Don't call _updateColor() here - it would trigger onColorChanged callback
+        // and create an infinite loop. Just update the internal state.
+        currentColor = widget.externalColor;
+      });
+    }
+  }
+  
+  /// Set slider values from an external color
+  void _setFromExternalColor(Color color) {
+    final oklch = srgbToOklch(color);
+    lightness = oklch.l;
+    chroma = oklch.c;
+    hue = oklch.h;
+    
+    // Reset slider state when external color is set
+    sliderIsActive = false;
+    isLeftExtremeTracking = false;
+    isRightExtremeTracking = false;
   }
 
   void _updateColor() {

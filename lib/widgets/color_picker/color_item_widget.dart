@@ -22,6 +22,13 @@ class ColorItemWidget extends StatelessWidget {
   /// Callback when this item should be deleted
   final VoidCallback? onDelete;
   
+  /// Callback when drag to delete starts
+  final VoidCallback? onDragToDeleteStart;
+  
+  /// Callback when drag to delete ends
+  /// Returns true if deleted, false otherwise
+  final bool Function()? onDragToDeleteEnd;
+  
   /// Whether this item is currently being dragged
   final bool isDragging;
   
@@ -37,6 +44,8 @@ class ColorItemWidget extends StatelessWidget {
     this.onTap,
     this.onLongPress,
     this.onDelete,
+    this.onDragToDeleteStart,
+    this.onDragToDeleteEnd,
     this.isDragging = false,
     this.size = 80.0,
     this.showDragHandle = true,
@@ -44,10 +53,12 @@ class ColorItemWidget extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
+    final colorWidget = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
-      transform: Matrix4.identity()..scale(isDragging ? 1.05 : 1.0),
+      transform: isDragging 
+          ? (Matrix4.identity()..scale(1.05))
+          : Matrix4.identity(),
       child: GestureDetector(
         onTap: onTap,
         onLongPress: onLongPress,
@@ -86,109 +97,55 @@ class ColorItemWidget extends StatelessWidget {
         ),
       ),
     );
+    
+    // Wrap in LongPressDraggable for drag-to-delete functionality
+    if (onDragToDeleteStart != null && onDragToDeleteEnd != null) {
+      return LongPressDraggable<String>(
+        data: item.id,
+        delay: const Duration(milliseconds: 500), // Longer delay to avoid conflicting with reorder
+        feedback: Transform.scale(
+          scale: 1.1,
+          child: Opacity(
+            opacity: 0.8,
+            child: Material(
+              color: Colors.transparent,
+              child: colorWidget,
+            ),
+          ),
+        ),
+        childWhenDragging: Opacity(
+          opacity: 0.3,
+          child: colorWidget,
+        ),
+        onDragStarted: onDragToDeleteStart,
+        onDragEnd: (_) {
+          onDragToDeleteEnd?.call();
+        },
+        onDraggableCanceled: (_, __) {
+          onDragToDeleteEnd?.call();
+        },
+        child: colorWidget,
+      );
+    }
+    
+    return colorWidget;
   }
   
   /// Build the main color content area
   Widget _buildColorContent() {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Top area - could show name if available
-          if (item.name != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                item.name!,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          
-          // Bottom area - hex code
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              _getHexCode(),
-              style: TextStyle(
-                color: _getTextColor(),
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'monospace',
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    // Just pure color - no text or labels
+    return const SizedBox.expand();
   }
   
   /// Build the drag handle
   Widget _buildDragHandle() {
-    return Positioned(
-      top: 4,
-      right: 4,
-      child: Container(
-        width: 16,
-        height: 16,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.8),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: const Icon(
-          Icons.drag_indicator,
-          size: 12,
-          color: Colors.black54,
-        ),
-      ),
-    );
+    // No visible drag handle - drag anywhere on the box
+    return const SizedBox.shrink();
   }
   
   /// Build the selection indicator
   Widget _buildSelectionIndicator() {
-    return Positioned(
-      top: 4,
-      left: 4,
-      child: Container(
-        width: 16,
-        height: 16,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.check,
-          size: 12,
-          color: Colors.black,
-        ),
-      ),
-    );
-  }
-  
-  /// Get the hex code for the color
-  String _getHexCode() {
-    final hex = item.color.toARGB32().toRadixString(16).substring(2).toUpperCase();
-    return '#$hex';
-  }
-  
-  /// Get appropriate text color based on background luminance
-  Color _getTextColor() {
-    return item.color.computeLuminance() > 0.5 ? Colors.black : Colors.white;
+    // No visible selection indicator - selection shown via border in main container
+    return const SizedBox.shrink();
   }
 }

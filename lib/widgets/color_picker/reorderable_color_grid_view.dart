@@ -30,6 +30,13 @@ class ReorderableColorGridView extends StatefulWidget {
   /// Callback when add button is pressed
   final VoidCallback onAddColor;
   
+  /// Callback when drag starts (for showing delete zone)
+  final Function(ColorPaletteItem)? onDragStarted;
+  
+  /// Callback when drag ends (for hiding delete zone)
+  /// Returns true if item was deleted, false otherwise
+  final bool Function()? onDragEnded;
+  
   /// Number of columns in the grid
   final int crossAxisCount;
   
@@ -53,6 +60,8 @@ class ReorderableColorGridView extends StatefulWidget {
     required this.onItemLongPress,
     required this.onItemDelete,
     required this.onAddColor,
+    this.onDragStarted,
+    this.onDragEnded,
     this.crossAxisCount = 4,
     this.spacing = 12.0,
     this.itemSize = 80.0,
@@ -85,11 +94,27 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
         childAspectRatio: 1.0,
         dragStartDelay: const Duration(milliseconds: 200),
         restrictDragScope: false,
-        children: widget.items.map((item) => _buildColorItem(item)).toList(),
-        onReorder: widget.onReorder,
+        onReorder: (oldIndex, newIndex) {
+          // Call the drag ended callback before reordering
+          final wasDeleted = widget.onDragEnded?.call() ?? false;
+          
+          // Only perform reorder if item wasn't deleted
+          if (!wasDeleted) {
+            widget.onReorder(oldIndex, newIndex);
+          }
+        },
         footer: widget.showAddButton ? [_buildAddButton()] : null,
+        children: widget.items.map((item) => _buildColorItem(item)).toList(),
         dragWidgetBuilderV2: DragWidgetBuilderV2(
           builder: (index, child, screenshot) {
+            // Notify that drag has started
+            if (widget.onDragStarted != null && index < widget.items.length) {
+              // Use post-frame callback to avoid calling setState during build
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                widget.onDragStarted!(widget.items[index]);
+              });
+            }
+            
             // Use the child directly for smooth dragging experience
             return Transform.scale(
               scale: 1.1,
@@ -127,6 +152,10 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
       onTap: () => widget.onItemTap(item),
       onLongPress: () => widget.onItemLongPress(item),
       onDelete: () => widget.onItemDelete(item),
+      onDragToDeleteStart: widget.onDragStarted != null 
+          ? () => widget.onDragStarted!(item)
+          : null,
+      onDragToDeleteEnd: widget.onDragEnded,
     );
   }
   

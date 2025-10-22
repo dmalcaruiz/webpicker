@@ -15,7 +15,7 @@ class UndoRedoManager extends ChangeNotifier {
   /// Current state
   AppStateSnapshot? _currentState;
   
-  UndoRedoManager({this.maxHistorySize = 50});
+  UndoRedoManager({this.maxHistorySize = 100});
   
   /// Get current state
   AppStateSnapshot? get currentState => _currentState;

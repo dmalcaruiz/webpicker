@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 class ClipboardService {
   /// Copy a color to the clipboard as hex string
   static Future<void> copyColorToClipboard(Color color) async {
-    final hexString = '#${color.value.toRadixString(16).substring(2).toUpperCase()}';
+    final hexString = '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
     await Clipboard.setData(ClipboardData(text: hexString));
   }
   
@@ -76,9 +76,9 @@ class ClipboardService {
   /// Convert Color to hex string
   static String colorToHex(Color color, {bool includeAlpha = false}) {
     if (includeAlpha) {
-      return '#${color.value.toRadixString(16).padLeft(8, '0').toUpperCase()}';
+      return '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
     } else {
-      return '#${color.value.toRadixString(16).substring(2).toUpperCase()}';
+      return '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
     }
   }
 }

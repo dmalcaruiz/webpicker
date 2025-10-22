@@ -66,9 +66,15 @@ class ColorPaletteItem {
     );
   }
   
+  /// Counter for generating unique IDs
+  static int _idCounter = 0;
+  
   /// Generate a unique ID for the color item
   static String _generateId() {
-    return 'color_${DateTime.now().millisecondsSinceEpoch}_${(DateTime.now().microsecond % 1000).toString().padLeft(3, '0')}';
+    _idCounter++;
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    // Combine timestamp with counter for guaranteed uniqueness
+    return 'color_${timestamp}_${_idCounter}';
   }
   
   @override
@@ -103,3 +109,4 @@ class OklchValues {
   @override
   String toString() => 'OklchValues(l: $lightness, c: $chroma, h: $hue, a: $alpha)';
 }
+
