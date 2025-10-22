@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../utils/global_gesture_manager.dart';
 
 /// Invisible slider that handles touch interactions but doesn't render a visible thumb
 class InvisibleSlider extends StatefulWidget {
@@ -29,7 +28,7 @@ class InvisibleSlider extends StatefulWidget {
 }
 
 class _InvisibleSliderState extends State<InvisibleSlider> {
-  final GlobalKey _sliderKey = GlobalKey();
+  bool _isDragging = false;
   
   @override
   Widget build(BuildContext context) {
@@ -44,37 +43,65 @@ class _InvisibleSliderState extends State<InvisibleSlider> {
             right: 0,
             top: 0,
             bottom: 0,
-            child: SliderTheme(
-              data: SliderThemeData(
-                activeTrackColor: Colors.transparent,
-                inactiveTrackColor: Colors.transparent,
-                trackHeight: widget.trackHeight,
-                trackShape: const RectangularSliderTrackShape(),
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
-                overlayColor: Colors.transparent,
-                overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-                thumbColor: Colors.transparent,
-                activeTickMarkColor: Colors.transparent,
-                inactiveTickMarkColor: Colors.transparent,
-                valueIndicatorColor: Colors.transparent,
-                valueIndicatorTextStyle: const TextStyle(color: Colors.transparent),
-              ),
-              child: Slider(
-                key: _sliderKey,
-                value: widget.value.clamp(widget.min, widget.max),
-                min: widget.min,
-                max: widget.max,
-                onChanged: (newValue) {
-                  widget.onChanged(newValue.clamp(widget.min, widget.max));
-                },
-                onChangeStart: (_) {
-                  widget.onChangeStart?.call();
-                  _registerWithGlobalManager();
-                },
-                onChangeEnd: (_) {
-                  widget.onChangeEnd?.call();
-                  GlobalGestureManager().unregisterActiveSlider();
-                },
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTapDown: (details) {
+                print('🎯 TAP DOWN at ${details.localPosition}');
+                _isDragging = false;
+                widget.onChangeStart?.call();
+                _handlePositionChange(details.localPosition);
+              },
+              onTapUp: (details) {
+                print('🎯 TAP UP - Finger released');
+                widget.onChangeEnd?.call();
+              },
+              onTapCancel: () {
+                print('🚨 TAP CANCELLED - Tracking lost!');
+                widget.onChangeEnd?.call();
+              },
+              onHorizontalDragStart: (details) {
+                print('🎯 HORIZONTAL DRAG START');
+                _isDragging = true;
+                widget.onChangeStart?.call();
+              },
+              onHorizontalDragUpdate: (details) {
+                if (_isDragging) {
+                  _handlePositionChange(details.localPosition);
+                }
+              },
+              onHorizontalDragEnd: (details) {
+                print('🎯 HORIZONTAL DRAG END');
+                _isDragging = false;
+                widget.onChangeEnd?.call();
+              },
+              onHorizontalDragCancel: () {
+                print('🚨 HORIZONTAL DRAG CANCELLED - Left bounds!');
+                _isDragging = false;
+                widget.onChangeEnd?.call();
+              },
+              child: SliderTheme(
+                data: SliderThemeData(
+                  activeTrackColor: Colors.transparent,
+                  inactiveTrackColor: Colors.transparent,
+                  trackHeight: widget.trackHeight,
+                  trackShape: const RectangularSliderTrackShape(),
+                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
+                  overlayColor: Colors.transparent,
+                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
+                  thumbColor: Colors.transparent,
+                  activeTickMarkColor: Colors.transparent,
+                  inactiveTickMarkColor: Colors.transparent,
+                  valueIndicatorColor: Colors.transparent,
+                  valueIndicatorTextStyle: const TextStyle(color: Colors.transparent),
+                ),
+                child: Slider(
+                  value: widget.value.clamp(widget.min, widget.max),
+                  min: widget.min,
+                  max: widget.max,
+                  onChanged: (newValue) {
+                    // Slider is now passive, just for visual
+                  },
+                ),
               ),
             ),
           ),
@@ -83,28 +110,14 @@ class _InvisibleSliderState extends State<InvisibleSlider> {
     );
   }
   
-  void _registerWithGlobalManager() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final RenderBox? renderBox = _sliderKey.currentContext?.findRenderObject() as RenderBox?;
-      if (renderBox != null) {
-        final Offset position = renderBox.localToGlobal(Offset.zero);
-        final Size size = renderBox.size;
-        
-        GlobalGestureManager().registerActiveSlider(
-          sliderId: 'slider_${widget.hashCode}',
-          currentValue: widget.value,
-          min: widget.min,
-          max: widget.max,
-          sliderBounds: Rect.fromLTWH(position.dx, position.dy, size.width, size.height),
-          onChanged: (newValue) {
-            widget.onChanged(newValue.clamp(widget.min, widget.max));
-          },
-          onEnd: () {
-            widget.onChangeEnd?.call();
-          },
-        );
-      }
-    });
+  void _handlePositionChange(Offset localPosition) {
+    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox != null) {
+      final width = renderBox.size.width;
+      final percentage = (localPosition.dx / width).clamp(0.0, 1.0);
+      final newValue = widget.min + (percentage * (widget.max - widget.min));
+      widget.onChanged(newValue.clamp(widget.min, widget.max));
+    }
   }
 }
 
