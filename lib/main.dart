@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cyclop/cyclop.dart';
 import 'screens/home_screen.dart';
+import 'utils/global_pointer_tracker.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,7 +14,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: EyeDrop(child: const HomeScreen()),
+      home: GlobalPointerTrackerProvider(
+        child: EyeDrop(child: const HomeScreen()),
+      ),
     );
   }
 }

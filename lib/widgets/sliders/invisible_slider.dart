@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/global_pointer_tracker.dart';
 
 /// Invisible slider that handles touch interactions but doesn't render a visible thumb
 class InvisibleSlider extends StatefulWidget {
@@ -28,7 +29,13 @@ class InvisibleSlider extends StatefulWidget {
 }
 
 class _InvisibleSliderState extends State<InvisibleSlider> {
-  bool _isTracking = false;
+  GlobalPointerTrackerState? _globalTracker;
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _globalTracker = GlobalPointerTracker.of(context);
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -36,35 +43,30 @@ class _InvisibleSliderState extends State<InvisibleSlider> {
       height: widget.trackHeight,
       child: Listener(
         behavior: HitTestBehavior.opaque,
-        // Listener uses pointer events with ZERO threshold
-        // Tracks every single pixel of movement instantly
+        // Local listener only handles initial touch down
+        // After that, global tracker takes over for unlimited range tracking
         onPointerDown: (event) {
           print('🎯 TOUCH DOWN at ${event.localPosition}');
-          _isTracking = true;
           widget.onChangeStart?.call();
           _handlePositionChange(event.localPosition);
-        },
-        onPointerMove: (event) {
-          if (_isTracking) {
-            // Instant tracking on EVERY pixel movement - no threshold!
-            _handlePositionChange(event.localPosition);
-          }
-        },
-        onPointerUp: (event) {
-          print('🎯 TOUCH RELEASED at ${event.localPosition}');
-          if (_isTracking) {
-            _isTracking = false;
-            // Final position update before release
-            _handlePositionChange(event.localPosition);
-            widget.onChangeEnd?.call();
-          }
-        },
-        onPointerCancel: (event) {
-          print('🚨 TOUCH CANCELLED - Lost tracking!');
-          if (_isTracking) {
-            _isTracking = false;
-            widget.onChangeEnd?.call();
-          }
+          
+          // Register with global tracker to handle movement everywhere
+          _globalTracker?.registerSlider(
+            pointerId: event.pointer,
+            onMove: (moveEvent) {
+              // Convert global position to local slider position
+              _handleGlobalPositionChange(moveEvent.position);
+            },
+            onUp: (upEvent) {
+              print('🎯 TOUCH RELEASED (global) at ${upEvent.position}');
+              _handleGlobalPositionChange(upEvent.position);
+              widget.onChangeEnd?.call();
+            },
+            onCancel: (cancelEvent) {
+              print('🚨 TOUCH CANCELLED (global) - Lost tracking!');
+              widget.onChangeEnd?.call();
+            },
+          );
         },
         child: Container(
           height: widget.trackHeight,
@@ -81,6 +83,22 @@ class _InvisibleSliderState extends State<InvisibleSlider> {
       
       // Clamp percentage to 0.0-1.0 to keep value within slider bounds
       // even if finger moves outside the slider area
+      final percentage = (localPosition.dx / width).clamp(0.0, 1.0);
+      final newValue = widget.min + (percentage * (widget.max - widget.min));
+      
+      widget.onChanged(newValue.clamp(widget.min, widget.max));
+    }
+  }
+  
+  void _handleGlobalPositionChange(Offset globalPosition) {
+    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox != null) {
+      // Convert global position to local position
+      final localPosition = renderBox.globalToLocal(globalPosition);
+      final width = renderBox.size.width;
+      
+      // Clamp percentage to 0.0-1.0 to keep value within slider bounds
+      // even if finger moves way outside the slider area
       final percentage = (localPosition.dx / width).clamp(0.0, 1.0);
       final newValue = widget.min + (percentage * (widget.max - widget.min));
       
