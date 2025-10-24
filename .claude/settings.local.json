@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(flutter pub get:*)",
-      "Bash(flutter analyze:*)"
+      "Bash(flutter analyze:*)",
+      "Bash(python extract_mixbox_lut.py:*)",
+      "Bash(py extract_mixbox_lut.py:*)",
+      "Bash(dart analyze:*)",
+      "Bash(flutter build:*)",
+      "Bash(python:*)",
+      "Bash(flutter clean:*)"
     ],
     "deny": [],
     "ask": []

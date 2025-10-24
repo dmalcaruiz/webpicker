@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../../models/extreme_color_item.dart';
 import '../../utils/color_operations.dart';
+import '../../utils/mixbox.dart';
 import '../color_picker/mixer_extremes_row.dart';
 import 'invisible_slider.dart';
 
@@ -45,6 +46,12 @@ class MixedChannelSlider extends StatefulWidget {
   /// Callback when interaction with slider starts/ends
   final Function(bool)? onInteractionChanged;
 
+  /// Whether to use pigment mixing (Mixbox) instead of OKLCH
+  final bool usePigmentMixing;
+
+  /// Callback when pigment mixing toggle changes
+  final Function(bool)? onPigmentMixingChanged;
+
   const MixedChannelSlider({
     super.key,
     required this.value,
@@ -58,6 +65,8 @@ class MixedChannelSlider extends StatefulWidget {
     required this.onSliderTouchEnd,
     this.samples = 300,
     this.onInteractionChanged,
+    this.usePigmentMixing = false,
+    this.onPigmentMixingChanged,
   });
   
   @override
@@ -140,18 +149,73 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
             rightExtreme: widget.rightExtreme,
             onExtremeTap: widget.onExtremeTap,
           ),
+
+          // Pigment mixing toggle
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () {
+              widget.onPigmentMixingChanged?.call(!widget.usePigmentMixing);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: widget.usePigmentMixing
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: widget.usePigmentMixing
+                      ? Colors.white.withValues(alpha: 0.3)
+                      : Colors.white.withValues(alpha: 0.1),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    widget.usePigmentMixing ? Icons.check_box : Icons.check_box_outline_blank,
+                    size: 16,
+                    color: widget.usePigmentMixing
+                        ? Colors.white.withValues(alpha: 0.9)
+                        : Colors.white.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Pigment Mixing',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: widget.usePigmentMixing
+                          ? Colors.white.withValues(alpha: 0.9)
+                          : Colors.white.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  /// Interpolates between left and right extreme colors using OKLCH
+  /// Interpolates between left and right extreme colors
+  /// Uses either OKLCH or Mixbox pigment mixing based on toggle
   Color _getCurrentThumbColor() {
-    return lerpOklch(
-      widget.leftExtreme.color,
-      widget.rightExtreme.color,
-      widget.value,
-    );
+    if (widget.usePigmentMixing) {
+      return lerpMixbox(
+        widget.leftExtreme.color,
+        widget.rightExtreme.color,
+        widget.value,
+      );
+    } else {
+      return lerpOklch(
+        widget.leftExtreme.color,
+        widget.rightExtreme.color,
+        widget.value,
+      );
+    }
   }
 
   List<Color> _generateMixGradient() {
@@ -159,7 +223,11 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
 
     for (int i = 0; i < widget.samples; i++) {
       final double t = i / (widget.samples - 1);
-      colors.add(lerpOklch(widget.leftExtreme.color, widget.rightExtreme.color, t));
+      if (widget.usePigmentMixing) {
+        colors.add(lerpMixbox(widget.leftExtreme.color, widget.rightExtreme.color, t));
+      } else {
+        colors.add(lerpOklch(widget.leftExtreme.color, widget.rightExtreme.color, t));
+      }
     }
 
     return colors;

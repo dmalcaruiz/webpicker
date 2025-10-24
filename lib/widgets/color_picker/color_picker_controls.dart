@@ -67,6 +67,9 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
   // Slider interaction state
   bool sliderIsActive = false;
 
+  // Pigment mixing toggle state
+  bool usePigmentMixing = false;
+
   // Flag to prevent feedback loop when we update the color internally
   bool _isInternalUpdate = false;
 
@@ -332,12 +335,18 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
             leftExtreme: widget.leftExtreme,
             rightExtreme: widget.rightExtreme,
             sliderIsActive: sliderIsActive,
+            usePigmentMixing: usePigmentMixing,
             onChanged: (value) {
               setState(() {
                 mixValue = value.clamp(0.0, 1.0);
                 if (sliderIsActive) {
                   _updateColor();
                 }
+              });
+            },
+            onPigmentMixingChanged: (value) {
+              setState(() {
+                usePigmentMixing = value;
               });
             },
             onExtremeTap: widget.onExtremeTap,
