@@ -1,4 +1,6 @@
 // ignore: avoid_web_libraries_in_flutter
+// ignore_for_file: deprecated_member_use
+
 import 'dart:js' as js;
 
 import 'package:flutter/material.dart';

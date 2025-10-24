@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -22,7 +23,9 @@ void main() {
       );
       
       // Selection should be preserved but might be lost
-      print('After color update: isSelected = ${items[selectedIndex].isSelected}');
+      if (kDebugMode) {
+        print('After color update: isSelected = ${items[selectedIndex].isSelected}');
+      }
       expect(items[selectedIndex].isSelected, true, 
         reason: 'EXPECTED FAILURE: Selection is lost when not explicitly passed to copyWith');
     });
@@ -54,8 +57,12 @@ void main() {
       expect(items[foundIndex].isSelected, true, reason: 'Selection preserved during reorder');
       
       // But if we use the old reference, it might not match
-      print('Old reference: ${selectedItem.hashCode}');
-      print('New reference: ${items[foundIndex].hashCode}');
+      if (kDebugMode) {
+        print('Old reference: ${selectedItem.hashCode}');
+      }
+      if (kDebugMode) {
+        print('New reference: ${items[foundIndex].hashCode}');
+      }
       
       // This is why we should always look up by ID, not keep old references
     });

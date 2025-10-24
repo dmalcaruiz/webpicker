@@ -28,8 +28,8 @@ class EyedropperButton extends StatelessWidget {
     this.onColorChanged,
     this.icon = Icons.colorize,
     this.iconColor = Colors.blueGrey,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) => Container(

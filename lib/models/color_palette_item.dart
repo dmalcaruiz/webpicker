@@ -126,7 +126,7 @@ class ColorPaletteItem {
     _idCounter++;
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     // Combine timestamp with counter for guaranteed uniqueness
-    return 'color_${timestamp}_${_idCounter}';
+    return 'color_${timestamp}_$_idCounter';
   }
   
   @override

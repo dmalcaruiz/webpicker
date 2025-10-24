@@ -15,8 +15,7 @@ class ChannelSliders extends StatefulWidget {
   final ValueChanged<Color> onChange;
 
   const ChannelSliders(
-      {required this.selectedColor, required this.onChange, Key? key})
-      : super(key: key);
+      {required this.selectedColor, required this.onChange, super.key});
 
   @override
   ChannelSlidersState createState() => ChannelSlidersState();

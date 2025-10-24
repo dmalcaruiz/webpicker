@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Test to verify the fixed reordering logic for ReorderableGridView
@@ -18,7 +19,9 @@ void main() {
       
       // Expected: [Red, Green, Orange, Blue]
       expect(items, ['Red', 'Green', 'Orange', 'Blue']);
-      print('✓ Forward drag: $items');
+      if (kDebugMode) {
+        print('✓ Forward drag: $items');
+      }
     });
     
     test('Backward drag without adjustment - CORRECT behavior', () {
@@ -35,7 +38,9 @@ void main() {
       
       // Expected: [Red, Orange, Blue, Green]
       expect(items, ['Red', 'Orange', 'Blue', 'Green']);
-      print('✓ Backward drag: $items');
+      if (kDebugMode) {
+        print('✓ Backward drag: $items');
+      }
     });
     
     test('Adjacent forward - move one position right', () {
@@ -51,7 +56,9 @@ void main() {
       
       // Expected: [A, C, B, D]
       expect(items, ['A', 'C', 'B', 'D']);
-      print('✓ Adjacent forward: $items');
+      if (kDebugMode) {
+        print('✓ Adjacent forward: $items');
+      }
     });
     
     test('Adjacent backward - move one position left', () {
@@ -67,7 +74,9 @@ void main() {
       
       // Expected: [A, C, B, D]
       expect(items, ['A', 'C', 'B', 'D']);
-      print('✓ Adjacent backward: $items');
+      if (kDebugMode) {
+        print('✓ Adjacent backward: $items');
+      }
     });
     
     test('Complex sequence - multiple reorders', () {
@@ -89,7 +98,9 @@ void main() {
       items.insert(3, item);
       expect(items, [5, 1, 4, 3, 2]);
       
-      print('✓ Complex sequence: $items');
+      if (kDebugMode) {
+        print('✓ Complex sequence: $items');
+      }
     });
     
     test('First to last position', () {
@@ -103,7 +114,9 @@ void main() {
       items.insert(newIndex, item);
       
       expect(items, ['Second', 'Third', 'Fourth', 'First']);
-      print('✓ First to last: $items');
+      if (kDebugMode) {
+        print('✓ First to last: $items');
+      }
     });
     
     test('Last to first position', () {
@@ -117,7 +130,9 @@ void main() {
       items.insert(newIndex, item);
       
       expect(items, ['Fourth', 'First', 'Second', 'Third']);
-      print('✓ Last to first: $items');
+      if (kDebugMode) {
+        print('✓ Last to first: $items');
+      }
     });
   });
 }

@@ -18,8 +18,8 @@ class OpacitySlider extends StatelessWidget {
     required this.opacity,
     required this.selectedColor,
     required this.onChange,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

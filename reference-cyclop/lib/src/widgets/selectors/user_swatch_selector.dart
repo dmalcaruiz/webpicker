@@ -1,3 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:basics/int_basics.dart';
 import 'package:flutter/material.dart';
 import 'package:quiver/collection.dart';
@@ -15,8 +17,8 @@ class SwatchLibrary extends StatefulWidget {
     required this.onColorSelected,
     this.onSwatchesUpdate,
     this.colors = const {},
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   bool get canAdd => !colors.contains(currentColor);
 
@@ -65,8 +67,7 @@ class SwatchLibraryState extends State<SwatchLibrary> {
                 setState(() {});
               },
         child: Tooltip(
-          height: 52,
-          showDuration: 0.seconds,
+          showDuration: 0.seconds, constraints: BoxConstraints(minHeight: 52),
           message: 'Tap to select /\nDouble Tap to remove',
           child: Container(
             margin: const EdgeInsets.all(4),

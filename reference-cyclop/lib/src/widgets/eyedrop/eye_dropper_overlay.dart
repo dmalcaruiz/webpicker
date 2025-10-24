@@ -1,3 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -20,8 +22,8 @@ class EyeDropOverlay extends StatelessWidget {
     required this.colors,
     this.cursorPosition,
     this.touchable = false,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

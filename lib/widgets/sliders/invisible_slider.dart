@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../utils/global_pointer_tracker.dart';
 
@@ -46,7 +47,9 @@ class _InvisibleSliderState extends State<InvisibleSlider> {
         // Local listener only handles initial touch down
         // After that, global tracker takes over for unlimited range tracking
         onPointerDown: (event) {
-          print('🎯 TOUCH DOWN at ${event.localPosition}');
+          if (kDebugMode) {
+            print('🎯 TOUCH DOWN at ${event.localPosition}');
+          }
           widget.onChangeStart?.call();
           _handlePositionChange(event.localPosition);
           
@@ -58,12 +61,16 @@ class _InvisibleSliderState extends State<InvisibleSlider> {
               _handleGlobalPositionChange(moveEvent.position);
             },
             onUp: (upEvent) {
-              print('🎯 TOUCH RELEASED (global) at ${upEvent.position}');
+              if (kDebugMode) {
+                print('🎯 TOUCH RELEASED (global) at ${upEvent.position}');
+              }
               _handleGlobalPositionChange(upEvent.position);
               widget.onChangeEnd?.call();
             },
             onCancel: (cancelEvent) {
-              print('🚨 TOUCH CANCELLED (global) - Lost tracking!');
+              if (kDebugMode) {
+                print('🚨 TOUCH CANCELLED (global) - Lost tracking!');
+              }
               widget.onChangeEnd?.call();
             },
           );

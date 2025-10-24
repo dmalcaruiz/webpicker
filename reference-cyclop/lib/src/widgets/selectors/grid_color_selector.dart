@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 
 import '../../theme.dart';
@@ -16,8 +18,8 @@ class GridColorSelector extends StatelessWidget {
   const GridColorSelector({
     required this.selectedColor,
     required this.onColorSelected,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) => AspectRatio(

@@ -34,8 +34,8 @@ class ChannelSlider extends StatelessWidget {
     required this.onChange,
     required this.label,
     required this.labelGetter,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   double get channelValue => channelValueGetter(selectedColor);
 

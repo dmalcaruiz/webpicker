@@ -104,7 +104,6 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
           }
         },
         footer: widget.showAddButton ? [_buildAddButton()] : null,
-        children: widget.items.map((item) => _buildColorItem(item)).toList(),
         dragWidgetBuilderV2: DragWidgetBuilderV2(
           builder: (index, child, screenshot) {
             // Notify that drag has started
@@ -139,6 +138,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
             ),
           );
         },
+        children: widget.items.map((item) => _buildColorItem(item)).toList(),
       ),
     );
   }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
 
 /// A drag target zone that appears when dragging palette items
 /// Provides visual feedback for drag-to-delete functionality

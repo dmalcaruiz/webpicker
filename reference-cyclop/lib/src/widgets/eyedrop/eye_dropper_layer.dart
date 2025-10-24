@@ -35,9 +35,8 @@ class EyeDropperModel {
 class EyeDrop extends InheritedWidget {
   static EyeDropperModel data = EyeDropperModel();
 
-  EyeDrop({required Widget child, Key? key})
+  EyeDrop({required Widget child, super.key})
       : super(
-          key: key,
           child: RepaintBoundary(
             key: captureKey,
             child: Listener(
