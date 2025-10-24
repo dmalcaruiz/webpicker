@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/color_operations.dart';
+import '../../models/extreme_color_item.dart';
 import 'oklch_gradient_slider.dart';
 import '../sliders/mixer_slider.dart' show MixedChannelSlider;
 
@@ -25,6 +26,16 @@ class ColorPickerControls extends StatefulWidget {
   final double? externalHue;
   final double? externalAlpha;
 
+  /// Mixer extreme colors (managed by parent)
+  final ExtremeColorItem leftExtreme;
+  final ExtremeColorItem rightExtreme;
+
+  /// Callback when an extreme is tapped
+  final Function(String extremeId) onExtremeTap;
+
+  /// Callback when mixer slider is touched (to deselect extremes)
+  final VoidCallback? onMixerSliderTouched;
+
   const ColorPickerControls({
     super.key,
     required this.isBgEditMode,
@@ -36,6 +47,10 @@ class ColorPickerControls extends StatefulWidget {
     this.externalChroma,
     this.externalHue,
     this.externalAlpha,
+    required this.leftExtreme,
+    required this.rightExtreme,
+    required this.onExtremeTap,
+    this.onMixerSliderTouched,
   });
 
   @override
@@ -48,15 +63,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
   double chroma = 0.15;    // 0.0 to 0.4 (0.37 is max for sRGB)
   double hue = 240.0;      // 0 to 360 degrees
   double mixValue = 0.0;   // 0.0 to 1.0 for mixed channel slider
-  
-  // Extreme colors (independent of global OKLCH)
-  Color leftExtremeColor = const Color(0xFF808080); // Gray initial
-  Color rightExtremeColor = const Color(0xFFFFFFFF); // White initial
-  
-  // Tracking states
-  bool isLeftExtremeTracking = false;
-  bool isRightExtremeTracking = false;
-  
+
   // Slider interaction state
   bool sliderIsActive = false;
 
@@ -113,8 +120,6 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
 
         // Reset slider state when external values are set
         sliderIsActive = false;
-        isLeftExtremeTracking = false;
-        isRightExtremeTracking = false;
 
         // Update display color
         currentColor = colorFromOklch(lightness, chroma, hue);
@@ -178,21 +183,13 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
         // Get current global OKLCH color
         final globalColor = colorFromOklch(lightness, chroma, hue);
 
-        // Update tracking extremes
-        if (isLeftExtremeTracking) {
-          leftExtremeColor = globalColor;
-        }
-        if (isRightExtremeTracking) {
-          rightExtremeColor = globalColor;
-        }
-
         // Calculate final values
         if (sliderIsActive) {
           // Slider is controlling: interpolate IN OKLCH SPACE (perceptually uniform!)
 
           // Step 1: Convert extremes to OKLCH
-          final leftOklch = srgbToOklch(leftExtremeColor);
-          final rightOklch = srgbToOklch(rightExtremeColor);
+          final leftOklch = srgbToOklch(widget.leftExtreme.color);
+          final rightOklch = srgbToOklch(widget.rightExtreme.color);
 
           // Step 2: Interpolate each OKLCH component separately
           lightness = _lerpDouble(leftOklch.l, rightOklch.l, mixValue);
@@ -224,63 +221,11 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
     }
   }
 
-  void _handleLeftExtremeAction(String action) {
-    setState(() {
-      if (action == 'takeIn' || action == 'giveTo') {
-        // Disconnect the other extreme (only one can track)
-        isRightExtremeTracking = false;
-        
-        if (action == 'takeIn') {
-          // Copy global to left extreme
-          leftExtremeColor = colorFromOklch(lightness, chroma, hue);
-        } else {
-          // Copy left extreme to global
-          final oklch = srgbToOklch(leftExtremeColor);
-          lightness = oklch.l;
-          chroma = oklch.c;
-          hue = oklch.h;
-        }
-        
-        // Start tracking
-        isLeftExtremeTracking = true;
-      } else if (action == 'disconnect') {
-        isLeftExtremeTracking = false;
-      }
-      _updateColor();
-    });
-  }
-
-  void _handleRightExtremeAction(String action) {
-    setState(() {
-      if (action == 'takeIn' || action == 'giveTo') {
-        // Disconnect the other extreme (only one can track)
-        isLeftExtremeTracking = false;
-        
-        if (action == 'takeIn') {
-          // Copy global to right extreme
-          rightExtremeColor = colorFromOklch(lightness, chroma, hue);
-        } else {
-          // Copy right extreme to global
-          final oklch = srgbToOklch(rightExtremeColor);
-          lightness = oklch.l;
-          chroma = oklch.c;
-          hue = oklch.h;
-        }
-        
-        // Start tracking
-        isRightExtremeTracking = true;
-      } else if (action == 'disconnect') {
-        isRightExtremeTracking = false;
-      }
-      _updateColor();
-    });
-  }
-
   void _handleSliderTouchStart() {
+    // Notify parent to deselect extremes when mixer slider is touched
+    widget.onMixerSliderTouched?.call();
+
     setState(() {
-      // Disconnect both extremes when slider is touched
-      isLeftExtremeTracking = false;
-      isRightExtremeTracking = false;
       sliderIsActive = true;
       _updateColor();
     });
@@ -379,15 +324,13 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
           onInteractionChanged: widget.onSliderInteractionChanged,
         ),
         
-        // Mixed channel slider with dot system (hidden in bg edit mode)
+        // Mixed channel slider with extreme circles (hidden in bg edit mode)
         if (!widget.isBgEditMode)
           MixedChannelSlider(
             value: mixValue,
             currentColor: colorFromOklch(lightness, chroma, hue),
-            leftExtremeColor: leftExtremeColor,
-            rightExtremeColor: rightExtremeColor,
-            isLeftTracking: isLeftExtremeTracking,
-            isRightTracking: isRightExtremeTracking,
+            leftExtreme: widget.leftExtreme,
+            rightExtreme: widget.rightExtreme,
             sliderIsActive: sliderIsActive,
             onChanged: (value) {
               setState(() {
@@ -397,8 +340,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
                 }
               });
             },
-            onLeftExtremeAction: _handleLeftExtremeAction,
-            onRightExtremeAction: _handleRightExtremeAction,
+            onExtremeTap: widget.onExtremeTap,
             onSliderTouchStart: _handleSliderTouchStart,
             onSliderTouchEnd: _handleSliderTouchEnd,
             onInteractionChanged: widget.onSliderInteractionChanged,

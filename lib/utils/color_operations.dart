@@ -594,15 +594,89 @@ List<Color> generateAlphaGradient(
   int samples,
 ) {
   final List<Color> stops = [];
-  
+
   // Step 1: Sample alpha values
   for (int i = 0; i < samples; i++) {
     // Step 2: Calculate alpha value for this sample
     final double alpha = i / (samples - 1); // 0.0 to 1.0
-    
+
     // Step 3: Create color with varying alpha
     stops.add(baseColor.withValues(alpha: alpha));
   }
-  
+
   return stops;
+}
+
+// ============================================================
+// OKLCH COLOR INTERPOLATION
+// ============================================================
+
+/// Interpolates between two colors in OKLCH color space
+///
+/// This function performs perceptually uniform interpolation by:
+/// 1. Converting both colors to OKLCH
+/// 2. Interpolating L, C, H, and alpha channels separately
+/// 3. Using the shortest path for hue interpolation (handles wraparound)
+/// 4. Converting back to sRGB with gamut mapping
+///
+/// Parameters:
+/// - colorA: Starting color
+/// - colorB: Ending color
+/// - t: Interpolation factor (0.0 = colorA, 1.0 = colorB)
+///
+/// Returns the interpolated color in sRGB space
+Color lerpOklch(Color colorA, Color colorB, double t) {
+  // Convert both colors to OKLCH
+  final oklchA = srgbToOklch(colorA);
+  final oklchB = srgbToOklch(colorB);
+
+  // Interpolate lightness and chroma linearly
+  final l = oklchA.l + (oklchB.l - oklchA.l) * t;
+  final c = oklchA.c + (oklchB.c - oklchA.c) * t;
+  final alpha = oklchA.alpha + (oklchB.alpha - oklchA.alpha) * t;
+
+  // Interpolate hue using the shortest path around the color wheel
+  double h;
+  if (oklchA.c < 0.0001 || oklchB.c < 0.0001) {
+    // If either color is achromatic (very low chroma), use the hue from the chromatic color
+    // or interpolate normally if both are achromatic
+    if (oklchA.c < 0.0001 && oklchB.c >= 0.0001) {
+      h = oklchB.h;
+    } else if (oklchB.c < 0.0001 && oklchA.c >= 0.0001) {
+      h = oklchA.h;
+    } else {
+      h = oklchA.h + (oklchB.h - oklchA.h) * t;
+    }
+  } else {
+    // Both colors are chromatic - use shortest path interpolation
+    double hueA = oklchA.h;
+    double hueB = oklchB.h;
+
+    // Normalize hues to [0, 360)
+    hueA = hueA % 360;
+    hueB = hueB % 360;
+    if (hueA < 0) hueA += 360;
+    if (hueB < 0) hueB += 360;
+
+    // Calculate the difference
+    double diff = hueB - hueA;
+
+    // Take the shortest path
+    if (diff > 180) {
+      diff -= 360;
+    } else if (diff < -180) {
+      diff += 360;
+    }
+
+    // Interpolate
+    h = hueA + diff * t;
+
+    // Normalize result to [0, 360)
+    h = h % 360;
+    if (h < 0) h += 360;
+  }
+
+  // Create interpolated OKLCH color and convert to sRGB
+  final interpolated = OklchColor(l, c, h, alpha);
+  return oklchToSrgbWithGamut(interpolated);
 }

@@ -9,6 +9,7 @@ import '../widgets/home/action_buttons_row.dart';
 import '../widgets/home/background_edit_button.dart';
 import '../widgets/common/undo_redo_buttons.dart';
 import '../models/color_palette_item.dart';
+import '../models/extreme_color_item.dart';
 import '../models/app_state_snapshot.dart';
 import '../services/undo_redo_manager.dart';
 import '../services/palette_manager.dart';
@@ -48,7 +49,14 @@ class _HomeScreenState extends State<HomeScreen> {
   
   /// Color palette items
   List<ColorPaletteItem> _colorPalette = [];
-  
+
+  /// Mixer extreme colors
+  late ExtremeColorItem _leftExtreme;
+  late ExtremeColorItem _rightExtreme;
+
+  /// Selected extreme ID ('left', 'right', or null)
+  String? _selectedExtremeId;
+
   /// Currently dragging item (for delete zone)
   ColorPaletteItem? _draggingItem;
   
@@ -93,6 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     bgColor = const Color(0xFF252525);
     _initializeSamplePalette();
+    _initializeExtremes();
     _saveStateToHistory('Initial state');
   }
   
@@ -110,6 +119,22 @@ class _HomeScreenState extends State<HomeScreen> {
       ColorPaletteItem.fromColor(const Color(0xFF2ECC71), name: 'Green'),
       ColorPaletteItem.fromColor(const Color(0xFFF39C12), name: 'Orange'),
     ];
+  }
+
+  /// Initialize mixer extremes with default colors
+  void _initializeExtremes() {
+    _leftExtreme = ExtremeColorItem.fromOklch(
+      id: 'left',
+      lightness: 0.5,
+      chroma: 0.0,
+      hue: 0.0,
+    );
+    _rightExtreme = ExtremeColorItem.fromOklch(
+      id: 'right',
+      lightness: 1.0,
+      chroma: 0.0,
+      hue: 0.0,
+    );
   }
 
   // ========== Color Change Handlers ==========
@@ -145,6 +170,29 @@ class _HomeScreenState extends State<HomeScreen> {
           alpha: alpha,
         );
         _saveStateToHistory('Modified ${selectedItem.name ?? "color"}');
+      } else if (_selectedExtremeId != null) {
+        // Update selected extreme (behaves exactly like a box)
+        final newColor = colorFromOklch(lightness, chroma, hue, alpha);
+        final newOklch = OklchValues(
+          lightness: lightness,
+          chroma: chroma,
+          hue: hue,
+          alpha: alpha,
+        );
+
+        if (_selectedExtremeId == 'left') {
+          _leftExtreme = _leftExtreme.copyWith(
+            color: newColor,
+            oklchValues: newOklch,
+          );
+          _saveStateToHistory('Modified left extreme');
+        } else if (_selectedExtremeId == 'right') {
+          _rightExtreme = _rightExtreme.copyWith(
+            color: newColor,
+            oklchValues: newOklch,
+          );
+          _saveStateToHistory('Modified right extreme');
+        }
       }
     });
   }
@@ -193,6 +241,11 @@ class _HomeScreenState extends State<HomeScreen> {
         itemId: item.id,
       );
 
+      // Deselect extremes when a box is selected
+      _selectedExtremeId = null;
+      _leftExtreme = _leftExtreme.copyWith(isSelected: false);
+      _rightExtreme = _rightExtreme.copyWith(isSelected: false);
+
       // Update current OKLCH values directly from the item (no conversion!)
       final selectedItem = PaletteManager.getSelectedItem(_colorPalette);
       if (selectedItem != null) {
@@ -205,6 +258,57 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
   
+  void _onExtremeTap(String extremeId) {
+    if (_isRestoringState) return;
+
+    setState(() {
+      // Deselect all palette boxes
+      _colorPalette = PaletteManager.deselectAll(currentPalette: _colorPalette);
+
+      // Select tapped extreme, deselect the other
+      if (extremeId == 'left') {
+        _selectedExtremeId = 'left';
+        _leftExtreme = _leftExtreme.copyWith(isSelected: true);
+        _rightExtreme = _rightExtreme.copyWith(isSelected: false);
+
+        // Update sliders with left extreme's OKLCH values
+        currentLightness = _leftExtreme.oklchValues.lightness;
+        currentChroma = _leftExtreme.oklchValues.chroma;
+        currentHue = _leftExtreme.oklchValues.hue;
+        currentAlpha = _leftExtreme.oklchValues.alpha;
+        currentColor = _leftExtreme.color;
+
+        _saveStateToHistory('Selected left extreme');
+      } else if (extremeId == 'right') {
+        _selectedExtremeId = 'right';
+        _leftExtreme = _leftExtreme.copyWith(isSelected: false);
+        _rightExtreme = _rightExtreme.copyWith(isSelected: true);
+
+        // Update sliders with right extreme's OKLCH values
+        currentLightness = _rightExtreme.oklchValues.lightness;
+        currentChroma = _rightExtreme.oklchValues.chroma;
+        currentHue = _rightExtreme.oklchValues.hue;
+        currentAlpha = _rightExtreme.oklchValues.alpha;
+        currentColor = _rightExtreme.color;
+
+        _saveStateToHistory('Selected right extreme');
+      }
+    });
+  }
+
+  void _onMixerSliderTouched() {
+    if (_isRestoringState) return;
+
+    // Deselect extremes when mixer slider is dragged
+    if (_selectedExtremeId != null) {
+      setState(() {
+        _selectedExtremeId = null;
+        _leftExtreme = _leftExtreme.copyWith(isSelected: false);
+        _rightExtreme = _rightExtreme.copyWith(isSelected: false);
+      });
+    }
+  }
+
   void _onPaletteItemLongPress(ColorPaletteItem item) {
     _showColorItemMenu(item);
   }
@@ -319,6 +423,9 @@ class _HomeScreenState extends State<HomeScreen> {
       bgColor: bgColor,
       isBgEditMode: isBgEditMode,
       selectedPaletteItemId: PaletteManager.getSelectedItem(_colorPalette)?.id,
+      selectedExtremeId: _selectedExtremeId,
+      leftExtreme: _leftExtreme,
+      rightExtreme: _rightExtreme,
       timestamp: DateTime.now(),
       actionDescription: actionDescription,
     );
@@ -327,14 +434,21 @@ class _HomeScreenState extends State<HomeScreen> {
   
   void _restoreState(AppStateSnapshot snapshot) {
     _isRestoringState = true;
-    
+
     setState(() {
       _colorPalette = List.from(snapshot.paletteItems);
       currentColor = snapshot.currentColor;
       bgColor = snapshot.bgColor;
       isBgEditMode = snapshot.isBgEditMode;
+      _selectedExtremeId = snapshot.selectedExtremeId;
+      if (snapshot.leftExtreme != null) {
+        _leftExtreme = snapshot.leftExtreme!;
+      }
+      if (snapshot.rightExtreme != null) {
+        _rightExtreme = snapshot.rightExtreme!;
+      }
     });
-    
+
     _isRestoringState = false;
   }
   
@@ -473,6 +587,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     externalChroma: currentChroma,
                     externalHue: currentHue,
                     externalAlpha: currentAlpha,
+                    // Pass extreme data
+                    leftExtreme: _leftExtreme,
+                    rightExtreme: _rightExtreme,
+                    onExtremeTap: _onExtremeTap,
+                    onMixerSliderTouched: _onMixerSliderTouched,
                     onBgEditModeChanged: (mode) => setState(() => isBgEditMode = mode),
                     onOklchChanged: _onOklchChanged,
                     onSliderInteractionChanged: (interacting) =>
@@ -557,6 +676,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(
                     child: ActionButtonsRow(
                       currentColor: currentColor,
+                      selectedExtremeId: _selectedExtremeId,
+                      leftExtreme: _leftExtreme,
+                      rightExtreme: _rightExtreme,
                       onColorSelected: _handleColorSelection,
                       undoRedoManager: _undoRedoManager,
                       onUndo: _handleUndo,

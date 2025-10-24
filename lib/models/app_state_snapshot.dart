@@ -1,26 +1,36 @@
 import 'package:flutter/material.dart';
 import 'color_palette_item.dart';
+import 'extreme_color_item.dart';
 
 /// Represents a complete snapshot of the app state for undo/redo
 class AppStateSnapshot {
   /// List of color palette items
   final List<ColorPaletteItem> paletteItems;
-  
+
   /// Current color being edited
   final Color? currentColor;
-  
+
   /// Background color
   final Color? bgColor;
-  
+
   /// Whether in background edit mode
   final bool isBgEditMode;
-  
+
   /// ID of the selected palette item
   final String? selectedPaletteItemId;
-  
+
+  /// ID of the selected extreme ('left', 'right', or null)
+  final String? selectedExtremeId;
+
+  /// Left extreme color state
+  final ExtremeColorItem? leftExtreme;
+
+  /// Right extreme color state
+  final ExtremeColorItem? rightExtreme;
+
   /// Timestamp when this snapshot was created
   final DateTime timestamp;
-  
+
   /// Description of the action that created this snapshot
   final String actionDescription;
   
@@ -30,6 +40,9 @@ class AppStateSnapshot {
     required this.bgColor,
     required this.isBgEditMode,
     this.selectedPaletteItemId,
+    this.selectedExtremeId,
+    this.leftExtreme,
+    this.rightExtreme,
     required this.timestamp,
     required this.actionDescription,
   });
@@ -41,6 +54,9 @@ class AppStateSnapshot {
     Color? bgColor,
     bool? isBgEditMode,
     String? selectedPaletteItemId,
+    String? selectedExtremeId,
+    ExtremeColorItem? leftExtreme,
+    ExtremeColorItem? rightExtreme,
     DateTime? timestamp,
     String? actionDescription,
   }) {
@@ -50,6 +66,9 @@ class AppStateSnapshot {
       bgColor: bgColor ?? this.bgColor,
       isBgEditMode: isBgEditMode ?? this.isBgEditMode,
       selectedPaletteItemId: selectedPaletteItemId ?? this.selectedPaletteItemId,
+      selectedExtremeId: selectedExtremeId ?? this.selectedExtremeId,
+      leftExtreme: leftExtreme ?? this.leftExtreme,
+      rightExtreme: rightExtreme ?? this.rightExtreme,
       timestamp: timestamp ?? this.timestamp,
       actionDescription: actionDescription ?? this.actionDescription,
     );
