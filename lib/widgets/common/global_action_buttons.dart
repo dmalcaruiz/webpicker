@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cyclop/cyclop.dart';
+import '../../cyclop_eyedropper/eyedropper_button.dart';
 import '../../services/clipboard_service.dart';
 
 /// Global action buttons for copy, paste, and eyedropper

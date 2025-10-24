@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cyclop/cyclop.dart';
+import 'cyclop_eyedropper/eye_dropper_layer.dart';
 import 'screens/home_screen.dart';
 import 'utils/global_pointer_tracker.dart';
 

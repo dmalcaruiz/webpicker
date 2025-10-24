@@ -593,7 +593,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(width: 12),
                             const Text(
-                              'Drag to Delete',
+                              '',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,

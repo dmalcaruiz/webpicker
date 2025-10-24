@@ -1,7 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-/// Global pointer tracker that captures pointer events once a slider is activated
-/// This allows tracking finger movement even when it leaves the slider bounds
+typedef PointerMoveCallback = void Function(PointerMoveEvent event);
+typedef PointerUpCallback = void Function(PointerUpEvent event);
+typedef PointerCancelCallback = void Function(PointerCancelEvent event);
+
+/// Global pointer tracker that captures pointer events once a slider is activated.
+/// This allows tracking finger movement even when it leaves the slider bounds.
+///
+/// Only one pointer can be tracked at a time (single-registration model).
 class GlobalPointerTracker extends InheritedWidget {
   final GlobalPointerTrackerState state;
 
@@ -22,28 +29,45 @@ class GlobalPointerTracker extends InheritedWidget {
 }
 
 class GlobalPointerTrackerState {
-  Function(PointerMoveEvent)? _onPointerMove;
-  Function(PointerUpEvent)? _onPointerUp;
-  Function(PointerCancelEvent)? _onPointerCancel;
+  PointerMoveCallback? _onPointerMove;
+  PointerUpCallback? _onPointerUp;
+  PointerCancelCallback? _onPointerCancel;
   int? _activePointerId;
 
-  /// Register a slider to receive global pointer events
+  /// Register a slider to receive global pointer events.
+  ///
+  /// Only ONE slider can be tracked at a time. New registrations
+  /// will replace any previous registration.
+  ///
+  /// Asserts in debug mode if attempting to register a different pointer
+  /// while another is already being tracked.
   void registerSlider({
     required int pointerId,
-    required Function(PointerMoveEvent) onMove,
-    required Function(PointerUpEvent) onUp,
-    required Function(PointerCancelEvent) onCancel,
+    required PointerMoveCallback onMove,
+    required PointerUpCallback onUp,
+    required PointerCancelCallback onCancel,
   }) {
+    assert(
+      _activePointerId == null || _activePointerId == pointerId,
+      'Cannot register slider: pointer $_activePointerId is already being tracked. '
+      'Attempted to register pointer $pointerId.',
+    );
+
     _activePointerId = pointerId;
     _onPointerMove = onMove;
     _onPointerUp = onUp;
     _onPointerCancel = onCancel;
-    print('🌍 Global tracker ACTIVATED for pointer $pointerId');
+
+    if (kDebugMode) {
+      debugPrint('🌍 Global tracker ACTIVATED for pointer $pointerId');
+    }
   }
 
   /// Unregister the active slider
   void unregisterSlider() {
-    print('🌍 Global tracker DEACTIVATED');
+    if (kDebugMode && _activePointerId != null) {
+      debugPrint('🌍 Global tracker DEACTIVATED');
+    }
     _activePointerId = null;
     _onPointerMove = null;
     _onPointerUp = null;
@@ -73,10 +97,29 @@ class GlobalPointerTrackerState {
     }
   }
 
+  /// Whether a pointer is currently being tracked
   bool get isTracking => _activePointerId != null;
+
+  /// The currently tracked pointer ID (null if not tracking)
+  int? get activePointerId => _activePointerId;
 }
 
-/// Widget wrapper that provides global pointer tracking
+/// Provides global pointer tracking for the widget subtree.
+///
+/// This widget enables tracking pointer movement across the entire app,
+/// which is particularly useful for sliders that need to continue tracking
+/// finger movement even when the pointer moves outside the slider's bounds.
+///
+/// Example usage:
+/// ```dart
+/// final tracker = GlobalPointerTracker.of(context);
+/// tracker?.registerSlider(
+///   pointerId: event.pointer,
+///   onMove: (e) => handleMove(e),
+///   onUp: (e) => handleUp(e),
+///   onCancel: (e) => handleCancel(e),
+/// );
+/// ```
 class GlobalPointerTrackerProvider extends StatefulWidget {
   final Widget child;
 
@@ -93,6 +136,12 @@ class GlobalPointerTrackerProvider extends StatefulWidget {
 class _GlobalPointerTrackerProviderState
     extends State<GlobalPointerTrackerProvider> {
   final GlobalPointerTrackerState _trackerState = GlobalPointerTrackerState();
+
+  @override
+  void dispose() {
+    _trackerState.unregisterSlider();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
