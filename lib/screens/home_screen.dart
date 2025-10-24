@@ -12,6 +12,7 @@ import '../models/color_palette_item.dart';
 import '../models/app_state_snapshot.dart';
 import '../services/undo_redo_manager.dart';
 import '../services/palette_manager.dart';
+import '../utils/color_operations.dart';
 
 /// Color Picker Home Screen
 /// 
@@ -29,10 +30,16 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // ========== Core State ==========
-  
-  /// Current color being edited
+
+  /// Current OKLCH values being edited (source of truth)
+  double? currentLightness;
+  double? currentChroma;
+  double? currentHue;
+  double? currentAlpha;
+
+  /// Current color (derived from OKLCH for display)
   Color? currentColor;
-  
+
   /// Background color
   Color? bgColor;
   
@@ -106,24 +113,54 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ========== Color Change Handlers ==========
-  
-  void _onColorChanged(Color? color) {
-    if (_isRestoringState || color == null) return;
-    
+
+  /// Handle OKLCH value changes from sliders (source of truth)
+  void _onOklchChanged({
+    required double lightness,
+    required double chroma,
+    required double hue,
+    double alpha = 1.0,
+  }) {
+    if (_isRestoringState) return;
+
     setState(() {
-      currentColor = color;
-      
+      // Update OKLCH state
+      currentLightness = lightness;
+      currentChroma = chroma;
+      currentHue = hue;
+      currentAlpha = alpha;
+
+      // Derive Color for display
+      currentColor = colorFromOklch(lightness, chroma, hue, alpha);
+
       // Update selected palette item if exists
       final selectedItem = PaletteManager.getSelectedItem(_colorPalette);
       if (selectedItem != null) {
-        _colorPalette = PaletteManager.updateItemColor(
+        _colorPalette = PaletteManager.updateItemOklch(
           currentPalette: _colorPalette,
           itemId: selectedItem.id,
-          color: color,
+          lightness: lightness,
+          chroma: chroma,
+          hue: hue,
+          alpha: alpha,
         );
         _saveStateToHistory('Modified ${selectedItem.name ?? "color"}');
       }
     });
+  }
+
+  /// Legacy handler for Color-based changes (eyedropper, paste)
+  void _onColorChanged(Color? color) {
+    if (_isRestoringState || color == null) return;
+
+    // Convert to OKLCH and use that as source of truth
+    final oklch = srgbToOklch(color);
+    _onOklchChanged(
+      lightness: oklch.l,
+      chroma: oklch.c,
+      hue: oklch.h,
+      alpha: oklch.alpha,
+    );
   }
   
   void _handleColorSelection(Color color) {
@@ -149,17 +186,21 @@ class _HomeScreenState extends State<HomeScreen> {
   
   void _onPaletteItemTap(ColorPaletteItem item) {
     if (_isRestoringState) return;
-    
+
     setState(() {
       _colorPalette = PaletteManager.selectItem(
         currentPalette: _colorPalette,
         itemId: item.id,
       );
-      
-      // Update current color to match selection
+
+      // Update current OKLCH values directly from the item (no conversion!)
       final selectedItem = PaletteManager.getSelectedItem(_colorPalette);
       if (selectedItem != null) {
-        currentColor = selectedItem.color;
+        currentLightness = selectedItem.oklchValues.lightness;
+        currentChroma = selectedItem.oklchValues.chroma;
+        currentHue = selectedItem.oklchValues.hue;
+        currentAlpha = selectedItem.oklchValues.alpha;
+        currentColor = selectedItem.color; // Already computed, just use it
       }
     });
   }
@@ -427,10 +468,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: ColorPickerControls(
                     isBgEditMode: isBgEditMode,
                     bgColor: bgColor,
-                    externalColor: currentColor,
+                    // Pass OKLCH values directly (no conversion!)
+                    externalLightness: currentLightness,
+                    externalChroma: currentChroma,
+                    externalHue: currentHue,
+                    externalAlpha: currentAlpha,
                     onBgEditModeChanged: (mode) => setState(() => isBgEditMode = mode),
-                    onColorChanged: _onColorChanged,
-                    onSliderInteractionChanged: (interacting) => 
+                    onOklchChanged: _onOklchChanged,
+                    onSliderInteractionChanged: (interacting) =>
                         setState(() => _isInteractingWithSlider = interacting),
                   ),
                 ),

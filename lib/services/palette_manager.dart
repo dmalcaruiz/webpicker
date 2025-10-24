@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/color_palette_item.dart';
+import '../utils/color_operations.dart';
 
 /// Manages color palette operations
 /// 
@@ -69,16 +70,58 @@ class PaletteManager {
     ).toList();
   }
   
-  /// Update color of a specific item
+  /// Update color of a specific item (from sRGB Color)
   static List<ColorPaletteItem> updateItemColor({
     required List<ColorPaletteItem> currentPalette,
     required String itemId,
     required Color color,
   }) {
+    // Convert to OKLCH - this is the source of truth
+    final oklch = srgbToOklch(color);
+    final oklchValues = OklchValues(
+      lightness: oklch.l,
+      chroma: oklch.c,
+      hue: oklch.h,
+      alpha: oklch.alpha,
+    );
+
     return currentPalette.map((item) {
       if (item.id == itemId) {
         return item.copyWith(
           color: color,
+          oklchValues: oklchValues,
+          lastModified: DateTime.now(),
+          isSelected: item.isSelected, // Preserve selection
+        );
+      }
+      return item;
+    }).toList();
+  }
+
+  /// Update color of a specific item (from OKLCH values - preferred)
+  static List<ColorPaletteItem> updateItemOklch({
+    required List<ColorPaletteItem> currentPalette,
+    required String itemId,
+    required double lightness,
+    required double chroma,
+    required double hue,
+    double alpha = 1.0,
+  }) {
+    final oklchValues = OklchValues(
+      lightness: lightness,
+      chroma: chroma,
+      hue: hue,
+      alpha: alpha,
+    );
+
+    // Convert to Color for display
+    final color = colorFromOklch(lightness, chroma, hue, alpha);
+
+    return currentPalette.map((item) {
+      if (item.id == itemId) {
+        return item.copyWith(
+          color: color,
+          oklchValues: oklchValues,
           lastModified: DateTime.now(),
           isSelected: item.isSelected, // Preserve selection
         );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/color_operations.dart';
 
 /// Represents a single color item in a palette
 class ColorPaletteItem {
@@ -19,10 +20,10 @@ class ColorPaletteItem {
   
   /// Whether this color is currently selected
   final bool isSelected;
-  
-  /// Optional OKLCH values for this color
-  final OklchValues? oklchValues;
-  
+
+  /// OKLCH values for this color (source of truth)
+  final OklchValues oklchValues;
+
   const ColorPaletteItem({
     required this.id,
     required this.color,
@@ -30,7 +31,7 @@ class ColorPaletteItem {
     required this.createdAt,
     required this.lastModified,
     this.isSelected = false,
-    this.oklchValues,
+    required this.oklchValues,
   });
   
   /// Create a copy of this item with updated values
@@ -57,12 +58,63 @@ class ColorPaletteItem {
   /// Create a new color item from a Color
   factory ColorPaletteItem.fromColor(Color color, {String? name}) {
     final now = DateTime.now();
+    // Convert color to OKLCH immediately - OKLCH is the source of truth
+    final oklch = _colorToOklchValues(color);
     return ColorPaletteItem(
       id: _generateId(),
       color: color,
       name: name,
       createdAt: now,
       lastModified: now,
+      oklchValues: oklch,
+    );
+  }
+
+  /// Create a new color item from OKLCH values (preferred method)
+  factory ColorPaletteItem.fromOklch({
+    required double lightness,
+    required double chroma,
+    required double hue,
+    double alpha = 1.0,
+    String? name,
+  }) {
+    final now = DateTime.now();
+    final oklch = OklchValues(
+      lightness: lightness,
+      chroma: chroma,
+      hue: hue,
+      alpha: alpha,
+    );
+    // Convert OKLCH to Color for display
+    final color = _oklchValuesToColor(oklch);
+    return ColorPaletteItem(
+      id: _generateId(),
+      color: color,
+      name: name,
+      createdAt: now,
+      lastModified: now,
+      oklchValues: oklch,
+    );
+  }
+
+  /// Helper: Convert Color to OklchValues
+  static OklchValues _colorToOklchValues(Color color) {
+    final oklch = srgbToOklch(color);
+    return OklchValues(
+      lightness: oklch.l,
+      chroma: oklch.c,
+      hue: oklch.h,
+      alpha: oklch.alpha,
+    );
+  }
+
+  /// Helper: Convert OklchValues to Color
+  static Color _oklchValuesToColor(OklchValues oklch) {
+    return colorFromOklch(
+      oklch.lightness,
+      oklch.chroma,
+      oklch.hue,
+      oklch.alpha,
     );
   }
   
