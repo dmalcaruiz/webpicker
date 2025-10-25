@@ -2,12 +2,6 @@ import 'package:flutter/material.dart';
 
 /// Sheet grabbing handle widget with pin functionality and chips
 class SheetGrabbingHandle extends StatelessWidget {
-  /// Whether the sheet is pinned
-  final bool isPinned;
-  
-  /// Callback when pin button is pressed
-  final VoidCallback onPinToggle;
-  
   /// States of the toggleable chips
   final List<bool> chipStates;
   
@@ -16,8 +10,6 @@ class SheetGrabbingHandle extends StatelessWidget {
   
   const SheetGrabbingHandle({
     super.key,
-    required this.isPinned,
-    required this.onPinToggle,
     required this.chipStates,
     required this.onChipToggle,
   });
@@ -49,38 +41,7 @@ class SheetGrabbingHandle extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          
-          const SizedBox(height: 8),
-          
-          // Title and pin button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Color Picker',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(width: 12),
-              IconButton(
-                onPressed: onPinToggle,
-                icon: Icon(
-                  isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                  color: isPinned ? Colors.blue : Colors.grey,
-                  size: 20,
-                ),
-                tooltip: isPinned ? 'Unpin sheet' : 'Pin sheet',
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 8),
-          
+          const SizedBox(height: 12),
           // Toggleable chips
           Row(
             mainAxisAlignment: MainAxisAlignment.center,

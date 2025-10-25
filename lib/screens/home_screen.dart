@@ -87,9 +87,6 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Track when user is interacting with sliders
   bool _isInteractingWithSlider = false;
   
-  /// Track if sheet is pinned
-  bool _isSheetPinned = false;
-  
   /// Track selected chips (placeholder feature)
   final List<bool> _selectedChips = [false, false, false, false];
 
@@ -727,280 +724,293 @@ class _HomeScreenState extends State<HomeScreen> {
       onRedo: _handleRedo,
       child: Scaffold(
         backgroundColor: bgColor ?? const Color(0xFF252525),
-        body: SnappingSheet(
-          controller: snappingSheetController,
-          lockOverflowDrag: true,
-          snappingPositions: const [
-            SnappingPosition.factor(
-              positionFactor: 0.3,
-              snappingCurve: Curves.easeOutExpo,
-              snappingDuration: Duration(milliseconds: 900),
-              grabbingContentOffset: GrabbingContentOffset.top,
-            ),
-            SnappingPosition.factor(
-              positionFactor: 0.7,
-              snappingCurve: Curves.easeOutExpo,
-              snappingDuration: Duration(milliseconds: 900),
-            ),
-            SnappingPosition.factor(
-              positionFactor: 1.0,
-              snappingCurve: Curves.easeOutExpo,
-              snappingDuration: Duration(milliseconds: 900),
-              grabbingContentOffset: GrabbingContentOffset.bottom,
-            ),
-          ],
-          
-          // Grabbing handle
-          grabbingHeight: 95,
-          grabbing: SheetGrabbingHandle(
-            isPinned: _isSheetPinned,
-            onPinToggle: () => setState(() => _isSheetPinned = !_isSheetPinned),
-            chipStates: _selectedChips,
-            onChipToggle: (index) => setState(() => _selectedChips[index] = !_selectedChips[index]),
-          ),
-          
-          // Sheet content
-          sheetBelow: SnappingSheetContent(
-            draggable: (details) => !_isInteractingWithSlider && !_isSheetPinned,
-            child: Column(
-              children: [
-                // Color picker controls
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                  child: ColorPickerControls(
-                    // Pass OKLCH values directly (no conversion!)
-                    externalLightness: currentLightness,
-                    externalChroma: currentChroma,
-                    externalHue: currentHue,
-                    externalAlpha: currentAlpha,
-                    // Pass extreme data without modification
-                    leftExtreme: _leftExtreme,
-                    rightExtreme: _rightExtreme,
-                    // Pass ICC filter for extreme colors
-                    extremeColorFilter: (extreme) => applyIccFilter(
-                      extreme.color,
-                      lightness: extreme.oklchValues.lightness,
-                      chroma: extreme.oklchValues.chroma,
-                      hue: extreme.oklchValues.hue,
-                      alpha: extreme.oklchValues.alpha,
-                    ),
-                    // Pass ICC filter for gradient colors
-                    gradientColorFilter: (color, l, c, h, a) => applyIccFilter(
-                      color,
-                      lightness: l,
-                      chroma: c,
-                      hue: h,
-                      alpha: a,
-                    ),
-                    onExtremeTap: _onExtremeTap,
-                    onMixerSliderTouched: _onMixerSliderTouched,
-                    onOklchChanged: _onOklchChanged,
-                    onSliderInteractionChanged: (interacting) =>
-                        setState(() => _isInteractingWithSlider = interacting),
-                    useRealPigmentsOnly: _useRealPigmentsOnly,
-                    onRealPigmentsOnlyChanged: _onRealPigmentsOnlyChanged,
-                  ),
+        body: Stack(
+          children: [
+            //---------------------------------------------------------------------------------------------------------------------
+            // Snapping Sheet Stack (includes grabbing handle, sheet content, and content below the sheet)
+            //---------------------------------------------------------------------------------------------------------------------
+            SnappingSheet(
+              // Snapping Sheet Properties
+              controller: snappingSheetController,
+              lockOverflowDrag: true,
+              snappingPositions: const [
+                SnappingPosition.pixels(
+                  positionPixels: 0,
+                  snappingCurve: Curves.easeOutExpo,
+                  snappingDuration: Duration(milliseconds: 900),
+                  grabbingContentOffset: GrabbingContentOffset.top,
                 ),
-                
-                // Scrollable controls area
-                Expanded(
-                  child: SingleChildScrollView(
-                    controller: scrollController,
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                SnappingPosition.pixels(
+                  positionPixels: 200,
+                  snappingCurve: Curves.easeOutExpo,
+                  snappingDuration: Duration(milliseconds: 900),
+                ),
+                  SnappingPosition.pixels(
+                  positionPixels: 400,
+                  snappingCurve: Curves.easeOutExpo,
+                  snappingDuration: Duration(milliseconds: 900),
+                  grabbingContentOffset: GrabbingContentOffset.bottom,
+                ),
+              ],
+
+              //---------------------------------------------------------------------------------------------------------------------
+              // Grabbing handle Content
+              //---------------------------------------------------------------------------------------------------------------------
+              grabbingHeight: 100,
+              grabbing: SheetGrabbingHandle(
+                chipStates: _selectedChips,
+                onChipToggle: (index) => setState(() => _selectedChips[index] = !_selectedChips[index]),
+              ),
+            
+              //---------------------------------------------------------------------------------------------------------------------
+              // Sheet Content
+              //---------------------------------------------------------------------------------------------------------------------
+              sheetBelow: SnappingSheetContent(
+                draggable: (details) => !_isInteractingWithSlider,
+                child: Column(
+                  children: [
+                    // Color picker controls
+                    Expanded(
+                      child: Container(
+                      color: Colors.white,
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                      child: ColorPickerControls(
+                        // Pass OKLCH values directly (no conversion!)
+                        externalLightness: currentLightness,
+                        externalChroma: currentChroma,
+                        externalHue: currentHue,
+                        externalAlpha: currentAlpha,
+                        // Pass extreme data without modification
+                        leftExtreme: _leftExtreme,
+                        rightExtreme: _rightExtreme,
+                        // Pass ICC filter for extreme colors
+                        extremeColorFilter: (extreme) => applyIccFilter(
+                          extreme.color,
+                          lightness: extreme.oklchValues.lightness,
+                          chroma: extreme.oklchValues.chroma,
+                          hue: extreme.oklchValues.hue,
+                          alpha: extreme.oklchValues.alpha,
+                        ),
+                        // Pass ICC filter for gradient colors
+                        gradientColorFilter: (color, l, c, h, a) => applyIccFilter(
+                          color,
+                          lightness: l,
+                          chroma: c,
+                          hue: h,
+                          alpha: a,
+                        ),
+                        onExtremeTap: _onExtremeTap,
+                        onMixerSliderTouched: _onMixerSliderTouched,
+                        onOklchChanged: _onOklchChanged,
+                        onSliderInteractionChanged: (interacting) =>
+                            setState(() => _isInteractingWithSlider = interacting),
+                        useRealPigmentsOnly: _useRealPigmentsOnly,
+                        onRealPigmentsOnlyChanged: _onRealPigmentsOnlyChanged,
+                      ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              //---------------------------------------------------------------------------------------------------------------------
+              // Main content area (behind the grabbing sheet)
+              //---------------------------------------------------------------------------------------------------------------------
+              child: Listener(
+                onPointerMove: (event) {
+                  if (_draggingItem != null) {
+                    _onDragUpdate(event.position);
+                  }
+                },
+                child: Stack(
+                  children: [
+                    // Main content (behind the delete zone)
+                    Container(
+                      padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
-                          SheetControls(controller: snappingSheetController),
+                          const SizedBox(height: 20),
+                          
+                          // Action buttons with BG color button
+                          Row(
+                            children: [
+                              // Background color button (acts like a palette box)
+                              GestureDetector(
+                                onTap: _onBgColorBoxTap,
+                                child: Container(
+                                  width: 48,
+                                  height: 48,
+                                  margin: const EdgeInsets.only(right: 12),
+                                  decoration: BoxDecoration(
+                                    color: applyIccFilter(
+                                      bgColor ?? const Color(0xFF252525),
+                                      lightness: _bgLightness,
+                                      chroma: _bgChroma,
+                                      hue: _bgHue,
+                                      alpha: _bgAlpha,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: _isBgColorSelected
+                                          ? Colors.white.withOpacity(0.9)
+                                          : Colors.white.withOpacity(0.3),
+                                      width: _isBgColorSelected ? 3 : 2,
+                                    ),
+                                    boxShadow: _isBgColorSelected
+                                        ? [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.3),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ]
+                                        : null,
+                                  ),
+                                  child: Icon(
+                                    Icons.format_paint,
+                                    color: Colors.white.withOpacity(_isBgColorSelected ? 0.9 : 0.7),
+                                    size: 24,
+                                  ),
+                                ),
+                              ),
+                              
+                              // Other action buttons
+                              Expanded(
+                                child: ActionButtonsRow(
+                                  currentColor: currentColor,
+                                  selectedExtremeId: _selectedExtremeId,
+                                  leftExtreme: _leftExtreme,
+                                  rightExtreme: _rightExtreme,
+                                  onColorSelected: _handleColorSelection,
+                                  undoRedoManager: _undoRedoManager,
+                                  onUndo: _handleUndo,
+                                  onRedo: _handleRedo,
+                                  colorFilter: (color) => applyIccFilter(color),
+                                ),
+                              ),
+                            ],
+                          ),
+                          
+                          const SizedBox(height: 20),
+
+                          // Color preview (with ICC filter if enabled)
+                          ColorPreviewBox(
+                            color: applyIccFilter(
+                              currentColor ?? Colors.grey,
+                              lightness: currentLightness,
+                              chroma: currentChroma,
+                              hue: currentHue,
+                              alpha: currentAlpha,
+                            ),
+                          ),
+
+                          const SizedBox(height: 30),
+                          
+                          // Color palette grid
+                          Expanded(
+                            child: ReorderableColorGridView(
+                              items: _colorPalette,
+                              onReorder: _onPaletteReorder,
+                              onItemTap: _onPaletteItemTap,
+                              onItemLongPress: _onPaletteItemLongPress,
+                              onItemDelete: _onPaletteItemDelete,
+                              onAddColor: _onAddColor,
+                              onDragStarted: _onDragStarted,
+                              onDragEnded: _onDragEnded,
+                              crossAxisCount: 4,
+                              spacing: 12.0,
+                              itemSize: 80.0,
+                              showAddButton: true,
+                              emptyStateMessage: 'No colors in palette\nCreate a color above and tap + to add it',
+                              colorFilter: (item) => applyIccFilter(
+                                item.color,
+                                lightness: item.oklchValues.lightness,
+                                chroma: item.oklchValues.chroma,
+                                hue: item.oklchValues.hue,
+                                alpha: item.oklchValues.alpha,
+                              ),
+                            ),
+                          ),
+                          
                           const SizedBox(height: 20),
                         ],
                       ),
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Main content area
-          child: Listener(
-            onPointerMove: (event) {
-              if (_draggingItem != null) {
-                _onDragUpdate(event.position);
-              }
-            },
-            child: Stack(
-              children: [
-                // Main content (behind the delete zone)
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 20),
-                      
-              // Action buttons with BG color button
-              Row(
-                children: [
-                  // Background color button (acts like a palette box)
-                  GestureDetector(
-                    onTap: _onBgColorBoxTap,
-                    child: Container(
-                      width: 48,
-                      height: 48,
-                      margin: const EdgeInsets.only(right: 12),
-                      decoration: BoxDecoration(
-                        color: applyIccFilter(
-                          bgColor ?? const Color(0xFF252525),
-                          lightness: _bgLightness,
-                          chroma: _bgChroma,
-                          hue: _bgHue,
-                          alpha: _bgAlpha,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: _isBgColorSelected
-                              ? Colors.white.withOpacity(0.9)
-                              : Colors.white.withOpacity(0.3),
-                          width: _isBgColorSelected ? 3 : 2,
-                        ),
-                        boxShadow: _isBgColorSelected
-                            ? [
+                    
+                    // Drag-to-delete zone (overlays on top)
+                    Positioned(
+                      top: 20,
+                      left: 0,
+                      right: 0,
+                      child: IgnorePointer(
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          opacity: _draggingItem != null ? 1.0 : 0.0,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                            decoration: BoxDecoration(
+                              color: _isInDeleteZone
+                                  ? Colors.red.shade700.withOpacity(0.95)
+                                  : Colors.red.shade600.withOpacity(0.85),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.4),
+                                width: 2,
+                              ),
+                              boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.3),
-                                  blurRadius: 8,
+                                  blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
-                              ]
-                            : null,
-                      ),
-                      child: Icon(
-                        Icons.format_paint,
-                        color: Colors.white.withOpacity(_isBgColorSelected ? 0.9 : 0.7),
-                        size: 24,
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.delete,
+                                  color: Colors.white,
+                                  size: 32,
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  '',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  
-                  // Other action buttons
-                  Expanded(
-                    child: ActionButtonsRow(
-                      currentColor: currentColor,
-                      selectedExtremeId: _selectedExtremeId,
-                      leftExtreme: _leftExtreme,
-                      rightExtreme: _rightExtreme,
-                      onColorSelected: _handleColorSelection,
-                      undoRedoManager: _undoRedoManager,
-                      onUndo: _handleUndo,
-                      onRedo: _handleRedo,
-                      colorFilter: (color) => applyIccFilter(color),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-                      
-                      const SizedBox(height: 20),
-
-                      // Color preview (with ICC filter if enabled)
-                      ColorPreviewBox(
-                        color: applyIccFilter(
-                          currentColor ?? Colors.grey,
-                          lightness: currentLightness,
-                          chroma: currentChroma,
-                          hue: currentHue,
-                          alpha: currentAlpha,
-                        ),
-                      ),
-
-                      const SizedBox(height: 30),
-                      
-                      // Color palette grid
-                      Expanded(
-                        child: ReorderableColorGridView(
-                          items: _colorPalette,
-                          onReorder: _onPaletteReorder,
-                          onItemTap: _onPaletteItemTap,
-                          onItemLongPress: _onPaletteItemLongPress,
-                          onItemDelete: _onPaletteItemDelete,
-                          onAddColor: _onAddColor,
-                          onDragStarted: _onDragStarted,
-                          onDragEnded: _onDragEnded,
-                          crossAxisCount: 4,
-                          spacing: 12.0,
-                          itemSize: 80.0,
-                          showAddButton: true,
-                          emptyStateMessage: 'No colors in palette\nCreate a color above and tap + to add it',
-                          colorFilter: (item) => applyIccFilter(
-                            item.color,
-                            lightness: item.oklchValues.lightness,
-                            chroma: item.oklchValues.chroma,
-                            hue: item.oklchValues.hue,
-                            alpha: item.oklchValues.alpha,
-                          ),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 20),
-                    ],
-                  ),
-                ),
-                
-                // Drag-to-delete zone (overlays on top)
-                Positioned(
-                  top: 20,
-                  left: 0,
-                  right: 0,
-                  child: IgnorePointer(
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
-                      opacity: _draggingItem != null ? 1.0 : 0.0,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                        decoration: BoxDecoration(
-                          color: _isInDeleteZone
-                              ? Colors.red.shade700.withOpacity(0.95)
-                              : Colors.red.shade600.withOpacity(0.85),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.4),
-                            width: 2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.delete,
-                              color: Colors.white,
-                              size: 32,
-                            ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              '',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
             ),
-          ),
+            
+            //---------------------------------------------------------------------------------------------------------------------
+            // Floating Action Button Stack)
+            //---------------------------------------------------------------------------------------------------------------------
+            Positioned(
+              bottom: 20,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                    color: Colors.red,
+                  child: Text('Hello'),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
