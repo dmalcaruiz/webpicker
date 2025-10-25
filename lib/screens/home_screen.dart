@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:snapping_sheet_2/snapping_sheet.dart';
 import '../widgets/color_picker/color_preview_box.dart';
 import '../widgets/color_picker/color_picker_controls.dart';
@@ -14,6 +15,7 @@ import '../models/app_state_snapshot.dart';
 import '../services/undo_redo_manager.dart';
 import '../services/palette_manager.dart';
 import '../utils/color_operations.dart';
+import '../utils/icc_color_manager.dart';
 
 /// Color Picker Home Screen
 /// 
@@ -85,7 +87,11 @@ class _HomeScreenState extends State<HomeScreen> {
   
   /// Track selected chips (placeholder feature)
   final List<bool> _selectedChips = [false, false, false, false];
-  
+
+  /// Whether to constrain colors to real pigment gamut (ICC profile)
+  /// This is a DISPLAY FILTER - doesn't modify stored OKLCH values
+  bool _useRealPigmentsOnly = false;
+
   // ========== Undo/Redo Management ==========
   
   /// Undo/redo manager
@@ -102,11 +108,13 @@ class _HomeScreenState extends State<HomeScreen> {
     bgColor = const Color(0xFF252525);
     _initializeSamplePalette();
     _initializeExtremes();
+    _initializeIccProfile();
     _saveStateToHistory('Initial state');
   }
   
   @override
   void dispose() {
+    IccColorManager.instance.dispose();
     _undoRedoManager.dispose();
     super.dispose();
   }
@@ -135,6 +143,37 @@ class _HomeScreenState extends State<HomeScreen> {
       chroma: 0.0,
       hue: 0.0,
     );
+  }
+
+  /// Initialize ICC color management
+  ///
+  /// Loads Canon PRO-1000 profile from assets for real-time filtering.
+  /// App continues normally if this fails (graceful degradation).
+  Future<void> _initializeIccProfile() async {
+    try {
+      const profilePath = 'reference-icc/Canon ImagePROGRAPH PRO-1000.icc';
+
+      // Load profile from assets
+      final profileData = await rootBundle.load(profilePath);
+      final bytes = profileData.buffer.asUint8List();
+
+      // Initialize ICC manager
+      final success = await IccColorManager.instance.initialize(bytes);
+
+      if (success) {
+        debugPrint('✓ ICC Profile loaded successfully');
+        debugPrint('  Profile: Canon ImagePROGRAPH PRO-1000');
+        debugPrint('  Size: ${bytes.length} bytes');
+        debugPrint('  Mode: Real-time display filter');
+      } else {
+        debugPrint('⚠ ICC Profile initialization failed');
+        debugPrint('  "Only Real Pigments" toggle will have no effect');
+      }
+
+    } catch (e) {
+      debugPrint('⚠ ICC Profile loading error: $e');
+      debugPrint('  App will continue with sRGB-only mode');
+    }
   }
 
   // ========== Color Change Handlers ==========
@@ -215,6 +254,71 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_isRestoringState) return;
     _onColorChanged(color);
     _saveStateToHistory('Color selected from eyedropper/paste');
+  }
+
+  /// Handle "Only Real Pigments" toggle
+  ///
+  /// This is a DISPLAY FILTER - doesn't modify stored OKLCH values.
+  /// When toggled ON, colors are filtered through ICC profile for display only.
+  void _onRealPigmentsOnlyChanged(bool value) {
+    if (_isRestoringState) return;
+
+    setState(() {
+      _useRealPigmentsOnly = value;
+      // Display will update automatically via filter
+      _saveStateToHistory(
+        value ? 'Enabled real pigments filter' : 'Disabled real pigments filter'
+      );
+    });
+  }
+
+  // ========== ICC Display Filter ==========
+
+  /// Apply ICC display filter to color
+  ///
+  /// This is where the REAL-TIME FILTERING happens!
+  ///
+  /// Returns:
+  /// - Original color if toggle OFF or ICC not ready
+  /// - Gamut-mapped color if toggle ON and ICC ready
+  ///
+  /// Important: This doesn't modify state, only display!
+  Color applyIccFilter(Color idealColor, {
+    double? lightness,
+    double? chroma,
+    double? hue,
+    double? alpha,
+  }) {
+    // No filter if toggle OFF or ICC not initialized
+    if (!_useRealPigmentsOnly || !IccColorManager.instance.isReady) {
+      return idealColor;
+    }
+
+    // Use provided OKLCH or extract from state
+    final l = lightness ?? currentLightness ?? 0.5;
+    final c = chroma ?? currentChroma ?? 0.0;
+    final h = hue ?? currentHue ?? 0.0;
+    final a = alpha ?? currentAlpha ?? 1.0;
+
+    try {
+      // Convert OKLCH → CIE Lab
+      final cieLab = oklchToCieLab(l, c, h);
+
+      // Apply ICC transform (the actual filter!)
+      final mappedLab = IccColorManager.instance.transformLab(
+        cieLab.l,
+        cieLab.a,
+        cieLab.b,
+      );
+
+      // Convert back: CIE Lab → OKLCH → sRGB
+      final mappedOklch = cieLabToOklch(mappedLab[0], mappedLab[1], mappedLab[2]);
+
+      return colorFromOklch(mappedOklch.l, mappedOklch.c, mappedOklch.h, a);
+    } catch (e) {
+      debugPrint('⚠ ICC filter error: $e');
+      return idealColor; // Fallback on error
+    }
   }
 
   // ========== Palette Operations ==========
@@ -426,6 +530,7 @@ class _HomeScreenState extends State<HomeScreen> {
       selectedExtremeId: _selectedExtremeId,
       leftExtreme: _leftExtreme,
       rightExtreme: _rightExtreme,
+      useRealPigmentsOnly: _useRealPigmentsOnly,
       timestamp: DateTime.now(),
       actionDescription: actionDescription,
     );
@@ -441,6 +546,7 @@ class _HomeScreenState extends State<HomeScreen> {
       bgColor = snapshot.bgColor;
       isBgEditMode = snapshot.isBgEditMode;
       _selectedExtremeId = snapshot.selectedExtremeId;
+      _useRealPigmentsOnly = snapshot.useRealPigmentsOnly;
       if (snapshot.leftExtreme != null) {
         _leftExtreme = snapshot.leftExtreme!;
       }
@@ -587,15 +693,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     externalChroma: currentChroma,
                     externalHue: currentHue,
                     externalAlpha: currentAlpha,
-                    // Pass extreme data
-                    leftExtreme: _leftExtreme,
-                    rightExtreme: _rightExtreme,
+                    // Pass extreme data (with ICC filter applied for display)
+                    leftExtreme: _leftExtreme.copyWith(
+                      color: applyIccFilter(_leftExtreme.color),
+                    ),
+                    rightExtreme: _rightExtreme.copyWith(
+                      color: applyIccFilter(_rightExtreme.color),
+                    ),
                     onExtremeTap: _onExtremeTap,
                     onMixerSliderTouched: _onMixerSliderTouched,
                     onBgEditModeChanged: (mode) => setState(() => isBgEditMode = mode),
                     onOklchChanged: _onOklchChanged,
                     onSliderInteractionChanged: (interacting) =>
                         setState(() => _isInteractingWithSlider = interacting),
+                    useRealPigmentsOnly: _useRealPigmentsOnly,
+                    onRealPigmentsOnlyChanged: _onRealPigmentsOnlyChanged,
                   ),
                 ),
                 
@@ -689,10 +801,18 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
                       
                       const SizedBox(height: 20),
-                      
-                      // Color preview
-                      ColorPreviewBox(color: currentColor),
-                      
+
+                      // Color preview (with ICC filter if enabled)
+                      ColorPreviewBox(
+                        color: applyIccFilter(
+                          currentColor ?? Colors.grey,
+                          lightness: currentLightness,
+                          chroma: currentChroma,
+                          hue: currentHue,
+                          alpha: currentAlpha,
+                        ),
+                      ),
+
                       const SizedBox(height: 30),
                       
                       // Color palette grid
@@ -711,6 +831,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           itemSize: 80.0,
                           showAddButton: true,
                           emptyStateMessage: 'No colors in palette\nCreate a color above and tap + to add it',
+                          colorFilter: (item) => applyIccFilter(
+                            item.color,
+                            lightness: item.oklchValues.lightness,
+                            chroma: item.oklchValues.chroma,
+                            hue: item.oklchValues.hue,
+                            alpha: item.oklchValues.alpha,
+                          ),
                         ),
                       ),
                       

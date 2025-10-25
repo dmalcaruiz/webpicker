@@ -52,6 +52,12 @@ class MixedChannelSlider extends StatefulWidget {
   /// Callback when pigment mixing toggle changes
   final Function(bool)? onPigmentMixingChanged;
 
+  /// Whether to use ICC profile filtering (real pigments only)
+  final bool useRealPigmentsOnly;
+
+  /// Callback when real pigments only toggle changes
+  final Function(bool)? onRealPigmentsOnlyChanged;
+
   const MixedChannelSlider({
     super.key,
     required this.value,
@@ -67,6 +73,8 @@ class MixedChannelSlider extends StatefulWidget {
     this.onInteractionChanged,
     this.usePigmentMixing = false,
     this.onPigmentMixingChanged,
+    this.useRealPigmentsOnly = false,
+    this.onRealPigmentsOnlyChanged,
   });
   
   @override
@@ -187,6 +195,52 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: widget.usePigmentMixing
+                          ? Colors.white.withValues(alpha: 0.9)
+                          : Colors.white.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Only Real Pigments toggle (ICC profile filter)
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () {
+              widget.onRealPigmentsOnlyChanged?.call(!widget.useRealPigmentsOnly);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: widget.useRealPigmentsOnly
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: widget.useRealPigmentsOnly
+                      ? Colors.white.withValues(alpha: 0.3)
+                      : Colors.white.withValues(alpha: 0.1),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    widget.useRealPigmentsOnly ? Icons.check_box : Icons.check_box_outline_blank,
+                    size: 16,
+                    color: widget.useRealPigmentsOnly
+                        ? Colors.white.withValues(alpha: 0.9)
+                        : Colors.white.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Only Real Pigments',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: widget.useRealPigmentsOnly
                           ? Colors.white.withValues(alpha: 0.9)
                           : Colors.white.withValues(alpha: 0.5),
                     ),

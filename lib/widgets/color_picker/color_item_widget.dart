@@ -12,35 +12,40 @@ import '../../models/color_palette_item.dart';
 class ColorItemWidget extends StatelessWidget {
   /// The color palette item to display
   final ColorPaletteItem item;
-  
+
+  /// Optional display color (e.g., ICC filtered)
+  /// If provided, this is used instead of item.color for display only
+  final Color? displayColor;
+
   /// Callback when this item is tapped
   final VoidCallback? onTap;
-  
+
   /// Callback when this item is long pressed
   final VoidCallback? onLongPress;
-  
+
   /// Callback when this item should be deleted
   final VoidCallback? onDelete;
-  
+
   /// Callback when drag to delete starts
   final VoidCallback? onDragToDeleteStart;
-  
+
   /// Callback when drag to delete ends
   /// Returns true if deleted, false otherwise
   final bool Function()? onDragToDeleteEnd;
-  
+
   /// Whether this item is currently being dragged
   final bool isDragging;
-  
+
   /// Size of the color item
   final double size;
-  
+
   /// Whether to show the drag handle
   final bool showDragHandle;
-  
+
   const ColorItemWidget({
     super.key,
     required this.item,
+    this.displayColor,
     this.onTap,
     this.onLongPress,
     this.onDelete,
@@ -66,7 +71,7 @@ class ColorItemWidget extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: item.color,
+            color: displayColor ?? item.color,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: item.isSelected 

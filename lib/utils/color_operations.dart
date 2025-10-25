@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'icc_color_manager.dart';
 
 /// OKLCH Color Operations
 /// 
@@ -71,6 +72,40 @@ class LinearRgbColor {
 
   @override
   String toString() => 'lrgb($r, $g, $b, $alpha)';
+}
+
+/// Represents a color in CIE Lab space (CIELAB / L*a*b*)
+///
+/// This is different from OKLab - CIE Lab is the standard device-independent
+/// color space used by ICC profiles for color management.
+///
+/// Ranges (typical):
+/// - L: 0 to 100 (lightness)
+/// - a: -128 to +127 (green to red)
+/// - b: -128 to +127 (blue to yellow)
+class CieLabColor {
+  final double l; // Lightness: 0-100
+  final double a; // Green (-) to Red (+)
+  final double b; // Blue (-) to Yellow (+)
+  final double alpha; // Alpha: 0-1
+
+  const CieLabColor(this.l, this.a, this.b, [this.alpha = 1.0]);
+
+  @override
+  String toString() => 'Lab($l, $a, $b, $alpha)';
+}
+
+/// Represents a color in CIE XYZ space with D65 illuminant
+class XyzD65Color {
+  final double x;
+  final double y;
+  final double z;
+  final double alpha;
+
+  const XyzD65Color(this.x, this.y, this.z, [this.alpha = 1.0]);
+
+  @override
+  String toString() => 'XYZ($x, $y, $z, $alpha)';
 }
 
 // ============================================================================
@@ -245,7 +280,7 @@ LinearRgbColor srgbToLinearRgb(Color color) {
   final double g = color.g;
   final double b = color.b;
   final double a = color.a;
-  
+
   // Apply gamma expansion
   return LinearRgbColor(
     _gammaExpansion(r),
@@ -253,6 +288,172 @@ LinearRgbColor srgbToLinearRgb(Color color) {
     _gammaExpansion(b),
     a,
   );
+}
+
+// ============================================================================
+// CONVERSION: Linear RGB ↔ XYZ D65
+// ============================================================================
+
+/// Converts Linear RGB to CIE XYZ (D65 illuminant)
+///
+/// Uses the sRGB to XYZ D65 transformation matrix.
+/// Reference: https://www.color.org/srgb.pdf
+XyzD65Color linearRgbToXyzD65(LinearRgbColor color) {
+  final double r = color.r;
+  final double g = color.g;
+  final double b = color.b;
+
+  // sRGB to XYZ D65 transformation matrix
+  final double x = 0.4124564 * r + 0.3575761 * g + 0.1804375 * b;
+  final double y = 0.2126729 * r + 0.7151522 * g + 0.0721750 * b;
+  final double z = 0.0193339 * r + 0.1191920 * g + 0.9503041 * b;
+
+  return XyzD65Color(x, y, z, color.alpha);
+}
+
+/// Converts CIE XYZ (D65 illuminant) to Linear RGB
+///
+/// Reverse of linearRgbToXyzD65.
+LinearRgbColor xyzD65ToLinearRgb(XyzD65Color color) {
+  final double x = color.x;
+  final double y = color.y;
+  final double z = color.z;
+
+  // XYZ D65 to sRGB transformation matrix (inverse)
+  final double r =  3.2404542 * x + -1.5371385 * y + -0.4985314 * z;
+  final double g = -0.9692660 * x +  1.8760108 * y +  0.0415560 * z;
+  final double b =  0.0556434 * x + -0.2040259 * y +  1.0572252 * z;
+
+  return LinearRgbColor(r, g, b, color.alpha);
+}
+
+// ============================================================================
+// CONVERSION: XYZ D65 ↔ CIE Lab
+// ============================================================================
+
+/// D65 white point reference values for CIE Lab
+const double _d65Xn = 0.95047;
+const double _d65Yn = 1.00000;
+const double _d65Zn = 1.08883;
+
+/// CIE Lab f(t) function helper
+///
+/// This is the nonlinear transformation used in CIE Lab color space.
+/// - If t > δ³: f(t) = t^(1/3)
+/// - Otherwise: f(t) = t/(3δ²) + 4/29
+/// where δ = 6/29
+double _labF(double t) {
+  const double delta = 6.0 / 29.0;
+  const double delta3 = delta * delta * delta; // (6/29)³ ≈ 0.008856
+  const double factor = 1.0 / (3.0 * delta * delta); // 1/(3*(6/29)²)
+  const double offset = 4.0 / 29.0;
+
+  if (t > delta3) {
+    return pow(t, 1.0 / 3.0).toDouble();
+  } else {
+    return factor * t + offset;
+  }
+}
+
+/// Inverse of CIE Lab f(t) function
+double _labFInv(double t) {
+  const double delta = 6.0 / 29.0;
+  const double threshold = delta; // 6/29
+  const double factor = 3.0 * delta * delta; // 3*(6/29)²
+  const double offset = 4.0 / 29.0;
+
+  if (t > threshold) {
+    return pow(t, 3.0).toDouble();
+  } else {
+    return factor * (t - offset);
+  }
+}
+
+/// Converts CIE XYZ (D65) to CIE Lab
+///
+/// Uses D65 illuminant as the white point.
+/// Formula from CIE 1976 L*a*b* standard.
+CieLabColor xyzD65ToCieLab(XyzD65Color color) {
+  // Normalize by D65 white point
+  final double xr = color.x / _d65Xn;
+  final double yr = color.y / _d65Yn;
+  final double zr = color.z / _d65Zn;
+
+  // Apply f(t) transformation
+  final double fx = _labF(xr);
+  final double fy = _labF(yr);
+  final double fz = _labF(zr);
+
+  // Calculate L*a*b* values
+  final double l = 116.0 * fy - 16.0;
+  final double a = 500.0 * (fx - fy);
+  final double b = 200.0 * (fy - fz);
+
+  return CieLabColor(l, a, b, color.alpha);
+}
+
+/// Converts CIE Lab to CIE XYZ (D65)
+///
+/// Reverse of xyzD65ToCieLab.
+XyzD65Color cieLabToXyzD65(CieLabColor color) {
+  // Calculate intermediate values
+  final double fy = (color.l + 16.0) / 116.0;
+  final double fx = color.a / 500.0 + fy;
+  final double fz = fy - color.b / 200.0;
+
+  // Apply inverse f(t) transformation
+  final double xr = _labFInv(fx);
+  final double yr = _labFInv(fy);
+  final double zr = _labFInv(fz);
+
+  // Denormalize by D65 white point
+  final double x = xr * _d65Xn;
+  final double y = yr * _d65Yn;
+  final double z = zr * _d65Zn;
+
+  return XyzD65Color(x, y, z, color.alpha);
+}
+
+// ============================================================================
+// CONVERSION: OKLCH ↔ CIE Lab (High-Level Helpers)
+// ============================================================================
+
+/// Converts OKLCH to CIE Lab
+///
+/// Full conversion chain: OKLCH → OKLab → Linear RGB → XYZ D65 → CIE Lab
+/// This is used for ICC profile transformations.
+CieLabColor oklchToCieLab(double l, double c, double h) {
+  // OKLCH → OKLab
+  final oklch = OklchColor(l, c, h);
+  final oklab = oklchToOklab(oklch);
+
+  // OKLab → Linear RGB
+  final linearRgb = oklabToLinearRgb(oklab);
+
+  // Linear RGB → XYZ D65
+  final xyz = linearRgbToXyzD65(linearRgb);
+
+  // XYZ D65 → CIE Lab
+  return xyzD65ToCieLab(xyz);
+}
+
+/// Converts CIE Lab to OKLCH
+///
+/// Full conversion chain: CIE Lab → XYZ D65 → Linear RGB → OKLab → OKLCH
+/// This is used to convert back from ICC profile transformations.
+OklchColor cieLabToOklch(double l, double a, double b) {
+  // CIE Lab → XYZ D65
+  final cieLab = CieLabColor(l, a, b);
+  final xyz = cieLabToXyzD65(cieLab);
+
+  // XYZ D65 → Linear RGB
+  final linearRgb = xyzD65ToLinearRgb(xyz);
+
+  // Linear RGB → OKLab
+  final oklab = linearRgbToOklab(linearRgb);
+
+  // OKLab → OKLCH
+  return oklabToOklch(oklab);
 }
 
 // ============================================================================
@@ -489,32 +690,49 @@ class GradientStop {
 List<GradientStop> generateLightnessGradient(
   double chroma,
   double hue,
-  int samples,
-) {
+  int samples, {
+  bool useRealPigmentsOnly = false,
+}) {
   final List<GradientStop> stops = [];
-  
+
   // Step 1: Sample colors across lightness range
   for (int i = 0; i < samples; i++) {
     // Step 2: Calculate lightness value for this sample
-    final double l = i / (samples - 1); // 0.0 to 1.0
-    
-    // Step 3: Create OKLCH color
-    final oklch = OklchColor(l, chroma, hue);
-    
-    // Step 4: Check if color is in sRGB gamut
+    double l = i / (samples - 1); // 0.0 to 1.0
+    double c = chroma;
+    double h = hue;
+
+    // Step 3: Apply ICC display filter if enabled
+    if (useRealPigmentsOnly && IccColorManager.instance.isReady) {
+      final cieLab = oklchToCieLab(l, c, h);
+      final mappedLab = IccColorManager.instance.transformLab(
+        cieLab.l,
+        cieLab.a,
+        cieLab.b,
+      );
+      final mappedOklch = cieLabToOklch(mappedLab[0], mappedLab[1], mappedLab[2]);
+      l = mappedOklch.l;
+      c = mappedOklch.c;
+      h = mappedOklch.h;
+    }
+
+    // Step 4: Create OKLCH color (potentially filtered)
+    final oklch = OklchColor(l, c, h);
+
+    // Step 5: Check if color is in sRGB gamut
     final inGamut = isInGamut(oklabToLinearRgb(oklchToOklab(oklch)));
-    
-    // Step 5: Convert to sRGB (with gamut mapping if needed)
+
+    // Step 6: Convert to sRGB (with gamut mapping if needed)
     final color = oklchToSrgbWithGamut(oklch);
-    
-    // Step 6: Create gradient stop
+
+    // Step 7: Create gradient stop
     stops.add(GradientStop(
-      requestedColor: color, // For now, both are the same after gamut mapping
+      requestedColor: color,
       fallbackColor: color,
       isInGamut: inGamut,
     ));
   }
-  
+
   return stops;
 }
 
@@ -525,31 +743,48 @@ List<GradientStop> generateChromaGradient(
   double hue,
   int samples, {
   double maxChroma = 0.4,
+  bool useRealPigmentsOnly = false,
 }) {
   final List<GradientStop> stops = [];
-  
+
   // Step 1: Sample colors across chroma range
   for (int i = 0; i < samples; i++) {
     // Step 2: Calculate chroma value for this sample
-    final double c = (i / (samples - 1)) * maxChroma; // 0.0 to maxChroma
-    
-    // Step 3: Create OKLCH color
-    final oklch = OklchColor(lightness, c, hue);
-    
-    // Step 4: Check if color is in sRGB gamut
+    double l = lightness;
+    double c = (i / (samples - 1)) * maxChroma; // 0.0 to maxChroma
+    double h = hue;
+
+    // Step 3: Apply ICC display filter if enabled
+    if (useRealPigmentsOnly && IccColorManager.instance.isReady) {
+      final cieLab = oklchToCieLab(l, c, h);
+      final mappedLab = IccColorManager.instance.transformLab(
+        cieLab.l,
+        cieLab.a,
+        cieLab.b,
+      );
+      final mappedOklch = cieLabToOklch(mappedLab[0], mappedLab[1], mappedLab[2]);
+      l = mappedOklch.l;
+      c = mappedOklch.c;
+      h = mappedOklch.h;
+    }
+
+    // Step 4: Create OKLCH color (potentially filtered)
+    final oklch = OklchColor(l, c, h);
+
+    // Step 5: Check if color is in sRGB gamut
     final inGamut = isInGamut(oklabToLinearRgb(oklchToOklab(oklch)));
-    
-    // Step 5: Convert to sRGB (with gamut mapping if needed)
+
+    // Step 6: Convert to sRGB (with gamut mapping if needed)
     final color = oklchToSrgbWithGamut(oklch);
-    
-    // Step 6: Create gradient stop
+
+    // Step 7: Create gradient stop
     stops.add(GradientStop(
       requestedColor: color,
       fallbackColor: color,
       isInGamut: inGamut,
     ));
   }
-  
+
   return stops;
 }
 
@@ -558,32 +793,49 @@ List<GradientStop> generateChromaGradient(
 List<GradientStop> generateHueGradient(
   double lightness,
   double chroma,
-  int samples,
-) {
+  int samples, {
+  bool useRealPigmentsOnly = false,
+}) {
   final List<GradientStop> stops = [];
-  
+
   // Step 1: Sample colors across hue range
   for (int i = 0; i < samples; i++) {
     // Step 2: Calculate hue value for this sample
-    final double h = (i / (samples - 1)) * 360.0; // 0 to 360 degrees
-    
-    // Step 3: Create OKLCH color
-    final oklch = OklchColor(lightness, chroma, h);
-    
-    // Step 4: Check if color is in sRGB gamut
+    double l = lightness;
+    double c = chroma;
+    double h = (i / (samples - 1)) * 360.0; // 0 to 360 degrees
+
+    // Step 3: Apply ICC display filter if enabled
+    if (useRealPigmentsOnly && IccColorManager.instance.isReady) {
+      final cieLab = oklchToCieLab(l, c, h);
+      final mappedLab = IccColorManager.instance.transformLab(
+        cieLab.l,
+        cieLab.a,
+        cieLab.b,
+      );
+      final mappedOklch = cieLabToOklch(mappedLab[0], mappedLab[1], mappedLab[2]);
+      l = mappedOklch.l;
+      c = mappedOklch.c;
+      h = mappedOklch.h;
+    }
+
+    // Step 4: Create OKLCH color (potentially filtered)
+    final oklch = OklchColor(l, c, h);
+
+    // Step 5: Check if color is in sRGB gamut
     final inGamut = isInGamut(oklabToLinearRgb(oklchToOklab(oklch)));
-    
-    // Step 5: Convert to sRGB (with gamut mapping if needed)
+
+    // Step 6: Convert to sRGB (with gamut mapping if needed)
     final color = oklchToSrgbWithGamut(oklch);
-    
-    // Step 6: Create gradient stop
+
+    // Step 7: Create gradient stop
     stops.add(GradientStop(
       requestedColor: color,
       fallbackColor: color,
       isInGamut: inGamut,
     ));
   }
-  
+
   return stops;
 }
 

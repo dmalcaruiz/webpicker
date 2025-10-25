@@ -51,7 +51,11 @@ class ReorderableColorGridView extends StatefulWidget {
   
   /// Empty state message
   final String emptyStateMessage;
-  
+
+  /// Optional color filter for display (e.g., ICC profile filtering)
+  /// Takes the palette item and returns the display color
+  final Color Function(ColorPaletteItem)? colorFilter;
+
   const ReorderableColorGridView({
     super.key,
     required this.items,
@@ -67,6 +71,7 @@ class ReorderableColorGridView extends StatefulWidget {
     this.itemSize = 80.0,
     this.showAddButton = true,
     this.emptyStateMessage = 'No colors in palette\nTap + to add your first color',
+    this.colorFilter,
   });
   
   @override
@@ -148,11 +153,12 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
     return ColorItemWidget(
       key: ValueKey(item.id),
       item: item,
+      displayColor: widget.colorFilter != null ? widget.colorFilter!(item) : null,
       size: widget.itemSize,
       onTap: () => widget.onItemTap(item),
       onLongPress: () => widget.onItemLongPress(item),
       onDelete: () => widget.onItemDelete(item),
-      onDragToDeleteStart: widget.onDragStarted != null 
+      onDragToDeleteStart: widget.onDragStarted != null
           ? () => widget.onDragStarted!(item)
           : null,
       onDragToDeleteEnd: widget.onDragEnded,

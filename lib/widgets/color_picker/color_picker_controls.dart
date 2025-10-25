@@ -36,6 +36,12 @@ class ColorPickerControls extends StatefulWidget {
   /// Callback when mixer slider is touched (to deselect extremes)
   final VoidCallback? onMixerSliderTouched;
 
+  /// Whether to use ICC profile filtering for display
+  final bool useRealPigmentsOnly;
+
+  /// Callback when real pigments toggle changes
+  final Function(bool)? onRealPigmentsOnlyChanged;
+
   const ColorPickerControls({
     super.key,
     required this.isBgEditMode,
@@ -51,6 +57,8 @@ class ColorPickerControls extends StatefulWidget {
     required this.rightExtreme,
     required this.onExtremeTap,
     this.onMixerSliderTouched,
+    this.useRealPigmentsOnly = false,
+    this.onRealPigmentsOnlyChanged,
   });
 
   @override
@@ -266,9 +274,14 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
               _updateColor();
             });
           },
-          generateGradient: () => widget.isBgEditMode 
+          generateGradient: () => widget.isBgEditMode
               ? generateLightnessGradient(bgChroma, bgHue, 300)
-              : generateLightnessGradient(chroma, hue, 300),
+              : generateLightnessGradient(
+                  chroma,
+                  hue,
+                  300,
+                  useRealPigmentsOnly: widget.useRealPigmentsOnly,
+                ),
           showSplitView: true,
           onInteractionChanged: widget.onSliderInteractionChanged,
         ),
@@ -295,7 +308,12 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
           },
           generateGradient: () => widget.isBgEditMode
               ? generateChromaGradient(bgLightness, bgHue, 300)
-              : generateChromaGradient(lightness, hue, 300),
+              : generateChromaGradient(
+                  lightness,
+                  hue,
+                  300,
+                  useRealPigmentsOnly: widget.useRealPigmentsOnly,
+                ),
           showSplitView: true,
           onInteractionChanged: widget.onSliderInteractionChanged,
         ),
@@ -322,7 +340,12 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
           },
           generateGradient: () => widget.isBgEditMode
               ? generateHueGradient(bgLightness, bgChroma, 300)
-              : generateHueGradient(lightness, chroma, 300),
+              : generateHueGradient(
+                  lightness,
+                  chroma,
+                  300,
+                  useRealPigmentsOnly: widget.useRealPigmentsOnly,
+                ),
           showSplitView: true,
           onInteractionChanged: widget.onSliderInteractionChanged,
         ),
@@ -336,6 +359,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
             rightExtreme: widget.rightExtreme,
             sliderIsActive: sliderIsActive,
             usePigmentMixing: usePigmentMixing,
+            useRealPigmentsOnly: widget.useRealPigmentsOnly,
             onChanged: (value) {
               setState(() {
                 mixValue = value.clamp(0.0, 1.0);
@@ -349,6 +373,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
                 usePigmentMixing = value;
               });
             },
+            onRealPigmentsOnlyChanged: widget.onRealPigmentsOnlyChanged,
             onExtremeTap: widget.onExtremeTap,
             onSliderTouchStart: _handleSliderTouchStart,
             onSliderTouchEnd: _handleSliderTouchEnd,

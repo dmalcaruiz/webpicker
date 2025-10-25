@@ -13,6 +13,7 @@ dependencies:
   snapping_sheet_2: ^3.1.5
   reorderable_grid_view: ^2.2.8
   image: ^4.0.0
+  icc_parser: ^0.2.0
 
 dev_dependencies:
   flutter_test:
@@ -21,3 +22,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - reference-icc/Canon ImagePROGRAPH PRO-1000.icc
