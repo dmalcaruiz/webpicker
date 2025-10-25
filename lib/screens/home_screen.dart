@@ -5,7 +5,6 @@ import '../widgets/color_picker/color_preview_box.dart';
 import '../widgets/color_picker/color_picker_controls.dart';
 import '../widgets/color_picker/reorderable_color_grid_view.dart';
 import '../widgets/home/sheet_grabbing_handle.dart';
-import '../widgets/home/sheet_controls.dart';
 import '../widgets/home/action_buttons_row.dart';
 import '../widgets/common/undo_redo_buttons.dart';
 import '../models/color_palette_item.dart';
@@ -756,7 +755,7 @@ class _HomeScreenState extends State<HomeScreen> {
               //---------------------------------------------------------------------------------------------------------------------
               // Grabbing handle Content
               //---------------------------------------------------------------------------------------------------------------------
-              grabbingHeight: 100,
+              grabbingHeight: 120,
               grabbing: SheetGrabbingHandle(
                 chipStates: _selectedChips,
                 onChipToggle: (index) => setState(() => _selectedChips[index] = !_selectedChips[index]),
@@ -829,70 +828,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
-                          const SizedBox(height: 20),
-                          
-                          // Action buttons with BG color button
-                          Row(
-                            children: [
-                              // Background color button (acts like a palette box)
-                              GestureDetector(
-                                onTap: _onBgColorBoxTap,
-                                child: Container(
-                                  width: 48,
-                                  height: 48,
-                                  margin: const EdgeInsets.only(right: 12),
-                                  decoration: BoxDecoration(
-                                    color: applyIccFilter(
-                                      bgColor ?? const Color(0xFF252525),
-                                      lightness: _bgLightness,
-                                      chroma: _bgChroma,
-                                      hue: _bgHue,
-                                      alpha: _bgAlpha,
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: _isBgColorSelected
-                                          ? Colors.white.withOpacity(0.9)
-                                          : Colors.white.withOpacity(0.3),
-                                      width: _isBgColorSelected ? 3 : 2,
-                                    ),
-                                    boxShadow: _isBgColorSelected
-                                        ? [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(0.3),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 4),
-                                            ),
-                                          ]
-                                        : null,
-                                  ),
-                                  child: Icon(
-                                    Icons.format_paint,
-                                    color: Colors.white.withOpacity(_isBgColorSelected ? 0.9 : 0.7),
-                                    size: 24,
-                                  ),
-                                ),
-                              ),
-                              
-                              // Other action buttons
-                              Expanded(
-                                child: ActionButtonsRow(
-                                  currentColor: currentColor,
-                                  selectedExtremeId: _selectedExtremeId,
-                                  leftExtreme: _leftExtreme,
-                                  rightExtreme: _rightExtreme,
-                                  onColorSelected: _handleColorSelection,
-                                  undoRedoManager: _undoRedoManager,
-                                  onUndo: _handleUndo,
-                                  onRedo: _handleRedo,
-                                  colorFilter: (color) => applyIccFilter(color),
-                                ),
-                              ),
-                            ],
-                          ),
-                          
-                          const SizedBox(height: 20),
-
                           // Color preview (with ICC filter if enabled)
                           ColorPreviewBox(
                             color: applyIccFilter(
@@ -1001,14 +936,67 @@ class _HomeScreenState extends State<HomeScreen> {
             //---------------------------------------------------------------------------------------------------------------------
             Positioned(
               bottom: 20,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                    color: Colors.red,
-                  child: Text('Hello'),
-                ),
-              ),
+              left: 20,
+              right: 20,
+              child: 
+                          Row(
+                            children: [
+                              // Background color button (acts like a palette box)
+                              GestureDetector(
+                                onTap: _onBgColorBoxTap,
+                                child: Container(
+                                  width: 48,
+                                  height: 48,
+                                  margin: const EdgeInsets.only(right: 12),
+                                  decoration: BoxDecoration(
+                                    color: applyIccFilter(
+                                      bgColor ?? const Color(0xFF252525),
+                                      lightness: _bgLightness,
+                                      chroma: _bgChroma,
+                                      hue: _bgHue,
+                                      alpha: _bgAlpha,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: _isBgColorSelected
+                                          ? const Color.fromARGB(255, 255, 255, 255).withOpacity(0.9)
+                                          : const Color.fromARGB(255, 255, 255, 255).withOpacity(0.3),
+                                      width: _isBgColorSelected ? 3 : 2,
+                                    ),
+                                    boxShadow: _isBgColorSelected
+                                        ? [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.3),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ]
+                                        : null,
+                                  ),
+                                  child: Icon(
+                                    Icons.format_paint,
+                                    color: const Color.fromARGB(255, 255, 255, 255).withOpacity(_isBgColorSelected ? 0.9 : 0.7),
+                                    size: 24,
+                                  ),
+                                ),
+                              ),
+                              
+                              // Other action buttons
+                              Expanded(
+                                child: ActionButtonsRow(
+                                  currentColor: currentColor,
+                                  selectedExtremeId: _selectedExtremeId,
+                                  leftExtreme: _leftExtreme,
+                                  rightExtreme: _rightExtreme,
+                                  onColorSelected: _handleColorSelection,
+                                  undoRedoManager: _undoRedoManager,
+                                  onUndo: _handleUndo,
+                                  onRedo: _handleRedo,
+                                  colorFilter: (color) => applyIccFilter(color),
+                                ),
+                              ),
+                            ],
+                          ),
             ),
           ],
         ),

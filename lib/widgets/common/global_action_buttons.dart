@@ -196,13 +196,13 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: isEnabled 
-                ? Colors.white.withValues(alpha: 0.15)
-                : Colors.white.withValues(alpha: 0.05),
+                ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.15)
+                : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isEnabled 
-                  ? Colors.white.withValues(alpha: 0.3)
-                  : Colors.white.withValues(alpha: 0.1),
+                  ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.3)
+                  : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.1),
               width: 1,
             ),
           ),
@@ -218,7 +218,7 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
                     color: previewColor,
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.5),
                       width: 1,
                     ),
                   ),
@@ -229,7 +229,7 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
               // Icon
               Icon(
                 icon,
-                color: isEnabled ? Colors.white : Colors.white.withValues(alpha: 0.3),
+                color: isEnabled ? Colors.black : Colors.black.withValues(alpha: 0.3),
                 size: 18,
               ),
               
@@ -239,7 +239,7 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
               Text(
                 label,
                 style: TextStyle(
-                  color: isEnabled ? Colors.white : Colors.white.withValues(alpha: 0.3),
+                  color: isEnabled ? Colors.black : Colors.black.withValues(alpha: 0.3),
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
@@ -272,7 +272,7 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
           }
         },
         icon: Icons.colorize,
-        iconColor: Colors.white,
+        iconColor: Colors.black,
       ),
     );
   }

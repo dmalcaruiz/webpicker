@@ -75,19 +75,19 @@ class UndoRedoButtons extends StatelessWidget {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: isEnabled 
-                  ? Colors.white.withValues(alpha: 0.15)
-                  : Colors.white.withValues(alpha: 0.05),
+                  ? Colors.black.withValues(alpha: 0.15)
+                  : Colors.black.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isEnabled 
-                    ? Colors.white.withValues(alpha: 0.3)
-                    : Colors.white.withValues(alpha: 0.1),
+                    ? Colors.black.withValues(alpha: 0.3)
+                    : Colors.black.withValues(alpha: 0.1),
                 width: 1,
               ),
             ),
             child: Icon(
               icon,
-              color: isEnabled ? Colors.white : Colors.white.withValues(alpha: 0.3),
+              color: isEnabled ? Colors.black : Colors.black.withValues(alpha: 0.3),
               size: 20,
             ),
           ),
