@@ -17,22 +17,29 @@ class ExtremeColorCircle extends StatelessWidget {
   /// Size of the circle
   final double size;
 
+  /// Optional color filter for ICC profile display
+  final Color Function(ExtremeColorItem)? colorFilter;
+
   const ExtremeColorCircle({
     super.key,
     required this.extreme,
     this.onTap,
     this.size = 44.0,
+    this.colorFilter,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Apply color filter if provided, otherwise use original color
+    final displayColor = colorFilter != null ? colorFilter!(extreme) : extreme.color;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: extreme.color,
+          color: displayColor,
           shape: BoxShape.circle,
           border: Border.all(
             color: extreme.isSelected

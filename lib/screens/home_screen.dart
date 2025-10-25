@@ -7,7 +7,6 @@ import '../widgets/color_picker/reorderable_color_grid_view.dart';
 import '../widgets/home/sheet_grabbing_handle.dart';
 import '../widgets/home/sheet_controls.dart';
 import '../widgets/home/action_buttons_row.dart';
-import '../widgets/home/background_edit_button.dart';
 import '../widgets/common/undo_redo_buttons.dart';
 import '../models/color_palette_item.dart';
 import '../models/extreme_color_item.dart';
@@ -45,10 +44,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Background color
   Color? bgColor;
-  
-  /// Whether in background edit mode
-  bool isBgEditMode = false;
-  
+
+  /// Background color OKLCH values (for proper tracking like palette boxes)
+  double? _bgLightness;
+  double? _bgChroma;
+  double? _bgHue;
+  double? _bgAlpha;
+
+  /// Whether background color "box" is selected
+  bool _isBgColorSelected = false;
+
   /// Color palette items
   List<ColorPaletteItem> _colorPalette = [];
 
@@ -105,7 +110,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // Initialize background color with OKLCH values
     bgColor = const Color(0xFF252525);
+    final bgOklch = srgbToOklch(bgColor!);
+    _bgLightness = bgOklch.l;
+    _bgChroma = bgOklch.c;
+    _bgHue = bgOklch.h;
+    _bgAlpha = bgOklch.alpha;
+
     _initializeSamplePalette();
     _initializeExtremes();
     _initializeIccProfile();
@@ -232,6 +244,14 @@ class _HomeScreenState extends State<HomeScreen> {
           );
           _saveStateToHistory('Modified right extreme');
         }
+      } else if (_isBgColorSelected) {
+        // Update background color (behaves exactly like a box)
+        _bgLightness = lightness;
+        _bgChroma = chroma;
+        _bgHue = hue;
+        _bgAlpha = alpha;
+        bgColor = colorFromOklch(lightness, chroma, hue, alpha);
+        _saveStateToHistory('Modified background color');
       }
     });
   }
@@ -340,6 +360,13 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_isRestoringState) return;
 
     setState(() {
+      // If tapping an already-selected item, deselect it
+      if (item.isSelected) {
+        _colorPalette = PaletteManager.deselectAll(currentPalette: _colorPalette);
+        return;
+      }
+
+      // Otherwise, select the item
       _colorPalette = PaletteManager.selectItem(
         currentPalette: _colorPalette,
         itemId: item.id,
@@ -349,6 +376,9 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedExtremeId = null;
       _leftExtreme = _leftExtreme.copyWith(isSelected: false);
       _rightExtreme = _rightExtreme.copyWith(isSelected: false);
+
+      // Deselect bg color box
+      _isBgColorSelected = false;
 
       // Update current OKLCH values directly from the item (no conversion!)
       final selectedItem = PaletteManager.getSelectedItem(_colorPalette);
@@ -361,13 +391,56 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     });
   }
-  
+
+  void _onBgColorBoxTap() {
+    if (_isRestoringState) return;
+
+    setState(() {
+      // If tapping an already-selected bg color box, deselect it
+      if (_isBgColorSelected) {
+        _isBgColorSelected = false;
+        return;
+      }
+
+      // Otherwise, select the bg color box
+      // Deselect all palette boxes
+      _colorPalette = PaletteManager.deselectAll(currentPalette: _colorPalette);
+
+      // Deselect extremes
+      _selectedExtremeId = null;
+      _leftExtreme = _leftExtreme.copyWith(isSelected: false);
+      _rightExtreme = _rightExtreme.copyWith(isSelected: false);
+
+      // Select bg color box
+      _isBgColorSelected = true;
+
+      // Update sliders with bg color's OKLCH values
+      currentLightness = _bgLightness;
+      currentChroma = _bgChroma;
+      currentHue = _bgHue;
+      currentAlpha = _bgAlpha;
+      currentColor = bgColor;
+    });
+  }
+
   void _onExtremeTap(String extremeId) {
     if (_isRestoringState) return;
 
     setState(() {
+      // If tapping an already-selected extreme, deselect it
+      if (_selectedExtremeId == extremeId) {
+        _selectedExtremeId = null;
+        _leftExtreme = _leftExtreme.copyWith(isSelected: false);
+        _rightExtreme = _rightExtreme.copyWith(isSelected: false);
+        return;
+      }
+
+      // Otherwise, select the tapped extreme
       // Deselect all palette boxes
       _colorPalette = PaletteManager.deselectAll(currentPalette: _colorPalette);
+
+      // Deselect bg color box
+      _isBgColorSelected = false;
 
       // Select tapped extreme, deselect the other
       if (extremeId == 'left') {
@@ -403,12 +476,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onMixerSliderTouched() {
     if (_isRestoringState) return;
 
-    // Deselect extremes when mixer slider is dragged
-    if (_selectedExtremeId != null) {
+    // Deselect extremes and bg color box when mixer slider is dragged
+    if (_selectedExtremeId != null || _isBgColorSelected) {
       setState(() {
         _selectedExtremeId = null;
         _leftExtreme = _leftExtreme.copyWith(isSelected: false);
         _rightExtreme = _rightExtreme.copyWith(isSelected: false);
+        _isBgColorSelected = false;
       });
     }
   }
@@ -525,7 +599,11 @@ class _HomeScreenState extends State<HomeScreen> {
       paletteItems: List.from(_colorPalette),
       currentColor: currentColor,
       bgColor: bgColor,
-      isBgEditMode: isBgEditMode,
+      bgLightness: _bgLightness,
+      bgChroma: _bgChroma,
+      bgHue: _bgHue,
+      bgAlpha: _bgAlpha,
+      isBgColorSelected: _isBgColorSelected,
       selectedPaletteItemId: PaletteManager.getSelectedItem(_colorPalette)?.id,
       selectedExtremeId: _selectedExtremeId,
       leftExtreme: _leftExtreme,
@@ -544,7 +622,11 @@ class _HomeScreenState extends State<HomeScreen> {
       _colorPalette = List.from(snapshot.paletteItems);
       currentColor = snapshot.currentColor;
       bgColor = snapshot.bgColor;
-      isBgEditMode = snapshot.isBgEditMode;
+      _bgLightness = snapshot.bgLightness;
+      _bgChroma = snapshot.bgChroma;
+      _bgHue = snapshot.bgHue;
+      _bgAlpha = snapshot.bgAlpha;
+      _isBgColorSelected = snapshot.isBgColorSelected;
       _selectedExtremeId = snapshot.selectedExtremeId;
       _useRealPigmentsOnly = snapshot.useRealPigmentsOnly;
       if (snapshot.leftExtreme != null) {
@@ -684,25 +766,35 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 // Color picker controls
                 Container(
+                  color: Colors.white,
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                   child: ColorPickerControls(
-                    isBgEditMode: isBgEditMode,
-                    bgColor: bgColor,
                     // Pass OKLCH values directly (no conversion!)
                     externalLightness: currentLightness,
                     externalChroma: currentChroma,
                     externalHue: currentHue,
                     externalAlpha: currentAlpha,
-                    // Pass extreme data (with ICC filter applied for display)
-                    leftExtreme: _leftExtreme.copyWith(
-                      color: applyIccFilter(_leftExtreme.color),
+                    // Pass extreme data without modification
+                    leftExtreme: _leftExtreme,
+                    rightExtreme: _rightExtreme,
+                    // Pass ICC filter for extreme colors
+                    extremeColorFilter: (extreme) => applyIccFilter(
+                      extreme.color,
+                      lightness: extreme.oklchValues.lightness,
+                      chroma: extreme.oklchValues.chroma,
+                      hue: extreme.oklchValues.hue,
+                      alpha: extreme.oklchValues.alpha,
                     ),
-                    rightExtreme: _rightExtreme.copyWith(
-                      color: applyIccFilter(_rightExtreme.color),
+                    // Pass ICC filter for gradient colors
+                    gradientColorFilter: (color, l, c, h, a) => applyIccFilter(
+                      color,
+                      lightness: l,
+                      chroma: c,
+                      hue: h,
+                      alpha: a,
                     ),
                     onExtremeTap: _onExtremeTap,
                     onMixerSliderTouched: _onMixerSliderTouched,
-                    onBgEditModeChanged: (mode) => setState(() => isBgEditMode = mode),
                     onOklchChanged: _onOklchChanged,
                     onSliderInteractionChanged: (interacting) =>
                         setState(() => _isInteractingWithSlider = interacting),
@@ -719,11 +811,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
                       child: Column(
                         children: [
-                          BackgroundEditButton(
-                            isBgEditMode: isBgEditMode,
-                            onPressed: () => setState(() => isBgEditMode = !isBgEditMode),
-                          ),
-                          const SizedBox(height: 10),
                           SheetControls(controller: snappingSheetController),
                           const SizedBox(height: 20),
                         ],
@@ -754,31 +841,41 @@ class _HomeScreenState extends State<HomeScreen> {
               // Action buttons with BG color button
               Row(
                 children: [
-                  // Background color button
+                  // Background color button (acts like a palette box)
                   GestureDetector(
-                    onTap: () {
-                      if (currentColor != null) {
-                        setState(() {
-                          bgColor = currentColor;
-                        });
-                        _showSnackBar('Background color updated');
-                      }
-                    },
+                    onTap: _onBgColorBoxTap,
                     child: Container(
                       width: 48,
                       height: 48,
                       margin: const EdgeInsets.only(right: 12),
                       decoration: BoxDecoration(
-                        color: bgColor ?? const Color(0xFF252525),
+                        color: applyIccFilter(
+                          bgColor ?? const Color(0xFF252525),
+                          lightness: _bgLightness,
+                          chroma: _bgChroma,
+                          hue: _bgHue,
+                          alpha: _bgAlpha,
+                        ),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
-                          width: 2,
+                          color: _isBgColorSelected
+                              ? Colors.white.withOpacity(0.9)
+                              : Colors.white.withOpacity(0.3),
+                          width: _isBgColorSelected ? 3 : 2,
                         ),
+                        boxShadow: _isBgColorSelected
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                            : null,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.format_paint,
-                        color: Colors.white70,
+                        color: Colors.white.withOpacity(_isBgColorSelected ? 0.9 : 0.7),
                         size: 24,
                       ),
                     ),
@@ -795,6 +892,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       undoRedoManager: _undoRedoManager,
                       onUndo: _handleUndo,
                       onRedo: _handleRedo,
+                      colorFilter: (color) => applyIccFilter(color),
                     ),
                   ),
                 ],

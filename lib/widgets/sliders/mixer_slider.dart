@@ -58,6 +58,13 @@ class MixedChannelSlider extends StatefulWidget {
   /// Callback when real pigments only toggle changes
   final Function(bool)? onRealPigmentsOnlyChanged;
 
+  /// Optional color filter for extreme colors (ICC profile display)
+  final Color Function(ExtremeColorItem)? extremeColorFilter;
+
+  /// Optional color filter for gradient colors (ICC profile display)
+  /// Takes color and OKLCH values, returns filtered color
+  final Color Function(Color color, double l, double c, double h, double a)? gradientColorFilter;
+
   const MixedChannelSlider({
     super.key,
     required this.value,
@@ -75,6 +82,8 @@ class MixedChannelSlider extends StatefulWidget {
     this.onPigmentMixingChanged,
     this.useRealPigmentsOnly = false,
     this.onRealPigmentsOnlyChanged,
+    this.extremeColorFilter,
+    this.gradientColorFilter,
   });
   
   @override
@@ -98,7 +107,7 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: Color.fromARGB(255, 0, 0, 0),
                   ),
                 ),
                 Text(
@@ -140,6 +149,7 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
                 painter: MixedChannelGradientPainter(
                   gradientColors: _generateMixGradient(),
                   borderRadius: 8.0,
+                  useRealPigmentsOnly: widget.useRealPigmentsOnly,
                 ),
               ),
               thumbColor: _getCurrentThumbColor(),
@@ -156,6 +166,7 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
             leftExtreme: widget.leftExtreme,
             rightExtreme: widget.rightExtreme,
             onExtremeTap: widget.onExtremeTap,
+            colorFilter: widget.extremeColorFilter,
           ),
 
           // Pigment mixing toggle
@@ -168,13 +179,13 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: widget.usePigmentMixing
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : Colors.white.withValues(alpha: 0.05),
+                    ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.15)
+                    : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
                   color: widget.usePigmentMixing
-                      ? Colors.white.withValues(alpha: 0.3)
-                      : Colors.white.withValues(alpha: 0.1),
+                      ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.3)
+                      : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -185,8 +196,8 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
                     widget.usePigmentMixing ? Icons.check_box : Icons.check_box_outline_blank,
                     size: 16,
                     color: widget.usePigmentMixing
-                        ? Colors.white.withValues(alpha: 0.9)
-                        : Colors.white.withValues(alpha: 0.5),
+                        ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.9)
+                        : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.5),
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -195,8 +206,8 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: widget.usePigmentMixing
-                          ? Colors.white.withValues(alpha: 0.9)
-                          : Colors.white.withValues(alpha: 0.5),
+                          ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.9)
+                          : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.5),
                     ),
                   ),
                 ],
@@ -214,13 +225,13 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: widget.useRealPigmentsOnly
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : Colors.white.withValues(alpha: 0.05),
+                    ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.15)
+                    : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
                   color: widget.useRealPigmentsOnly
-                      ? Colors.white.withValues(alpha: 0.3)
-                      : Colors.white.withValues(alpha: 0.1),
+                      ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.3)
+                      : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -231,8 +242,8 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
                     widget.useRealPigmentsOnly ? Icons.check_box : Icons.check_box_outline_blank,
                     size: 16,
                     color: widget.useRealPigmentsOnly
-                        ? Colors.white.withValues(alpha: 0.9)
-                        : Colors.white.withValues(alpha: 0.5),
+                        ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.9)
+                        : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.5),
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -241,8 +252,8 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: widget.useRealPigmentsOnly
-                          ? Colors.white.withValues(alpha: 0.9)
-                          : Colors.white.withValues(alpha: 0.5),
+                          ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.9)
+                          : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.5),
                     ),
                   ),
                 ],
@@ -257,31 +268,161 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
   /// Interpolates between left and right extreme colors
   /// Uses either OKLCH or Mixbox pigment mixing based on toggle
   Color _getCurrentThumbColor() {
+    Color color;
+    double l, c, h, a;
+
     if (widget.usePigmentMixing) {
-      return lerpMixbox(
-        widget.leftExtreme.color,
-        widget.rightExtreme.color,
-        widget.value,
-      );
+      // For pigment mixing, first filter the extremes if ICC is enabled, then interpolate
+      Color leftColor = widget.leftExtreme.color;
+      Color rightColor = widget.rightExtreme.color;
+
+      // Apply ICC filter to extremes if enabled
+      if (widget.gradientColorFilter != null) {
+        final leftOklch = widget.leftExtreme.oklchValues;
+        leftColor = widget.gradientColorFilter!(
+          leftColor,
+          leftOklch.lightness,
+          leftOklch.chroma,
+          leftOklch.hue,
+          leftOklch.alpha,
+        );
+
+        final rightOklch = widget.rightExtreme.oklchValues;
+        rightColor = widget.gradientColorFilter!(
+          rightColor,
+          rightOklch.lightness,
+          rightOklch.chroma,
+          rightOklch.hue,
+          rightOklch.alpha,
+        );
+      }
+
+      // Now do Mixbox interpolation with the (possibly filtered) colors
+      color = lerpMixbox(leftColor, rightColor, widget.value);
+
+      // Extract OKLCH for consistency (won't be filtered again)
+      final oklch = srgbToOklch(color);
+      l = oklch.l;
+      c = oklch.c;
+      h = oklch.h;
+      a = oklch.alpha;
     } else {
-      return lerpOklch(
-        widget.leftExtreme.color,
-        widget.rightExtreme.color,
-        widget.value,
-      );
+      // For OKLCH, interpolate using stored OKLCH values directly to avoid rounding errors
+      final leftOklch = widget.leftExtreme.oklchValues;
+      final rightOklch = widget.rightExtreme.oklchValues;
+      final t = widget.value;
+
+      // Interpolate each OKLCH component
+      l = leftOklch.lightness + (rightOklch.lightness - leftOklch.lightness) * t;
+      c = leftOklch.chroma + (rightOklch.chroma - leftOklch.chroma) * t;
+      a = leftOklch.alpha + (rightOklch.alpha - leftOklch.alpha) * t;
+
+      // Interpolate hue with wraparound (shortest path)
+      double h1 = leftOklch.hue % 360;
+      double h2 = rightOklch.hue % 360;
+      if (h1 < 0) h1 += 360;
+      if (h2 < 0) h2 += 360;
+
+      double diff = h2 - h1;
+      if (diff > 180) {
+        diff -= 360;
+      } else if (diff < -180) {
+        diff += 360;
+      }
+
+      h = h1 + diff * t;
+      if (h < 0) h += 360;
+      if (h >= 360) h -= 360;
+
+      // Convert to color
+      color = colorFromOklch(l, c, h, a);
     }
+
+    // Apply ICC filter if enabled (using the computed OKLCH values)
+    if (widget.gradientColorFilter != null) {
+      color = widget.gradientColorFilter!(color, l, c, h, a);
+    }
+
+    return color;
   }
 
   List<Color> _generateMixGradient() {
     final List<Color> colors = [];
 
+    // Pre-filter the extremes if ICC is enabled (for pigment mixing)
+    Color leftColor = widget.leftExtreme.color;
+    Color rightColor = widget.rightExtreme.color;
+
+    if (widget.usePigmentMixing && widget.gradientColorFilter != null) {
+      final leftOklch = widget.leftExtreme.oklchValues;
+      leftColor = widget.gradientColorFilter!(
+        leftColor,
+        leftOklch.lightness,
+        leftOklch.chroma,
+        leftOklch.hue,
+        leftOklch.alpha,
+      );
+
+      final rightOklch = widget.rightExtreme.oklchValues;
+      rightColor = widget.gradientColorFilter!(
+        rightColor,
+        rightOklch.lightness,
+        rightOklch.chroma,
+        rightOklch.hue,
+        rightOklch.alpha,
+      );
+    }
+
     for (int i = 0; i < widget.samples; i++) {
       final double t = i / (widget.samples - 1);
+      Color color;
+      double l, c, h, a;
+
       if (widget.usePigmentMixing) {
-        colors.add(lerpMixbox(widget.leftExtreme.color, widget.rightExtreme.color, t));
+        // For pigment mixing, interpolate with the (possibly filtered) colors
+        color = lerpMixbox(leftColor, rightColor, t);
+        final oklch = srgbToOklch(color);
+        l = oklch.l;
+        c = oklch.c;
+        h = oklch.h;
+        a = oklch.alpha;
       } else {
-        colors.add(lerpOklch(widget.leftExtreme.color, widget.rightExtreme.color, t));
+        // For OKLCH, interpolate using stored OKLCH values directly to avoid rounding errors
+        final leftOklch = widget.leftExtreme.oklchValues;
+        final rightOklch = widget.rightExtreme.oklchValues;
+
+        // Interpolate each OKLCH component
+        l = leftOklch.lightness + (rightOklch.lightness - leftOklch.lightness) * t;
+        c = leftOklch.chroma + (rightOklch.chroma - leftOklch.chroma) * t;
+        a = leftOklch.alpha + (rightOklch.alpha - leftOklch.alpha) * t;
+
+        // Interpolate hue with wraparound (shortest path)
+        double h1 = leftOklch.hue % 360;
+        double h2 = rightOklch.hue % 360;
+        if (h1 < 0) h1 += 360;
+        if (h2 < 0) h2 += 360;
+
+        double diff = h2 - h1;
+        if (diff > 180) {
+          diff -= 360;
+        } else if (diff < -180) {
+          diff += 360;
+        }
+
+        h = h1 + diff * t;
+        if (h < 0) h += 360;
+        if (h >= 360) h -= 360;
+
+        // Convert to color
+        color = colorFromOklch(l, c, h, a);
       }
+
+      // Apply ICC filter if enabled (using the computed OKLCH values)
+      if (widget.gradientColorFilter != null) {
+        color = widget.gradientColorFilter!(color, l, c, h, a);
+      }
+
+      colors.add(color);
     }
 
     return colors;
@@ -292,10 +433,12 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
 class MixedChannelGradientPainter extends CustomPainter {
   final List<Color> gradientColors;
   final double borderRadius;
-  
+  final bool useRealPigmentsOnly;
+
   const MixedChannelGradientPainter({
     required this.gradientColors,
     this.borderRadius = 8.0,
+    this.useRealPigmentsOnly = false,
   });
   
   @override
@@ -332,6 +475,7 @@ class MixedChannelGradientPainter extends CustomPainter {
   @override
   bool shouldRepaint(MixedChannelGradientPainter oldDelegate) {
     return gradientColors != oldDelegate.gradientColors ||
-           borderRadius != oldDelegate.borderRadius;
+           borderRadius != oldDelegate.borderRadius ||
+           useRealPigmentsOnly != oldDelegate.useRealPigmentsOnly;
   }
 }

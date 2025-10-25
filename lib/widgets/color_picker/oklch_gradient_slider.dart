@@ -91,7 +91,7 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: Color.fromARGB(255, 0, 0, 0),
                   ),
                 ),
                 ValueAdjuster(
@@ -114,7 +114,7 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
                 widget.description,
                 style: const TextStyle(
                   fontSize: 12,
-                  color: Colors.white54,
+                  color: Color.fromARGB(137, 0, 0, 0),
                 ),
               ),
             ),

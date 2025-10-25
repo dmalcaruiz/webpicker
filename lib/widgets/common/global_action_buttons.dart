@@ -3,26 +3,32 @@ import '../../cyclop_eyedropper/eyedropper_button.dart';
 import '../../services/clipboard_service.dart';
 
 /// Global action buttons for copy, paste, and eyedropper
-/// 
+///
 /// Features:
 /// - Copy current color to clipboard with preview
 /// - Paste color from clipboard with preview
 /// - Eyedropper for picking colors from screen
+/// - Applies ICC filter to copy if "Only Real Pigments" mode is enabled
 class GlobalActionButtons extends StatefulWidget {
-  /// Current color being edited
+  /// Current color being edited (unfiltered)
   final Color? currentColor;
-  
+
   /// Callback when color is pasted or picked
   final Function(Color) onColorSelected;
-  
+
   /// Callback when copy action is performed
   final VoidCallback? onCopy;
-  
+
+  /// Optional color filter to apply before copying (e.g., ICC profile filter)
+  /// If provided, this transforms the color before copying to clipboard
+  final Color Function(Color)? colorFilter;
+
   const GlobalActionButtons({
     super.key,
     required this.currentColor,
     required this.onColorSelected,
     this.onCopy,
+    this.colorFilter,
   });
   
   @override
@@ -61,21 +67,29 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
   }
   
   /// Handle copy action
+  ///
+  /// Applies color filter (if provided) before copying to ensure
+  /// the copied color matches what's displayed on screen.
   Future<void> _handleCopy() async {
     if (widget.currentColor != null) {
-      await ClipboardService.copyColorToClipboard(widget.currentColor!);
+      // Apply filter if provided (e.g., ICC profile filter for "Only Real Pigments")
+      final colorToCopy = widget.colorFilter != null
+          ? widget.colorFilter!(widget.currentColor!)
+          : widget.currentColor!;
+
+      await ClipboardService.copyColorToClipboard(colorToCopy);
       widget.onCopy?.call();
-      
-      // Update clipboard preview
+
+      // Update clipboard preview with the filtered color
       setState(() {
-        _clipboardColor = widget.currentColor;
+        _clipboardColor = colorToCopy;
       });
-      
-      // Show feedback
+
+      // Show feedback with the actual copied color hex
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Copied ${ClipboardService.colorToHex(widget.currentColor!)}'),
+            content: Text('Copied ${ClipboardService.colorToHex(colorToCopy)}'),
             duration: const Duration(seconds: 1),
             behavior: SnackBarBehavior.floating,
             backgroundColor: Colors.black87,
@@ -119,6 +133,11 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
   
   @override
   Widget build(BuildContext context) {
+    // Apply filter to preview color if provided
+    final displayColor = widget.currentColor != null && widget.colorFilter != null
+        ? widget.colorFilter!(widget.currentColor!)
+        : widget.currentColor;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
@@ -129,9 +148,9 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
             icon: Icons.copy,
             label: 'Copy',
             onPressed: widget.currentColor != null ? _handleCopy : null,
-            previewColor: widget.currentColor,
-            tooltip: widget.currentColor != null 
-                ? 'Copy ${ClipboardService.colorToHex(widget.currentColor!)}'
+            previewColor: displayColor,
+            tooltip: displayColor != null
+                ? 'Copy ${ClipboardService.colorToHex(displayColor)}'
                 : 'No color to copy',
           ),
           

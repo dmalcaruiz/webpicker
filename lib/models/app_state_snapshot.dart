@@ -13,8 +13,14 @@ class AppStateSnapshot {
   /// Background color
   final Color? bgColor;
 
-  /// Whether in background edit mode
-  final bool isBgEditMode;
+  /// Background color OKLCH values
+  final double? bgLightness;
+  final double? bgChroma;
+  final double? bgHue;
+  final double? bgAlpha;
+
+  /// Whether background color box is selected
+  final bool isBgColorSelected;
 
   /// ID of the selected palette item
   final String? selectedPaletteItemId;
@@ -42,7 +48,11 @@ class AppStateSnapshot {
     required this.paletteItems,
     required this.currentColor,
     required this.bgColor,
-    required this.isBgEditMode,
+    this.bgLightness,
+    this.bgChroma,
+    this.bgHue,
+    this.bgAlpha,
+    this.isBgColorSelected = false,
     this.selectedPaletteItemId,
     this.selectedExtremeId,
     this.leftExtreme,
@@ -57,7 +67,11 @@ class AppStateSnapshot {
     List<ColorPaletteItem>? paletteItems,
     Color? currentColor,
     Color? bgColor,
-    bool? isBgEditMode,
+    double? bgLightness,
+    double? bgChroma,
+    double? bgHue,
+    double? bgAlpha,
+    bool? isBgColorSelected,
     String? selectedPaletteItemId,
     String? selectedExtremeId,
     ExtremeColorItem? leftExtreme,
@@ -70,7 +84,11 @@ class AppStateSnapshot {
       paletteItems: paletteItems ?? this.paletteItems.map((item) => item).toList(),
       currentColor: currentColor ?? this.currentColor,
       bgColor: bgColor ?? this.bgColor,
-      isBgEditMode: isBgEditMode ?? this.isBgEditMode,
+      bgLightness: bgLightness ?? this.bgLightness,
+      bgChroma: bgChroma ?? this.bgChroma,
+      bgHue: bgHue ?? this.bgHue,
+      bgAlpha: bgAlpha ?? this.bgAlpha,
+      isBgColorSelected: isBgColorSelected ?? this.isBgColorSelected,
       selectedPaletteItemId: selectedPaletteItemId ?? this.selectedPaletteItemId,
       selectedExtremeId: selectedExtremeId ?? this.selectedExtremeId,
       leftExtreme: leftExtreme ?? this.leftExtreme,

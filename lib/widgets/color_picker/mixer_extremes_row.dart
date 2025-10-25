@@ -16,11 +16,15 @@ class MixerExtremesRow extends StatelessWidget {
   /// Callback when an extreme is tapped (receives extreme id: 'left' or 'right')
   final Function(String extremeId) onExtremeTap;
 
+  /// Optional color filter for ICC profile display
+  final Color Function(ExtremeColorItem)? colorFilter;
+
   const MixerExtremesRow({
     super.key,
     required this.leftExtreme,
     required this.rightExtreme,
     required this.onExtremeTap,
+    this.colorFilter,
   });
 
   @override
@@ -34,12 +38,14 @@ class MixerExtremesRow extends StatelessWidget {
           ExtremeColorCircle(
             extreme: leftExtreme,
             onTap: () => onExtremeTap(leftExtreme.id),
+            colorFilter: colorFilter,
           ),
 
           // Right extreme circle
           ExtremeColorCircle(
             extreme: rightExtreme,
             onTap: () => onExtremeTap(rightExtreme.id),
+            colorFilter: colorFilter,
           ),
         ],
       ),

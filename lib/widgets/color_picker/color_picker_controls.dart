@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../utils/color_operations.dart';
+import '../../utils/mixbox.dart';
 import '../../models/extreme_color_item.dart';
 import 'oklch_gradient_slider.dart';
 import '../sliders/mixer_slider.dart' show MixedChannelSlider;
 
 /// A widget containing all the color picker slider controls
 class ColorPickerControls extends StatefulWidget {
-  final bool isBgEditMode;
-  final Color? bgColor;
-  final Function(bool) onBgEditModeChanged;
-
   /// OKLCH change callback (source of truth)
   final Function({
     required double lightness,
@@ -42,11 +39,14 @@ class ColorPickerControls extends StatefulWidget {
   /// Callback when real pigments toggle changes
   final Function(bool)? onRealPigmentsOnlyChanged;
 
+  /// Optional color filter for extreme colors (ICC profile display)
+  final Color Function(ExtremeColorItem)? extremeColorFilter;
+
+  /// Optional color filter for gradient colors (ICC profile display)
+  final Color Function(Color color, double l, double c, double h, double a)? gradientColorFilter;
+
   const ColorPickerControls({
     super.key,
-    required this.isBgEditMode,
-    required this.bgColor,
-    required this.onBgEditModeChanged,
     required this.onOklchChanged,
     this.onSliderInteractionChanged,
     this.externalLightness,
@@ -59,6 +59,8 @@ class ColorPickerControls extends StatefulWidget {
     this.onMixerSliderTouched,
     this.useRealPigmentsOnly = false,
     this.onRealPigmentsOnlyChanged,
+    this.extremeColorFilter,
+    this.gradientColorFilter,
   });
 
   @override
@@ -81,10 +83,8 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
   // Flag to prevent feedback loop when we update the color internally
   bool _isInternalUpdate = false;
 
-  // Background color editing mode
-  double bgLightness = 0.15;  // Dark gray for bg (252525)
-  double bgChroma = 0.0;
-  double bgHue = 0.0;
+  // Slider order (for reorderable list)
+  List<String> _sliderOrder = ['lightness', 'chroma', 'hue', 'mixer'];
 
   // Converted color
   Color? currentColor;
@@ -113,10 +113,9 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
   void didUpdateWidget(ColorPickerControls oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // If external OKLCH values changed, update sliders (only in color edit mode)
+    // If external OKLCH values changed, update sliders
     // BUT skip if we're the source of the change (prevent feedback loop)
-    if (!widget.isBgEditMode &&
-        widget.externalLightness != null &&
+    if (widget.externalLightness != null &&
         widget.externalChroma != null &&
         widget.externalHue != null &&
         (widget.externalLightness != oldWidget.externalLightness ||
@@ -178,39 +177,44 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
         // Set flag to prevent feedback loop
         _isInternalUpdate = true;
 
-        // Update background color if in bg edit mode
-        if (widget.isBgEditMode) {
-          // For bg mode, send OKLCH values too
-          widget.onOklchChanged(
-            lightness: bgLightness,
-            chroma: bgChroma,
-            hue: bgHue,
-            alpha: 1.0,
-          );
-          errorMessage = '';
-          return;
-        }
-
         // Get current global OKLCH color
         final globalColor = colorFromOklch(lightness, chroma, hue);
 
         // Calculate final values
         if (sliderIsActive) {
-          // Slider is controlling: interpolate IN OKLCH SPACE (perceptually uniform!)
+          // Slider is controlling: interpolate between extremes
 
-          // Step 1: Convert extremes to OKLCH
-          final leftOklch = srgbToOklch(widget.leftExtreme.color);
-          final rightOklch = srgbToOklch(widget.rightExtreme.color);
+          if (usePigmentMixing) {
+            // Use Kubelka-Munk (Mixbox) for realistic pigment mixing
+            final mixedColor = lerpMixbox(
+              widget.leftExtreme.color,
+              widget.rightExtreme.color,
+              mixValue,
+            );
 
-          // Step 2: Interpolate each OKLCH component separately
-          lightness = _lerpDouble(leftOklch.l, rightOklch.l, mixValue);
-          chroma = _lerpDouble(leftOklch.c, rightOklch.c, mixValue);
+            // Extract OKLCH values from the mixed color
+            final mixedOklch = srgbToOklch(mixedColor);
+            lightness = mixedOklch.l;
+            chroma = mixedOklch.c;
+            hue = mixedOklch.h;
+            currentColor = mixedColor;
+          } else {
+            // Use OKLCH interpolation (perceptually uniform)
 
-          // Step 3: Interpolate hue with wraparound (shortest path around color wheel)
-          hue = _lerpHue(leftOklch.h, rightOklch.h, mixValue);
+            // Step 1: Convert extremes to OKLCH
+            final leftOklch = srgbToOklch(widget.leftExtreme.color);
+            final rightOklch = srgbToOklch(widget.rightExtreme.color);
 
-          // Step 4: Convert back to sRGB for display
-          currentColor = colorFromOklch(lightness, chroma, hue);
+            // Step 2: Interpolate each OKLCH component separately
+            lightness = _lerpDouble(leftOklch.l, rightOklch.l, mixValue);
+            chroma = _lerpDouble(leftOklch.c, rightOklch.c, mixValue);
+
+            // Step 3: Interpolate hue with wraparound (shortest path around color wheel)
+            hue = _lerpHue(leftOklch.h, rightOklch.h, mixValue);
+
+            // Step 4: Convert back to sRGB for display
+            currentColor = colorFromOklch(lightness, chroma, hue);
+          }
         } else {
           // Slider is not controlling: just display global color
           currentColor = globalColor;
@@ -250,156 +254,182 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
     });
   }
 
+  Widget _buildLightnessSlider() {
+    return OklchGradientSlider(
+      value: lightness,
+      min: 0.0,
+      max: 1.0,
+      label: 'Lightness (L)',
+      description: '',
+      step: 0.01,
+      decimalPlaces: 2,
+      onChanged: (value) {
+        setState(() {
+          lightness = value;
+          sliderIsActive = false;
+          _updateColor();
+        });
+      },
+      generateGradient: () => generateLightnessGradient(
+        chroma,
+        hue,
+        300,
+        useRealPigmentsOnly: widget.useRealPigmentsOnly,
+      ),
+      showSplitView: true,
+      onInteractionChanged: widget.onSliderInteractionChanged,
+    );
+  }
+
+  Widget _buildChromaSlider() {
+    return OklchGradientSlider(
+      value: chroma,
+      min: 0.0,
+      max: 0.4,
+      label: 'Chroma (C)',
+      description: '',
+      step: 0.01,
+      decimalPlaces: 2,
+      onChanged: (value) {
+        setState(() {
+          chroma = value;
+          sliderIsActive = false;
+          _updateColor();
+        });
+      },
+      generateGradient: () => generateChromaGradient(
+        lightness,
+        hue,
+        300,
+        useRealPigmentsOnly: widget.useRealPigmentsOnly,
+      ),
+      showSplitView: true,
+      onInteractionChanged: widget.onSliderInteractionChanged,
+    );
+  }
+
+  Widget _buildHueSlider() {
+    return OklchGradientSlider(
+      value: hue,
+      min: 0.0,
+      max: 360.0,
+      label: 'Hue (H)',
+      description: '',
+      step: 1.0,
+      decimalPlaces: 0,
+      onChanged: (value) {
+        setState(() {
+          hue = value;
+          sliderIsActive = false;
+          _updateColor();
+        });
+      },
+      generateGradient: () => generateHueGradient(
+        lightness,
+        chroma,
+        300,
+        useRealPigmentsOnly: widget.useRealPigmentsOnly,
+      ),
+      showSplitView: true,
+      onInteractionChanged: widget.onSliderInteractionChanged,
+    );
+  }
+
+  Widget _buildMixerSlider() {
+    return MixedChannelSlider(
+      value: mixValue,
+      currentColor: colorFromOklch(lightness, chroma, hue),
+      leftExtreme: widget.leftExtreme,
+      rightExtreme: widget.rightExtreme,
+      sliderIsActive: sliderIsActive,
+      usePigmentMixing: usePigmentMixing,
+      useRealPigmentsOnly: widget.useRealPigmentsOnly,
+      extremeColorFilter: widget.extremeColorFilter,
+      gradientColorFilter: widget.gradientColorFilter,
+      onChanged: (value) {
+        setState(() {
+          mixValue = value.clamp(0.0, 1.0);
+          if (sliderIsActive) {
+            _updateColor();
+          }
+        });
+      },
+      onPigmentMixingChanged: (value) {
+        setState(() {
+          usePigmentMixing = value;
+        });
+      },
+      onRealPigmentsOnlyChanged: widget.onRealPigmentsOnlyChanged,
+      onExtremeTap: widget.onExtremeTap,
+      onSliderTouchStart: _handleSliderTouchStart,
+      onSliderTouchEnd: _handleSliderTouchEnd,
+      onInteractionChanged: widget.onSliderInteractionChanged,
+    );
+  }
+
+  Widget _buildSliderByType(String type) {
+    switch (type) {
+      case 'lightness':
+        return _buildLightnessSlider();
+      case 'chroma':
+        return _buildChromaSlider();
+      case 'hue':
+        return _buildHueSlider();
+      case 'mixer':
+        return _buildMixerSlider();
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _wrapWithDragHandle(Widget slider, int index) {
+    return Stack(
+      children: [
+        slider,
+        // Long-press drag handle positioned ONLY over the title text (left side)
+        Positioned(
+          top: 12,
+          left: 13.5,
+          width: 150, // Only covers the title text area, not the buttons
+          height: 35,
+          child: ReorderableDragStartListener(
+            index: index,
+            child: Container(
+              color: Colors.transparent,
+              // This transparent container only covers the title text
+              // Long-pressing on "Lightness (L)" etc will trigger reordering
+              // Plus/minus buttons remain clickable
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return ReorderableListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      buildDefaultDragHandles: false,
+      onReorder: (oldIndex, newIndex) {
+        setState(() {
+          if (newIndex > oldIndex) {
+            newIndex -= 1;
+          }
+          final item = _sliderOrder.removeAt(oldIndex);
+          _sliderOrder.insert(newIndex, item);
+        });
+      },
       children: [
-        // Lightness slider with gradient
-        OklchGradientSlider(
-          value: widget.isBgEditMode ? bgLightness : lightness,
-          min: 0.0,
-          max: 1.0,
-          label: 'Lightness (L)',
-          description: '',
-          step: 0.01,
-          decimalPlaces: 2,
-          onChanged: (value) {
-            setState(() {
-              if (widget.isBgEditMode) {
-                bgLightness = value;
-              } else {
-                lightness = value;
-                sliderIsActive = false; // Disconnect slider
-              }
-              _updateColor();
-            });
-          },
-          generateGradient: () => widget.isBgEditMode
-              ? generateLightnessGradient(bgChroma, bgHue, 300)
-              : generateLightnessGradient(
-                  chroma,
-                  hue,
-                  300,
-                  useRealPigmentsOnly: widget.useRealPigmentsOnly,
-                ),
-          showSplitView: true,
-          onInteractionChanged: widget.onSliderInteractionChanged,
-        ),
-        
-        // Chroma slider with gradient
-        OklchGradientSlider(
-          value: widget.isBgEditMode ? bgChroma : chroma,
-          min: 0.0,
-          max: 0.4,
-          label: 'Chroma (C)',
-          description: '',
-          step: 0.01,
-          decimalPlaces: 2,
-          onChanged: (value) {
-            setState(() {
-              if (widget.isBgEditMode) {
-                bgChroma = value;
-              } else {
-                chroma = value;
-                sliderIsActive = false; // Disconnect slider
-              }
-              _updateColor();
-            });
-          },
-          generateGradient: () => widget.isBgEditMode
-              ? generateChromaGradient(bgLightness, bgHue, 300)
-              : generateChromaGradient(
-                  lightness,
-                  hue,
-                  300,
-                  useRealPigmentsOnly: widget.useRealPigmentsOnly,
-                ),
-          showSplitView: true,
-          onInteractionChanged: widget.onSliderInteractionChanged,
-        ),
-        
-        // Hue slider with gradient
-        OklchGradientSlider(
-          value: widget.isBgEditMode ? bgHue : hue,
-          min: 0.0,
-          max: 360.0,
-          label: 'Hue (H)',
-          description: '',
-          step: 1.0,
-          decimalPlaces: 0,
-          onChanged: (value) {
-            setState(() {
-              if (widget.isBgEditMode) {
-                bgHue = value;
-              } else {
-                hue = value;
-                sliderIsActive = false; // Disconnect slider
-              }
-              _updateColor();
-            });
-          },
-          generateGradient: () => widget.isBgEditMode
-              ? generateHueGradient(bgLightness, bgChroma, 300)
-              : generateHueGradient(
-                  lightness,
-                  chroma,
-                  300,
-                  useRealPigmentsOnly: widget.useRealPigmentsOnly,
-                ),
-          showSplitView: true,
-          onInteractionChanged: widget.onSliderInteractionChanged,
-        ),
-        
-        // Mixed channel slider with extreme circles (hidden in bg edit mode)
-        if (!widget.isBgEditMode)
-          MixedChannelSlider(
-            value: mixValue,
-            currentColor: colorFromOklch(lightness, chroma, hue),
-            leftExtreme: widget.leftExtreme,
-            rightExtreme: widget.rightExtreme,
-            sliderIsActive: sliderIsActive,
-            usePigmentMixing: usePigmentMixing,
-            useRealPigmentsOnly: widget.useRealPigmentsOnly,
-            onChanged: (value) {
-              setState(() {
-                mixValue = value.clamp(0.0, 1.0);
-                if (sliderIsActive) {
-                  _updateColor();
-                }
-              });
-            },
-            onPigmentMixingChanged: (value) {
-              setState(() {
-                usePigmentMixing = value;
-              });
-            },
-            onRealPigmentsOnlyChanged: widget.onRealPigmentsOnlyChanged,
-            onExtremeTap: widget.onExtremeTap,
-            onSliderTouchStart: _handleSliderTouchStart,
-            onSliderTouchEnd: _handleSliderTouchEnd,
-            onInteractionChanged: widget.onSliderInteractionChanged,
-          ),
-        
-        if (errorMessage.isNotEmpty) ...[
-          const SizedBox(height: 20),
+        for (int index = 0; index < _sliderOrder.length; index++)
           Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.amber[50],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.amber),
-            ),
-            child: Text(
-              errorMessage,
-              style: const TextStyle(
-                fontSize: 12,
-                fontFamily: 'monospace',
-              ),
+            key: ValueKey(_sliderOrder[index]),
+            child: _wrapWithDragHandle(
+              _buildSliderByType(_sliderOrder[index]),
+              index,
             ),
           ),
-        ],
-        
-        const SizedBox(height: 30),
       ],
     );
   }
