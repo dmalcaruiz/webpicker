@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../models/extreme_color_item.dart';
 import '../../utils/color_operations.dart';
 import '../../utils/mixbox.dart';
+import '../../utils/color_utils.dart'; // Import the new utility file
 import '../color_picker/mixer_extremes_row.dart';
 import 'invisible_slider.dart';
 
@@ -62,6 +63,8 @@ class MixedChannelSlider extends StatefulWidget {
   /// Takes color and OKLCH values, returns filtered color
   final Color Function(Color color, double l, double c, double h, double a)? gradientColorFilter;
 
+  final Color? bgColor;
+
   const MixedChannelSlider({
     super.key,
     required this.value,
@@ -80,6 +83,7 @@ class MixedChannelSlider extends StatefulWidget {
     this.useRealPigmentsOnly = false,
     this.extremeColorFilter,
     this.gradientColorFilter,
+    this.bgColor,
   });
   
   @override
@@ -98,20 +102,20 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
           Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Mixed Channel',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Color.fromARGB(255, 0, 0, 0),
+                    color: getTextColor(widget.bgColor ?? Colors.black),
                   ),
                 ),
                 Text(
                   widget.value.toStringAsFixed(2),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white70,
+                    color: getTextColor(widget.bgColor ?? Colors.black).withOpacity(0.7),
                   ),
                 ),
               ],
@@ -163,6 +167,7 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
             rightExtreme: widget.rightExtreme,
             onExtremeTap: widget.onExtremeTap,
             colorFilter: widget.extremeColorFilter,
+            bgColor: widget.bgColor, // Pass bgColor
           ),
 
           // Pigment mixing toggle
@@ -175,13 +180,13 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: widget.usePigmentMixing
-                    ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.15)
-                    : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.05),
+                    ? getTextColor(widget.bgColor ?? Colors.black).withOpacity(0.15)
+                    : (widget.bgColor ?? Colors.black).withOpacity(0.05),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
                   color: widget.usePigmentMixing
-                      ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.3)
-                      : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.1),
+                      ? getTextColor(widget.bgColor ?? Colors.black).withOpacity(0.3)
+                      : getTextColor(widget.bgColor ?? Colors.black).withOpacity(0.1),
                   width: 1,
                 ),
               ),
@@ -192,8 +197,8 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
                     widget.usePigmentMixing ? Icons.check_box : Icons.check_box_outline_blank,
                     size: 16,
                     color: widget.usePigmentMixing
-                        ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.9)
-                        : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.5),
+                        ? getTextColor(widget.bgColor ?? Colors.black)
+                        : getTextColor(widget.bgColor ?? Colors.black).withOpacity(0.7),
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -202,8 +207,8 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: widget.usePigmentMixing
-                          ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.9)
-                          : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.5),
+                          ? getTextColor(widget.bgColor ?? Colors.black)
+                          : getTextColor(widget.bgColor ?? Colors.black).withOpacity(0.7),
                     ),
                   ),
                 ],

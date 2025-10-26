@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../utils/color_utils.dart'; // Import the new utility file
 
 /// Widget for adjusting numeric values with +/- buttons and editable text field
 /// 
@@ -31,6 +32,9 @@ class ValueAdjuster extends StatefulWidget {
   /// Callback when interaction with adjuster starts/ends (for sheet dragging prevention)
   final Function(bool)? onInteractionChanged;
   
+  /// Background color for the adjuster
+  final Color? bgColor;
+  
   /// Constructor
   const ValueAdjuster({
     super.key,
@@ -41,6 +45,7 @@ class ValueAdjuster extends StatefulWidget {
     required this.decimalPlaces,
     required this.onChanged,
     this.onInteractionChanged,
+    this.bgColor,
   });
   
   @override
@@ -115,13 +120,13 @@ class _ValueAdjusterState extends State<ValueAdjuster> {
           Container(
             height: 36,
             decoration: BoxDecoration(
-              color: Colors.black,
+              color: getTextColor(widget.bgColor ?? Colors.black).withOpacity(0.15), // Use bgColor for button background
               borderRadius: BorderRadius.circular(4),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildButton(icon: Icons.remove),
+                _buildButton(icon: Icons.remove, bgColor: widget.bgColor), // Pass bgColor
                 
                 SizedBox(
                   width: 80,
@@ -131,8 +136,8 @@ class _ValueAdjusterState extends State<ValueAdjuster> {
                       controller: _controller,
                       focusNode: _focusNode,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: getTextColor(widget.bgColor ?? Colors.black),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         height: 1.0,
@@ -155,7 +160,7 @@ class _ValueAdjusterState extends State<ValueAdjuster> {
                   ),
                 ),
                 
-                _buildButton(icon: Icons.add),
+                _buildButton(icon: Icons.add, bgColor: widget.bgColor), // Pass bgColor
               ],
             ),
           ),
@@ -239,12 +244,12 @@ class _ValueAdjusterState extends State<ValueAdjuster> {
   }
   
   /// Build button widget (visual only)
-  Widget _buildButton({required IconData icon}) {
+  Widget _buildButton({required IconData icon, Color? bgColor}) {
     return SizedBox(
       width: 36,
       height: 36,
       child: Center(
-        child: Icon(icon, color: Colors.white, size: 18),
+        child: Icon(icon, color: getTextColor(bgColor ?? Colors.black), size: 18),
       ),
     );
   }

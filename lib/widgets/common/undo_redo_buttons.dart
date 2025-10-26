@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/undo_redo_manager.dart';
+import '../../utils/color_utils.dart'; // Import the new utility file
 
 /// Undo/Redo buttons with keyboard shortcuts
 class UndoRedoButtons extends StatelessWidget {
@@ -13,11 +14,14 @@ class UndoRedoButtons extends StatelessWidget {
   /// Callback when redo is triggered
   final VoidCallback onRedo;
   
+  final Color? bgColor;
+  
   const UndoRedoButtons({
     super.key,
     required this.undoRedoManager,
     required this.onUndo,
     required this.onRedo,
+    this.bgColor,
   });
   
   @override
@@ -64,6 +68,9 @@ class UndoRedoButtons extends StatelessWidget {
     required VoidCallback onPressed,
     required String shortcut,
   }) {
+    Color effectiveBgColor = bgColor ?? Colors.transparent;
+    Color textColor = getTextColor(effectiveBgColor);
+
     return Tooltip(
       message: '$tooltip\n$shortcut',
       child: Material(
@@ -72,23 +79,28 @@ class UndoRedoButtons extends StatelessWidget {
           onTap: isEnabled ? onPressed : null,
           borderRadius: BorderRadius.circular(8),
           child: Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(8), // Adjusted padding
             decoration: BoxDecoration(
               color: isEnabled 
-                  ? Colors.black.withValues(alpha: 0.15)
-                  : Colors.black.withValues(alpha: 0.05),
+                  ? effectiveBgColor.withOpacity(0.15)
+                  : effectiveBgColor.withOpacity(0.05),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isEnabled 
-                    ? Colors.black.withValues(alpha: 0.3)
-                    : Colors.black.withValues(alpha: 0.1),
+                    ? effectiveBgColor.withOpacity(0.3)
+                    : effectiveBgColor.withOpacity(0.1),
                 width: 1,
               ),
             ),
-            child: Icon(
-              icon,
-              color: isEnabled ? Colors.black : Colors.black.withValues(alpha: 0.3),
-              size: 20,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  color: isEnabled ? textColor : textColor.withOpacity(0.3),
+                  size: 20,
+                ),
+              ],
             ),
           ),
         ),

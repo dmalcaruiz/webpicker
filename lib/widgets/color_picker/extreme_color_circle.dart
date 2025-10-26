@@ -20,12 +20,15 @@ class ExtremeColorCircle extends StatelessWidget {
   /// Optional color filter for ICC profile display
   final Color Function(ExtremeColorItem)? colorFilter;
 
+  final Color? bgColor;
+
   const ExtremeColorCircle({
     super.key,
     required this.extreme,
     this.onTap,
     this.size = 44.0,
     this.colorFilter,
+    this.bgColor,
   });
 
   @override
@@ -43,14 +46,14 @@ class ExtremeColorCircle extends StatelessWidget {
           shape: BoxShape.circle,
           border: Border.all(
             color: extreme.isSelected
-                ? Colors.white.withValues(alpha: 0.9)
-                : Colors.white.withValues(alpha: 0.3),
+                ? (bgColor ?? Colors.white).computeLuminance() > 0.5 ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9)
+                : (bgColor ?? Colors.white).computeLuminance() > 0.5 ? Colors.black.withOpacity(0.3) : Colors.white.withOpacity(0.3),
             width: extreme.isSelected ? 3 : 2,
           ),
           boxShadow: extreme.isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
+                    color: Colors.black.withOpacity(0.2),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),

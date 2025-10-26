@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../cyclop_eyedropper/eyedropper_button.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
 import '../../services/clipboard_service.dart';
 import '../../cyclop_eyedropper/eye_dropper_layer.dart';
+import '../../utils/color_utils.dart'; // Import the new utility file
 
 /// Global action buttons for copy, paste, and eyedropper
 ///
@@ -24,12 +26,15 @@ class GlobalActionButtons extends StatefulWidget {
   /// If provided, this transforms the color before copying to clipboard
   final Color Function(Color)? colorFilter;
 
+  final Color? bgColor;
+
   const GlobalActionButtons({
     super.key,
     required this.currentColor,
     required this.onColorSelected,
     this.onCopy,
     this.colorFilter,
+    this.bgColor,
   });
   
   @override
@@ -159,18 +164,6 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
     }
   }
 
-  /// Determines if a color is light enough to warrant dark text/icons.
-  /// This is a simplified check based on perceived lightness (luminance).
-  bool _isLightColor(Color color) {
-    // Calculate luminance (perceived lightness) using a common formula
-    final double luminance = (0.299 * color.red + 0.587 * color.green + 0.114 * color.blue) / 255;
-    return luminance > 0.5; // Adjust threshold as needed
-  }
-
-  Color _getTextColor(Color backgroundColor) {
-    return _isLightColor(backgroundColor) ? Colors.black : Colors.white;
-  }
-
   @override
   Widget build(BuildContext context) {
     // Apply filter to preview color if provided
@@ -193,6 +186,7 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
                 ? 'Copy ${ClipboardService.colorToHex(displayColor)}'
                 : 'No color to copy',
             onPanStart: widget.currentColor != null ? (details) => _startEyedropper() : null,
+            parentBgColor: widget.bgColor, // Pass bgColor
           ),
           
           const SizedBox(width: 12),
@@ -207,6 +201,7 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
                 ? 'Paste ${ClipboardService.colorToHex(_clipboardColor!)}'
                 : 'No color in clipboard',
             onTap: _checkClipboard, // Check clipboard on tap if disabled
+            parentBgColor: widget.bgColor, // Pass bgColor
           ),
         ],
       ),
@@ -222,21 +217,24 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
     String? tooltip,
     VoidCallback? onTap,
     GestureDragStartCallback? onPanStart,
+    Color? parentBgColor, // Add this
   }) {
     final isEnabled = onPressed != null;
     
-    Color buttonBgColor = const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.15); // Default enabled color
-    Color buttonBorderColor = const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.3);
-    Color textColor = Colors.black; // Default text color
+    Color effectiveBgColor = parentBgColor ?? Colors.transparent; // Use parentBgColor if available
+
+    Color buttonBgColor = effectiveBgColor.withOpacity(0.15); // Default enabled color based on parentBgColor
+    Color buttonBorderColor = effectiveBgColor.withOpacity(0.3);
+    Color textColor = getTextColor(effectiveBgColor); // Default text color based on parentBgColor
 
     if (previewColor != null && isEnabled) {
       buttonBgColor = previewColor;
       buttonBorderColor = previewColor.withOpacity(0.8); // Slightly different for border
-      textColor = _getTextColor(previewColor);
+      textColor = getTextColor(previewColor);
     } else if (!isEnabled) {
-      buttonBgColor = const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.05); // Disabled color
-      buttonBorderColor = const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.1);
-      textColor = Colors.black.withValues(alpha: 0.3); // Disabled text color
+      buttonBgColor = effectiveBgColor.withOpacity(0.05); // Disabled color
+      buttonBorderColor = effectiveBgColor.withOpacity(0.1);
+      textColor = getTextColor(effectiveBgColor).withOpacity(0.3); // Disabled text color
     }
 
     return Tooltip(
@@ -278,21 +276,6 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  /// Build eyedropper button with Cyclop integration
-  Widget _buildEyedropperButton() {
-    return Tooltip(
-      message: 'Pick color from screen',
-      child: EyedropperButton(
-        onColor: (color) {_handleEyedropper(color);},
-        icon: Icons.colorize,
-        iconColor: Colors.black,
-        backgroundColor: Colors.white.withOpacity(0.9), // Consistent with other buttons
-        borderColor: Colors.black.withOpacity(0.3),     // Consistent with other buttons
-        foregroundColor: Colors.black,                   // Consistent with other buttons
       ),
     );
   }

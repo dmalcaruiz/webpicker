@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../../utils/color_operations.dart';
+import '../../utils/color_utils.dart'; // Import the new utility file
 import '../common/gradient_painter.dart';
 import '../common/plus_minus_adjuster_buttons.dart';
 import '../sliders/invisible_slider.dart';
@@ -69,7 +70,10 @@ class OklchGradientSlider extends StatefulWidget {
     this.samples = 300,
     this.onInteractionChanged,
     this.useRealPigmentsOnly = false,
+    this.bgColor,
   });
+
+  final Color? bgColor;
   
   @override
   State<OklchGradientSlider> createState() => _OklchGradientSliderState();
@@ -92,10 +96,10 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
               children: [
                 Text(
                   widget.label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Color.fromARGB(255, 0, 0, 0),
+                    color: getTextColor(widget.bgColor ?? Colors.black),
                   ),
                 ),
                 ValueAdjuster(
@@ -106,6 +110,7 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
                   decimalPlaces: widget.decimalPlaces,
                   onChanged: widget.onChanged,
                   onInteractionChanged: widget.onInteractionChanged,
+                  bgColor: widget.bgColor, // Pass bgColor to ValueAdjuster
                 ),
               ],
           ),
@@ -116,9 +121,9 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
               padding: const EdgeInsets.symmetric(vertical: 4.0),
               child: Text(
                 widget.description,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Color.fromARGB(137, 0, 0, 0),
+                  color: getTextColor(widget.bgColor ?? Colors.black).withOpacity(0.7),
                 ),
               ),
             ),

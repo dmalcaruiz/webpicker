@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/color_utils.dart'; // Import the new utility file
 
 /// Sheet grabbing handle widget with pin functionality and chips
 class SheetGrabbingHandle extends StatelessWidget {
@@ -7,20 +8,23 @@ class SheetGrabbingHandle extends StatelessWidget {
   
   /// Callback when a chip is toggled
   final Function(int index) onChipToggle;
+
+  final Color? bgColor;
   
   const SheetGrabbingHandle({
     super.key,
     required this.chipStates,
     required this.onChipToggle,
+    this.bgColor,
   });
   
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        boxShadow: [
+      decoration: BoxDecoration(
+        color: bgColor ?? Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        boxShadow: const [
           BoxShadow(
             color: Colors.black26,
             blurRadius: 12,
@@ -37,7 +41,7 @@ class SheetGrabbingHandle extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.shade400,
+              color: getTextColor(bgColor ?? Colors.white).withOpacity(0.4),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -51,21 +55,26 @@ class SheetGrabbingHandle extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () => onChipToggle(index),
                   child: Container(
-                    width: 32,
-                    height: 24,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), // Added padding
                     decoration: BoxDecoration(
-                      color: chipStates[index] ? Colors.black : Colors.grey.shade300,
+                      color: chipStates[index]
+                          ? getTextColor(bgColor ?? Colors.white)
+                          : (bgColor ?? Colors.white).withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: chipStates[index] ? Colors.black : Colors.grey.shade400,
+                        color: chipStates[index]
+                            ? getTextColor(bgColor ?? Colors.white)
+                            : getTextColor(bgColor ?? Colors.white).withOpacity(0.3),
                         width: 1,
                       ),
                     ),
                     child: Center(
                       child: Text(
-                        '${index + 1}',
+                        chipStates[index] ? ['My Picks', 'CHL', 'HSB', 'CMYK'][index] : ['My Picks', 'CHL', 'HSB', 'CMYK'][index],
                         style: TextStyle(
-                          color: chipStates[index] ? Colors.white : Colors.grey.shade600,
+                          color: chipStates[index]
+                              ? (getTextColor(bgColor ?? Colors.white) == Colors.black ? Colors.white : Colors.black)
+                              : getTextColor(bgColor ?? Colors.white).withOpacity(0.7),
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),

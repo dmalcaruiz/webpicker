@@ -33,6 +33,8 @@ class ActionButtonsRow extends StatelessWidget {
   /// Optional color filter to apply before copying (e.g., ICC profile filter)
   final Color Function(Color)? colorFilter;
 
+  final Color? bgColor;
+
   const ActionButtonsRow({
     super.key,
     required this.currentColor,
@@ -44,6 +46,7 @@ class ActionButtonsRow extends StatelessWidget {
     required this.onUndo,
     required this.onRedo,
     this.colorFilter,
+    this.bgColor,
   });
   
   @override
@@ -61,20 +64,22 @@ class ActionButtonsRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        // Undo/Redo buttons
+        UndoRedoButtons(
+          undoRedoManager: undoRedoManager,
+          onUndo: onUndo,
+          onRedo: onRedo,
+          bgColor: bgColor,
+        ),
+        
         // Copy/Paste/Eyedropper buttons
         Expanded(
           child: GlobalActionButtons(
             currentColor: colorToUse,
             onColorSelected: onColorSelected,
             colorFilter: colorFilter,
+            bgColor: bgColor,
           ),
-        ),
-
-        // Undo/Redo buttons
-        UndoRedoButtons(
-          undoRedoManager: undoRedoManager,
-          onUndo: onUndo,
-          onRedo: onRedo,
         ),
       ],
     );

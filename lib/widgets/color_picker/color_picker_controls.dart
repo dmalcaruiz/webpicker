@@ -42,6 +42,8 @@ class ColorPickerControls extends StatefulWidget {
   /// Optional color filter for gradient colors (ICC profile display)
   final Color Function(Color color, double l, double c, double h, double a)? gradientColorFilter;
 
+  final Color? bgColor;
+
   const ColorPickerControls({
     super.key,
     required this.onOklchChanged,
@@ -57,6 +59,7 @@ class ColorPickerControls extends StatefulWidget {
     this.useRealPigmentsOnly = false,
     this.extremeColorFilter,
     this.gradientColorFilter,
+    this.bgColor,
   });
 
   @override
@@ -274,6 +277,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
       ),
       showSplitView: true,
       onInteractionChanged: widget.onSliderInteractionChanged,
+      bgColor: widget.bgColor, // Pass bgColor
     );
   }
 
@@ -301,6 +305,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
       ),
       showSplitView: true,
       onInteractionChanged: widget.onSliderInteractionChanged,
+      bgColor: widget.bgColor, // Pass bgColor
     );
   }
 
@@ -328,6 +333,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
       ),
       showSplitView: true,
       onInteractionChanged: widget.onSliderInteractionChanged,
+      bgColor: widget.bgColor, // Pass bgColor
     );
   }
 
@@ -359,6 +365,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
       onSliderTouchStart: _handleSliderTouchStart,
       onSliderTouchEnd: _handleSliderTouchEnd,
       onInteractionChanged: widget.onSliderInteractionChanged,
+      bgColor: widget.bgColor, // Pass bgColor
     );
   }
 

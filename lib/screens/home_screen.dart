@@ -13,6 +13,7 @@ import '../services/undo_redo_manager.dart';
 import '../services/palette_manager.dart';
 import '../utils/color_operations.dart';
 import '../utils/icc_color_manager.dart';
+import '../utils/color_utils.dart'; // Import the new utility file
 import 'menu_screen.dart'; // Import the new MenuScreen
 
 /// Color Picker Home Screen
@@ -87,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isInteractingWithSlider = false;
   
   /// Track selected chips (placeholder feature)
-  final List<bool> _selectedChips = [false, false, false, false];
+  final List<bool> _selectedChips = [false, true, false, false];
 
   /// Current height of the snapping sheet
   double _currentSheetHeight = 0.0;
@@ -779,6 +780,7 @@ class _HomeScreenState extends State<HomeScreen> {
               grabbing: SheetGrabbingHandle(
                 chipStates: _selectedChips,
                 onChipToggle: (index) => setState(() => _selectedChips[index] = !_selectedChips[index]),
+                bgColor: bgColor, // Pass bgColor
               ),
             
               //---------------------------------------------------------------------------------------------------------------------
@@ -791,7 +793,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Color picker controls
                     Expanded(
                       child: Container(
-                      color: Colors.white,
+                      color: bgColor ?? Colors.white, // Use bgColor for the sheet content
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                       child: ColorPickerControls(
                         // Pass OKLCH values directly (no conversion!)
@@ -824,6 +826,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         onSliderInteractionChanged: (interacting) =>
                             setState(() => _isInteractingWithSlider = interacting),
                         useRealPigmentsOnly: _useRealPigmentsOnly,
+                        bgColor: bgColor, // Pass bgColor
                       ),
                       ),
                     ),
@@ -864,15 +867,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                             ? Colors.blue.shade700.withOpacity(0.9) // Selected color
                                             : Colors.grey.shade200, // Unselected color
                                         borderRadius: BorderRadius.circular(10),
-                                        boxShadow: _useRealPigmentsOnly
-                                            ? [ // Shadow when selected
-                                                BoxShadow(
-                                                  color: Colors.blue.shade700.withOpacity(0.4),
-                                                  blurRadius: 10,
-                                                  offset: const Offset(0, 4),
-                                                ),
-                                              ]
-                                            : null,
                                       ),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
@@ -945,7 +939,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             IconButton(
                               icon: Icon(
                                 Icons.star_border,
-                                color: (bgColor ?? const Color(0xFF252525)).computeLuminance() > 0.5 ? Colors.black : Colors.white,
+                                color: getTextColor(bgColor ?? const Color(0xFF252525)),
                               ),
                               onPressed: () {
                                 // TODO: Implement star functionality
@@ -953,7 +947,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             Text('Palletator',
                               style: TextStyle(
-                                color: (bgColor ?? const Color(0xFF252525)).computeLuminance() > 0.5 ? Colors.black : Colors.white,
+                                color: getTextColor(bgColor ?? const Color(0xFF252525)),
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -963,7 +957,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: IconButton(
                                 icon: Icon(
                                   Icons.menu,
-                                  color: (bgColor ?? const Color(0xFF252525)).computeLuminance() > 0.5 ? Colors.black : Colors.white,
+                                  color: getTextColor(bgColor ?? const Color(0xFF252525)), // Apply color logic
                                 ),
                                 onPressed: () {
                                   Navigator.push(context, PageRouteBuilder(
@@ -1012,13 +1006,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: Colors.white.withOpacity(0.4),
                                 width: 2,
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.3),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -1058,8 +1045,8 @@ class _HomeScreenState extends State<HomeScreen> {
               right: 20,
               child: 
                           Container(
-                            color: Colors.white,
-                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                            color: bgColor ?? Colors.white, // Use bgColor for the action bar
+                            padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
                             child: Row(
                               children: [
                                 // Background color button (acts like a palette box)
@@ -1068,7 +1055,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: Container(
                                     width: 48,
                                     height: 48,
-                                    margin: const EdgeInsets.only(right: 12),
                                     decoration: BoxDecoration(
                                       color: applyIccFilter(
                                         bgColor ?? const Color(0xFF252525),
@@ -1080,23 +1066,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: _isBgColorSelected
-                                            ? const Color.fromARGB(255, 255, 255, 255).withOpacity(0.9)
-                                            : const Color.fromARGB(255, 255, 255, 255).withOpacity(0.3),
+                                            ? getTextColor(bgColor ?? Colors.white).withOpacity(0.9)
+                                            : getTextColor(bgColor ?? Colors.white).withOpacity(0.3),
                                         width: _isBgColorSelected ? 3 : 2,
                                       ),
-                                      boxShadow: _isBgColorSelected
-                                          ? [
-                                              BoxShadow(
-                                                color: Colors.black.withOpacity(0.3),
-                                                blurRadius: 8,
-                                                offset: const Offset(0, 4),
-                                              ),
-                                            ]
-                                          : null,
                                     ),
                                     child: Icon(
                                       Icons.format_paint,
-                                      color: const Color.fromARGB(255, 255, 255, 255).withOpacity(_isBgColorSelected ? 0.9 : 0.7),
+                                      color: getTextColor(bgColor ?? Colors.white).withOpacity(_isBgColorSelected ? 0.9 : 0.7),
                                       size: 24,
                                     ),
                                   ),
@@ -1114,6 +1091,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     onUndo: _handleUndo,
                                     onRedo: _handleRedo,
                                     colorFilter: (color) => applyIccFilter(color),
+                                    bgColor: bgColor, // Pass bgColor to ActionButtonsRow
                                   ),
                                 ),
                               ],
