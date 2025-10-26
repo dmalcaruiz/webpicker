@@ -4,7 +4,7 @@ import '../common/undo_redo_buttons.dart';
 import '../../services/undo_redo_manager.dart';
 import '../../models/extreme_color_item.dart';
 
-/// Row containing global action buttons and undo/redo controls
+/// Row containing global copy, paste and undo/redo controls
 class ActionButtonsRow extends StatelessWidget {
   /// Current color for copy/paste operations
   final Color? currentColor;

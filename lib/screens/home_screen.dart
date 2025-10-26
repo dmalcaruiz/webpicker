@@ -732,30 +732,41 @@ class _HomeScreenState extends State<HomeScreen> {
               // Snapping Sheet Properties
               controller: snappingSheetController,
               lockOverflowDrag: true,
+              // Snapping Sheet Positions
               snappingPositions: const [
                 SnappingPosition.pixels(
-                  positionPixels: 0,
+                  positionPixels: 60,
                   snappingCurve: Curves.easeOutExpo,
                   snappingDuration: Duration(milliseconds: 900),
                   grabbingContentOffset: GrabbingContentOffset.top,
                 ),
                 SnappingPosition.pixels(
-                  positionPixels: 200,
+                  positionPixels: 220,
                   snappingCurve: Curves.easeOutExpo,
                   snappingDuration: Duration(milliseconds: 900),
                 ),
-                  SnappingPosition.pixels(
-                  positionPixels: 400,
+                SnappingPosition.pixels(
+                  positionPixels: 370,
                   snappingCurve: Curves.easeOutExpo,
                   snappingDuration: Duration(milliseconds: 900),
                   grabbingContentOffset: GrabbingContentOffset.bottom,
+                ),
+                SnappingPosition.pixels(
+                  positionPixels: 440,
+                  snappingCurve: Curves.easeOutExpo,
+                  snappingDuration: Duration(milliseconds: 900),
+                ),
+                SnappingPosition.pixels(
+                  positionPixels: 700,
+                  snappingCurve: Curves.easeOutExpo,
+                  snappingDuration: Duration(milliseconds: 900),
                 ),
               ],
 
               //---------------------------------------------------------------------------------------------------------------------
               // Grabbing handle Content
               //---------------------------------------------------------------------------------------------------------------------
-              grabbingHeight: 120,
+              grabbingHeight: 80,
               grabbing: SheetGrabbingHandle(
                 chipStates: _selectedChips,
                 onChipToggle: (index) => setState(() => _selectedChips[index] = !_selectedChips[index]),
@@ -772,7 +783,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       child: Container(
                       color: Colors.white,
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                       child: ColorPickerControls(
                         // Pass OKLCH values directly (no conversion!)
                         externalLightness: currentLightness,
@@ -828,16 +839,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
-                          // Color preview (with ICC filter if enabled)
-                          ColorPreviewBox(
-                            color: applyIccFilter(
-                              currentColor ?? Colors.grey,
-                              lightness: currentLightness,
-                              chroma: currentChroma,
-                              hue: currentHue,
-                              alpha: currentAlpha,
-                            ),
-                          ),
 
                           const SizedBox(height: 30),
                           
@@ -868,6 +869,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           
                           const SizedBox(height: 20),
+
+                          // Color preview (with ICC filter if enabled)
+                          ColorPreviewBox(
+                            color: applyIccFilter(
+                              currentColor ?? Colors.grey,
+                              lightness: currentLightness,
+                              chroma: currentChroma,
+                              hue: currentHue,
+                              alpha: currentAlpha,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -935,67 +947,71 @@ class _HomeScreenState extends State<HomeScreen> {
             // Floating Action Button Stack)
             //---------------------------------------------------------------------------------------------------------------------
             Positioned(
-              bottom: 20,
+              bottom: 0,
               left: 20,
               right: 20,
               child: 
-                          Row(
-                            children: [
-                              // Background color button (acts like a palette box)
-                              GestureDetector(
-                                onTap: _onBgColorBoxTap,
-                                child: Container(
-                                  width: 48,
-                                  height: 48,
-                                  margin: const EdgeInsets.only(right: 12),
-                                  decoration: BoxDecoration(
-                                    color: applyIccFilter(
-                                      bgColor ?? const Color(0xFF252525),
-                                      lightness: _bgLightness,
-                                      chroma: _bgChroma,
-                                      hue: _bgHue,
-                                      alpha: _bgAlpha,
+                          Container(
+                            color: Colors.white,
+                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                            child: Row(
+                              children: [
+                                // Background color button (acts like a palette box)
+                                GestureDetector(
+                                  onTap: _onBgColorBoxTap,
+                                  child: Container(
+                                    width: 48,
+                                    height: 48,
+                                    margin: const EdgeInsets.only(right: 12),
+                                    decoration: BoxDecoration(
+                                      color: applyIccFilter(
+                                        bgColor ?? const Color(0xFF252525),
+                                        lightness: _bgLightness,
+                                        chroma: _bgChroma,
+                                        hue: _bgHue,
+                                        alpha: _bgAlpha,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: _isBgColorSelected
+                                            ? const Color.fromARGB(255, 255, 255, 255).withOpacity(0.9)
+                                            : const Color.fromARGB(255, 255, 255, 255).withOpacity(0.3),
+                                        width: _isBgColorSelected ? 3 : 2,
+                                      ),
+                                      boxShadow: _isBgColorSelected
+                                          ? [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(0.3),
+                                                blurRadius: 8,
+                                                offset: const Offset(0, 4),
+                                              ),
+                                            ]
+                                          : null,
                                     ),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: _isBgColorSelected
-                                          ? const Color.fromARGB(255, 255, 255, 255).withOpacity(0.9)
-                                          : const Color.fromARGB(255, 255, 255, 255).withOpacity(0.3),
-                                      width: _isBgColorSelected ? 3 : 2,
+                                    child: Icon(
+                                      Icons.format_paint,
+                                      color: const Color.fromARGB(255, 255, 255, 255).withOpacity(_isBgColorSelected ? 0.9 : 0.7),
+                                      size: 24,
                                     ),
-                                    boxShadow: _isBgColorSelected
-                                        ? [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(0.3),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 4),
-                                            ),
-                                          ]
-                                        : null,
-                                  ),
-                                  child: Icon(
-                                    Icons.format_paint,
-                                    color: const Color.fromARGB(255, 255, 255, 255).withOpacity(_isBgColorSelected ? 0.9 : 0.7),
-                                    size: 24,
                                   ),
                                 ),
-                              ),
-                              
-                              // Other action buttons
-                              Expanded(
-                                child: ActionButtonsRow(
-                                  currentColor: currentColor,
-                                  selectedExtremeId: _selectedExtremeId,
-                                  leftExtreme: _leftExtreme,
-                                  rightExtreme: _rightExtreme,
-                                  onColorSelected: _handleColorSelection,
-                                  undoRedoManager: _undoRedoManager,
-                                  onUndo: _handleUndo,
-                                  onRedo: _handleRedo,
-                                  colorFilter: (color) => applyIccFilter(color),
+                                
+                                // Other action buttons
+                                Expanded(
+                                  child: ActionButtonsRow(
+                                    currentColor: currentColor,
+                                    selectedExtremeId: _selectedExtremeId,
+                                    leftExtreme: _leftExtreme,
+                                    rightExtreme: _rightExtreme,
+                                    onColorSelected: _handleColorSelection,
+                                    undoRedoManager: _undoRedoManager,
+                                    onUndo: _handleUndo,
+                                    onRedo: _handleRedo,
+                                    colorFilter: (color) => applyIccFilter(color),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
             ),
           ],
