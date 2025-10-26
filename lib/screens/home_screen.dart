@@ -88,6 +88,9 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Track selected chips (placeholder feature)
   final List<bool> _selectedChips = [false, false, false, false];
 
+  /// Current height of the snapping sheet
+  double _currentSheetHeight = 0.0;
+
   /// Whether to constrain colors to real pigment gamut (ICC profile)
   /// This is a DISPLAY FILTER - doesn't modify stored OKLCH values
   bool _useRealPigmentsOnly = false;
@@ -762,6 +765,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
 
+              onSheetMoved: (positionData) {
+                setState(() {
+                  _currentSheetHeight = positionData.pixels;
+                });
+              },
+
               //---------------------------------------------------------------------------------------------------------------------
               // Grabbing handle Content
               //---------------------------------------------------------------------------------------------------------------------
@@ -833,85 +842,91 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Stack(
                   children: [
                     // Main content (behind the delete zone)
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 100),
-                                                    // Only Real Pigments toggle (ICC profile filter)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 20.0),
-                            child: GestureDetector(
-                              onTap: () {
-                                _onRealPigmentsOnlyChanged(!_useRealPigmentsOnly);
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                decoration: BoxDecoration(
-                                  color: _useRealPigmentsOnly
-                                      ? Colors.blue.shade700.withOpacity(0.9) // Selected color
-                                      : Colors.grey.shade200, // Unselected color
-                                  borderRadius: BorderRadius.circular(10),
-                                  boxShadow: _useRealPigmentsOnly
-                                      ? [ // Shadow when selected
-                                          BoxShadow(
-                                            color: Colors.blue.shade700.withOpacity(0.4),
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 4),
+                    Column(
+                      children: [
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 60),
+                                // Only Real Pigments toggle (ICC profile filter)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 0.0),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      _onRealPigmentsOnlyChanged(!_useRealPigmentsOnly);
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      decoration: BoxDecoration(
+                                        color: _useRealPigmentsOnly
+                                            ? Colors.blue.shade700.withOpacity(0.9) // Selected color
+                                            : Colors.grey.shade200, // Unselected color
+                                        borderRadius: BorderRadius.circular(10),
+                                        boxShadow: _useRealPigmentsOnly
+                                            ? [ // Shadow when selected
+                                                BoxShadow(
+                                                  color: Colors.blue.shade700.withOpacity(0.4),
+                                                  blurRadius: 10,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                              ]
+                                            : null,
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            _useRealPigmentsOnly ? Icons.check_circle : Icons.circle_outlined,
+                                            size: 20,
+                                            color: _useRealPigmentsOnly ? Colors.white : Colors.grey.shade700,
                                           ),
-                                        ]
-                                      : null,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      _useRealPigmentsOnly ? Icons.check_circle : Icons.circle_outlined,
-                                      size: 20,
-                                      color: _useRealPigmentsOnly ? Colors.white : Colors.grey.shade700,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      'Only Real Pigments',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        color: _useRealPigmentsOnly ? Colors.white : Colors.grey.shade800,
+                                          const SizedBox(width: 10),
+                                          Text(
+                                            'Only Real Pigments',
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                              color: _useRealPigmentsOnly ? Colors.white : Colors.grey.shade800,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ),
+                                // Color palette grid
+                                ReorderableColorGridView(
+                                  items: _colorPalette,
+                                  onReorder: _onPaletteReorder,
+                                  onItemTap: _onPaletteItemTap,
+                                  onItemLongPress: _onPaletteItemLongPress,
+                                  onItemDelete: _onPaletteItemDelete,
+                                  onAddColor: _onAddColor,
+                                  onDragStarted: _onDragStarted,
+                                  onDragEnded: _onDragEnded,
+                                  crossAxisCount: 4,
+                                  spacing: 12.0,
+                                  itemSize: 80.0,
+                                  showAddButton: true,
+                                  emptyStateMessage: 'No colors in palette\nCreate a color above and tap + to add it',
+                                  colorFilter: (item) => applyIccFilter(
+                                    item.color,
+                                    lightness: item.oklchValues.lightness,
+                                    chroma: item.oklchValues.chroma,
+                                    hue: item.oklchValues.hue,
+                                    alpha: item.oklchValues.alpha,
+                                  ),
+                                ),
+                                SizedBox(height: _currentSheetHeight),
+                              ],
                             ),
                           ),
-                          // Color palette grid
-                          Expanded(
-                            child: ReorderableColorGridView(
-                              items: _colorPalette,
-                              onReorder: _onPaletteReorder,
-                              onItemTap: _onPaletteItemTap,
-                              onItemLongPress: _onPaletteItemLongPress,
-                              onItemDelete: _onPaletteItemDelete,
-                              onAddColor: _onAddColor,
-                              onDragStarted: _onDragStarted,
-                              onDragEnded: _onDragEnded,
-                              crossAxisCount: 4,
-                              spacing: 12.0,
-                              itemSize: 80.0,
-                              showAddButton: true,
-                              emptyStateMessage: 'No colors in palette\nCreate a color above and tap + to add it',
-                              colorFilter: (item) => applyIccFilter(
-                                item.color,
-                                lightness: item.oklchValues.lightness,
-                                chroma: item.oklchValues.chroma,
-                                hue: item.oklchValues.hue,
-                                alpha: item.oklchValues.alpha,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 80),
+                      ],
                     ),
+
 
                     // Drag-to-delete zone (overlays on top)
                     Positioned(
