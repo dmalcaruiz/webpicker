@@ -77,13 +77,13 @@ class ColorItemWidget extends StatelessWidget {
               color: item.isSelected 
                   ? Colors.white 
                   : Colors.white.withValues(alpha: 0.3),
-              width: item.isSelected ? 3 : 1,
+              width: item.isSelected ? 2 : 0,
             ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: isDragging ? 8 : 4,
-                offset: Offset(0, isDragging ? 4 : 2),
+                blurRadius: isDragging ? 8 : 0,
+                offset: Offset(0, isDragging ? 4 : 0),
               ),
             ],
           ),

@@ -839,6 +839,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
+                          const SizedBox(height: 100),
                           // Color palette grid
                           Expanded(
                             child: ReorderableColorGridView(
