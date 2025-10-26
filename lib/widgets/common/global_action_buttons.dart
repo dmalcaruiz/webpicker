@@ -208,11 +208,6 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
                 : 'No color in clipboard',
             onTap: _checkClipboard, // Check clipboard on tap if disabled
           ),
-          
-          const SizedBox(width: 12),
-          
-          // Eyedropper button
-          _buildEyedropperButton(),
         ],
       ),
     );
