@@ -15,6 +15,8 @@ import '../utils/color_operations.dart';
 import '../utils/icc_color_manager.dart';
 import '../utils/color_utils.dart'; // Import the new utility file
 import 'menu_screen.dart'; // Import the new MenuScreen
+import '../cyclop_eyedropper/eye_dropper_layer.dart'; // Add this line
+import '../services/clipboard_service.dart'; // Add this line
 
 /// Color Picker Home Screen
 /// 
@@ -521,10 +523,6 @@ class _HomeScreenState extends State<HomeScreen> {
         );
         _saveStateToHistory('Added new color to palette');
       });
-      
-      _showSnackBar('Color added to palette');
-    } else {
-      _showSnackBar('Please create a color first', isError: true);
     }
   }
   
@@ -586,7 +584,6 @@ class _HomeScreenState extends State<HomeScreen> {
         itemId: itemToDelete.id,
       );
       _saveStateToHistory('Deleted ${itemToDelete.name ?? "color"} via drag');
-      _showSnackBar('Color deleted');
     }
   }
   
@@ -614,7 +611,99 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     _undoRedoManager.pushState(snapshot);
   }
-  
+
+  // New method for eyedropper logic for background color
+  void _startEyedropperForBgColor(DragStartDetails details) {
+    try {
+      Future.delayed(
+        const Duration(milliseconds: 50),
+        () => EyeDrop.of(context).capture(context, (color) {
+          _onOklchChanged(
+            lightness: srgbToOklch(color).l,
+            chroma: srgbToOklch(color).c,
+            hue: srgbToOklch(color).h,
+            alpha: srgbToOklch(color).alpha,
+          );
+          // Update the background color directly after eyedropper selection
+          setState(() {
+            final oklchColor = srgbToOklch(color);
+            bgColor = color;
+            _bgLightness = oklchColor.l;
+            _bgChroma = oklchColor.c;
+            _bgHue = oklchColor.h;
+            _bgAlpha = oklchColor.alpha;
+            _isBgColorSelected = true; // Select bg color when picked
+            _saveStateToHistory('Eyedropper picked color for background');
+          });
+          // Show feedback
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Picked ${ClipboardService.colorToHex(color)} for background'),
+                duration: const Duration(milliseconds: 100),
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: Colors.black87,
+              ),
+            );
+          }
+        }, null),
+      );
+    } catch (err) {
+      debugPrint('EyeDrop capture error for background: $err');
+    }
+  }
+
+  // New method for eyedropper logic for extremes
+  void _startEyedropperForExtreme(String extremeId, DragStartDetails details) {
+    try {
+      Future.delayed(
+        const Duration(milliseconds: 50),
+        () => EyeDrop.of(context).capture(context, (color) {
+          if (extremeId == 'left') {
+            _onOklchChanged(
+              lightness: srgbToOklch(color).l,
+              chroma: srgbToOklch(color).c,
+              hue: srgbToOklch(color).h,
+              alpha: srgbToOklch(color).alpha,
+            );
+            // Update the left extreme directly after eyedropper selection
+            setState(() {
+              final oklchColor = srgbToOklch(color);
+              _leftExtreme = _leftExtreme.copyWith(color: color, oklchValues: OklchValues(lightness: oklchColor.l, chroma: oklchColor.c, hue: oklchColor.h, alpha: oklchColor.alpha));
+              _saveStateToHistory('Eyedropper picked color for left extreme');
+            });
+          } else if (extremeId == 'right') {
+            _onOklchChanged(
+              lightness: srgbToOklch(color).l,
+              chroma: srgbToOklch(color).c,
+              hue: srgbToOklch(color).h,
+              alpha: srgbToOklch(color).alpha,
+            );
+            // Update the right extreme directly after eyedropper selection
+            setState(() {
+              final oklchColor = srgbToOklch(color);
+              _rightExtreme = _rightExtreme.copyWith(color: color, oklchValues: OklchValues(lightness: oklchColor.l, chroma: oklchColor.c, hue: oklchColor.h, alpha: oklchColor.alpha));
+              _saveStateToHistory('Eyedropper picked color for right extreme');
+            });
+          }
+          // Show feedback
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Picked ${ClipboardService.colorToHex(color)} for extreme'),
+                duration: const Duration(milliseconds: 100),
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: Colors.black87,
+              ),
+            );
+          }
+        }, null),
+      );
+    } catch (err) {
+      debugPrint('EyeDrop capture error for extreme: $err');
+    }
+  }
+
   void _restoreState(AppStateSnapshot snapshot) {
     _isRestoringState = true;
 
@@ -707,17 +796,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
   
-  void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: Duration(seconds: isError ? 2 : 1),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: isError ? Colors.red.shade700 : Colors.black87,
-      ),
-    );
-  }
-
   // ========== Build ==========
   
   @override
@@ -827,6 +905,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             setState(() => _isInteractingWithSlider = interacting),
                         useRealPigmentsOnly: _useRealPigmentsOnly,
                         bgColor: bgColor, // Pass bgColor
+                        onPanStartExtreme: _startEyedropperForExtreme, // Pass eyedropper function
                       ),
                       ),
                     ),
@@ -1052,6 +1131,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 // Background color button (acts like a palette box)
                                 GestureDetector(
                                   onTap: _onBgColorBoxTap,
+                                  onPanStart: _startEyedropperForBgColor, // Add this line
                                   child: Container(
                                     width: 48,
                                     height: 48,

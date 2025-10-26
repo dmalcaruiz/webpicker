@@ -44,6 +44,8 @@ class ColorPickerControls extends StatefulWidget {
 
   final Color? bgColor;
 
+  final Function(String extremeId, DragStartDetails details)? onPanStartExtreme; // Add this line
+
   const ColorPickerControls({
     super.key,
     required this.onOklchChanged,
@@ -60,6 +62,7 @@ class ColorPickerControls extends StatefulWidget {
     this.extremeColorFilter,
     this.gradientColorFilter,
     this.bgColor,
+    this.onPanStartExtreme, // Add this line
   });
 
   @override
@@ -92,7 +95,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
   @override
   void initState() {
     super.initState();
-
+    debugPrint('ColorPickerControls initState - usePigmentMixing: $usePigmentMixing');
     // Initialize from external OKLCH values if provided (no conversion!)
     if (widget.externalLightness != null &&
         widget.externalChroma != null &&
@@ -111,7 +114,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
   @override
   void didUpdateWidget(ColorPickerControls oldWidget) {
     super.didUpdateWidget(oldWidget);
-
+    debugPrint('ColorPickerControls didUpdateWidget - usePigmentMixing: $usePigmentMixing');
     // If external OKLCH values changed, update sliders
     // BUT skip if we're the source of the change (prevent feedback loop)
     if (widget.externalLightness != null &&
@@ -359,6 +362,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
       onPigmentMixingChanged: (value) {
         setState(() {
           usePigmentMixing = value;
+          debugPrint('ColorPickerControls onPigmentMixingChanged - usePigmentMixing: $usePigmentMixing');
         });
       },
       onExtremeTap: widget.onExtremeTap,
@@ -366,6 +370,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
       onSliderTouchEnd: _handleSliderTouchEnd,
       onInteractionChanged: widget.onSliderInteractionChanged,
       bgColor: widget.bgColor, // Pass bgColor
+      onPanStartExtreme: widget.onPanStartExtreme, // Pass to MixedChannelSlider
     );
   }
 
@@ -392,7 +397,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
         Positioned(
           top: 12,
           left: 13.5,
-          width: 150, // Only covers the title text area, not the buttons
+          width: 90, // Only covers the title text area, not the buttons
           height: 35,
           child: ReorderableDragStartListener(
             index: index,
@@ -422,6 +427,13 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
           final item = _sliderOrder.removeAt(oldIndex);
           _sliderOrder.insert(newIndex, item);
         });
+      },
+      proxyDecorator: (Widget child, int index, Animation<double> animation) {
+        return Material(
+          color: widget.bgColor ?? Colors.transparent, // Use the provided background color
+          borderRadius: BorderRadius.circular(10),
+          child: child,
+        );
       },
       children: [
         for (int index = 0; index < _sliderOrder.length; index++)

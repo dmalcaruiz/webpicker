@@ -65,6 +65,8 @@ class MixedChannelSlider extends StatefulWidget {
 
   final Color? bgColor;
 
+  final Function(String extremeId, DragStartDetails details)? onPanStartExtreme; // Add this line
+
   const MixedChannelSlider({
     super.key,
     required this.value,
@@ -84,6 +86,7 @@ class MixedChannelSlider extends StatefulWidget {
     this.extremeColorFilter,
     this.gradientColorFilter,
     this.bgColor,
+    this.onPanStartExtreme, // Add this line
   });
   
   @override
@@ -91,6 +94,14 @@ class MixedChannelSlider extends StatefulWidget {
 }
 
 class _MixedChannelSliderState extends State<MixedChannelSlider> {
+  @override
+  void didUpdateWidget(MixedChannelSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.usePigmentMixing != oldWidget.usePigmentMixing) {
+      debugPrint('MixedChannelSlider didUpdateWidget - usePigmentMixing: ${widget.usePigmentMixing}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -168,6 +179,7 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
             onExtremeTap: widget.onExtremeTap,
             colorFilter: widget.extremeColorFilter,
             bgColor: widget.bgColor, // Pass bgColor
+            onPanStart: widget.onPanStartExtreme, // Pass to MixerExtremesRow
           ),
 
           // Pigment mixing toggle

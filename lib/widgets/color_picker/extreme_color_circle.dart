@@ -22,6 +22,8 @@ class ExtremeColorCircle extends StatelessWidget {
 
   final Color? bgColor;
 
+  final GestureDragStartCallback? onPanStart;
+
   const ExtremeColorCircle({
     super.key,
     required this.extreme,
@@ -29,6 +31,7 @@ class ExtremeColorCircle extends StatelessWidget {
     this.size = 44.0,
     this.colorFilter,
     this.bgColor,
+    this.onPanStart,
   });
 
   @override
@@ -38,6 +41,7 @@ class ExtremeColorCircle extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
+      onPanStart: onPanStart,
       child: Container(
         width: size,
         height: size,

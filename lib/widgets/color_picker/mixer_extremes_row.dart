@@ -21,6 +21,8 @@ class MixerExtremesRow extends StatelessWidget {
 
   final Color? bgColor;
 
+  final Function(String extremeId, DragStartDetails details)? onPanStart; // Change this line
+
   const MixerExtremesRow({
     super.key,
     required this.leftExtreme,
@@ -28,6 +30,7 @@ class MixerExtremesRow extends StatelessWidget {
     required this.onExtremeTap,
     this.colorFilter,
     this.bgColor,
+    this.onPanStart, // Change this line
   });
 
   @override
@@ -43,6 +46,7 @@ class MixerExtremesRow extends StatelessWidget {
             onTap: () => onExtremeTap(leftExtreme.id),
             colorFilter: colorFilter,
             bgColor: bgColor, // Pass bgColor
+            onPanStart: onPanStart != null ? (details) => onPanStart!(leftExtreme.id, details) : null, // Pass to ExtremeColorCircle
           ),
 
           // Right extreme circle
@@ -51,6 +55,7 @@ class MixerExtremesRow extends StatelessWidget {
             onTap: () => onExtremeTap(rightExtreme.id),
             colorFilter: colorFilter,
             bgColor: bgColor, // Pass bgColor
+            onPanStart: onPanStart != null ? (details) => onPanStart!(rightExtreme.id, details) : null, // Pass to ExtremeColorCircle
           ),
         ],
       ),

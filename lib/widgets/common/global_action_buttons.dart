@@ -92,14 +92,6 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
 
       // Show feedback with the actual copied color hex
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Copied ${ClipboardService.colorToHex(colorToCopy)}'),
-            duration: const Duration(seconds: 1),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.black87,
-          ),
-        );
       }
     }
   }
@@ -112,26 +104,10 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
       
       // Show feedback
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Pasted ${ClipboardService.colorToHex(color)}'),
-            duration: const Duration(seconds: 1),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.black87,
-          ),
-        );
       }
     } else {
       // Show error
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No valid color in clipboard'),
-            duration: Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.redAccent,
-          ),
-        );
       }
     }
   }
