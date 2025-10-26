@@ -846,6 +846,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Expanded(
                           child: SingleChildScrollView(
+                            physics: const ClampingScrollPhysics(),
                             child: Column(
                               children: [
                                 const SizedBox(height: 60),
