@@ -48,6 +48,9 @@ class OklchGradientSlider extends StatefulWidget {
   /// Callback when interaction with slider starts/ends
   final Function(bool)? onInteractionChanged;
   
+  /// Whether to constrain colors to real pigment gamut (ICC profile)
+  final bool useRealPigmentsOnly;
+  
   /// Constructor
   /// 
   /// Step 1: Initialize slider with all required parameters
@@ -65,6 +68,7 @@ class OklchGradientSlider extends StatefulWidget {
     this.showSplitView = true,
     this.samples = 300,
     this.onInteractionChanged,
+    this.useRealPigmentsOnly = false,
   });
   
   @override
@@ -144,6 +148,7 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
                   stops: _getGradientStops(),
                   showSplitView: widget.showSplitView,
                   borderRadius: 8.0,
+                  useRealPigmentsOnly: widget.useRealPigmentsOnly,
                 ),
               ),
               thumbColor: _getCurrentThumbColor(),
@@ -205,7 +210,8 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
     
     // Step 9: Clear cache if gradient generator changed
     // (This happens when other OKLCH parameters change)
-    if (oldWidget.generateGradient != widget.generateGradient) {
+    if (oldWidget.generateGradient != widget.generateGradient ||
+        oldWidget.useRealPigmentsOnly != widget.useRealPigmentsOnly) {
       _cachedGradient = null;
     }
   }

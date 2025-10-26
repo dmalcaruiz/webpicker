@@ -33,11 +33,8 @@ class ColorPickerControls extends StatefulWidget {
   /// Callback when mixer slider is touched (to deselect extremes)
   final VoidCallback? onMixerSliderTouched;
 
-  /// Whether to use ICC profile filtering for display
+  /// Whether to constrain colors to real pigment gamut (ICC profile)
   final bool useRealPigmentsOnly;
-
-  /// Callback when real pigments toggle changes
-  final Function(bool)? onRealPigmentsOnlyChanged;
 
   /// Optional color filter for extreme colors (ICC profile display)
   final Color Function(ExtremeColorItem)? extremeColorFilter;
@@ -58,7 +55,6 @@ class ColorPickerControls extends StatefulWidget {
     required this.onExtremeTap,
     this.onMixerSliderTouched,
     this.useRealPigmentsOnly = false,
-    this.onRealPigmentsOnlyChanged,
     this.extremeColorFilter,
     this.gradientColorFilter,
   });
@@ -359,7 +355,6 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
           usePigmentMixing = value;
         });
       },
-      onRealPigmentsOnlyChanged: widget.onRealPigmentsOnlyChanged,
       onExtremeTap: widget.onExtremeTap,
       onSliderTouchStart: _handleSliderTouchStart,
       onSliderTouchEnd: _handleSliderTouchEnd,

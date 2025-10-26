@@ -17,6 +17,9 @@ class GradientPainter extends CustomPainter {
   /// Border radius for the gradient rectangle
   final double borderRadius;
   
+  /// Whether to constrain colors to real pigment gamut (ICC profile)
+  final bool useRealPigmentsOnly;
+  
   /// Constructor
   /// 
   /// Step 1: Initialize painter with gradient stops and options
@@ -24,6 +27,7 @@ class GradientPainter extends CustomPainter {
     required this.stops,
     this.showSplitView = true,
     this.borderRadius = 8.0,
+    this.useRealPigmentsOnly = false,
   });
   
   @override
@@ -60,7 +64,7 @@ class GradientPainter extends CustomPainter {
       
       
       // Step 7: Check if this color is out of gamut and split-view is enabled
-      if (showSplitView && !stop.isInGamut) {
+      if (showSplitView && !stop.isInGamut && useRealPigmentsOnly) {
         // Step 7a: Paint top half with requested color
         final topPaint = Paint()
           ..color = stop.requestedColor
@@ -137,7 +141,8 @@ class GradientPainter extends CustomPainter {
     // Step 9: Repaint if stops or settings changed
     return stops != oldDelegate.stops ||
            showSplitView != oldDelegate.showSplitView ||
-           borderRadius != oldDelegate.borderRadius;
+           borderRadius != oldDelegate.borderRadius ||
+           useRealPigmentsOnly != oldDelegate.useRealPigmentsOnly;
   }
 }
 

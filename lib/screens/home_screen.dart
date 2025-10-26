@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:snapping_sheet_2/snapping_sheet.dart';
-import '../widgets/color_picker/color_preview_box.dart';
 import '../widgets/color_picker/color_picker_controls.dart';
 import '../widgets/color_picker/reorderable_color_grid_view.dart';
 import '../widgets/home/sheet_grabbing_handle.dart';
@@ -815,7 +814,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         onSliderInteractionChanged: (interacting) =>
                             setState(() => _isInteractingWithSlider = interacting),
                         useRealPigmentsOnly: _useRealPigmentsOnly,
-                        onRealPigmentsOnlyChanged: _onRealPigmentsOnlyChanged,
                       ),
                       ),
                     ),
@@ -840,6 +838,52 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         children: [
                           const SizedBox(height: 100),
+                                                    // Only Real Pigments toggle (ICC profile filter)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 20.0),
+                            child: GestureDetector(
+                              onTap: () {
+                                _onRealPigmentsOnlyChanged(!_useRealPigmentsOnly);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: _useRealPigmentsOnly
+                                      ? Colors.blue.shade700.withOpacity(0.9) // Selected color
+                                      : Colors.grey.shade200, // Unselected color
+                                  borderRadius: BorderRadius.circular(10),
+                                  boxShadow: _useRealPigmentsOnly
+                                      ? [ // Shadow when selected
+                                          BoxShadow(
+                                            color: Colors.blue.shade700.withOpacity(0.4),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _useRealPigmentsOnly ? Icons.check_circle : Icons.circle_outlined,
+                                      size: 20,
+                                      color: _useRealPigmentsOnly ? Colors.white : Colors.grey.shade700,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      'Only Real Pigments',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: _useRealPigmentsOnly ? Colors.white : Colors.grey.shade800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                           // Color palette grid
                           Expanded(
                             child: ReorderableColorGridView(
@@ -865,18 +909,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           ),
-/*
-                          // Color preview (with ICC filter if enabled) DO NOT DELETE
-                          ColorPreviewBox(
-                            color: applyIccFilter(
-                              currentColor ?? Colors.grey,
-                              lightness: currentLightness,
-                              chroma: currentChroma,
-                              hue: currentHue,
-                              alpha: currentAlpha,
-                            ),
-                          ),
-*/
                         ],
                       ),
                     ),

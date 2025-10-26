@@ -55,9 +55,6 @@ class MixedChannelSlider extends StatefulWidget {
   /// Whether to use ICC profile filtering (real pigments only)
   final bool useRealPigmentsOnly;
 
-  /// Callback when real pigments only toggle changes
-  final Function(bool)? onRealPigmentsOnlyChanged;
-
   /// Optional color filter for extreme colors (ICC profile display)
   final Color Function(ExtremeColorItem)? extremeColorFilter;
 
@@ -81,7 +78,6 @@ class MixedChannelSlider extends StatefulWidget {
     this.usePigmentMixing = false,
     this.onPigmentMixingChanged,
     this.useRealPigmentsOnly = false,
-    this.onRealPigmentsOnlyChanged,
     this.extremeColorFilter,
     this.gradientColorFilter,
   });
@@ -214,52 +210,6 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
               ),
             ),
           ),
-
-          // Only Real Pigments toggle (ICC profile filter)
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: () {
-              widget.onRealPigmentsOnlyChanged?.call(!widget.useRealPigmentsOnly);
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: widget.useRealPigmentsOnly
-                    ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.15)
-                    : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: widget.useRealPigmentsOnly
-                      ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.3)
-                      : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.1),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    widget.useRealPigmentsOnly ? Icons.check_box : Icons.check_box_outline_blank,
-                    size: 16,
-                    color: widget.useRealPigmentsOnly
-                        ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.9)
-                        : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Only Real Pigments',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: widget.useRealPigmentsOnly
-                          ? const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.9)
-                          : const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.5),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -277,7 +227,7 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
       Color rightColor = widget.rightExtreme.color;
 
       // Apply ICC filter to extremes if enabled
-      if (widget.gradientColorFilter != null) {
+      if (widget.useRealPigmentsOnly && widget.gradientColorFilter != null) {
         final leftOklch = widget.leftExtreme.oklchValues;
         leftColor = widget.gradientColorFilter!(
           leftColor,
@@ -339,7 +289,7 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
     }
 
     // Apply ICC filter if enabled (using the computed OKLCH values)
-    if (widget.gradientColorFilter != null) {
+    if (widget.useRealPigmentsOnly && widget.gradientColorFilter != null) {
       color = widget.gradientColorFilter!(color, l, c, h, a);
     }
 
@@ -353,7 +303,7 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
     Color leftColor = widget.leftExtreme.color;
     Color rightColor = widget.rightExtreme.color;
 
-    if (widget.usePigmentMixing && widget.gradientColorFilter != null) {
+    if (widget.usePigmentMixing && widget.useRealPigmentsOnly && widget.gradientColorFilter != null) {
       final leftOklch = widget.leftExtreme.oklchValues;
       leftColor = widget.gradientColorFilter!(
         leftColor,
@@ -418,7 +368,7 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
       }
 
       // Apply ICC filter if enabled (using the computed OKLCH values)
-      if (widget.gradientColorFilter != null) {
+      if (widget.useRealPigmentsOnly && widget.gradientColorFilter != null) {
         color = widget.gradientColorFilter!(color, l, c, h, a);
       }
 
