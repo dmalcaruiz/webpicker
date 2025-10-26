@@ -839,9 +839,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
-
-                          const SizedBox(height: 30),
-                          
                           // Color palette grid
                           Expanded(
                             child: ReorderableColorGridView(
@@ -867,10 +864,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           ),
-                          
-                          const SizedBox(height: 20),
-
-                          // Color preview (with ICC filter if enabled)
+/*
+                          // Color preview (with ICC filter if enabled) DO NOT DELETE
                           ColorPreviewBox(
                             color: applyIccFilter(
                               currentColor ?? Colors.grey,
@@ -880,10 +875,11 @@ class _HomeScreenState extends State<HomeScreen> {
                               alpha: currentAlpha,
                             ),
                           ),
+*/
                         ],
                       ),
                     ),
-                    
+
                     // Drag-to-delete zone (overlays on top)
                     Positioned(
                       top: 20,
