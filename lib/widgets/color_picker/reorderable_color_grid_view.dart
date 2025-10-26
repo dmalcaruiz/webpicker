@@ -98,6 +98,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
         mainAxisSpacing: widget.spacing,
         childAspectRatio: 1.0,
         shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         dragStartDelay: const Duration(milliseconds: 200),
         restrictDragScope: false,
         onReorder: (oldIndex, newIndex) {
