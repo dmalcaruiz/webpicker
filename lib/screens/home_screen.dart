@@ -13,6 +13,7 @@ import '../services/undo_redo_manager.dart';
 import '../services/palette_manager.dart';
 import '../utils/color_operations.dart';
 import '../utils/icc_color_manager.dart';
+import 'menu_screen.dart'; // Import the new MenuScreen
 
 /// Color Picker Home Screen
 /// 
@@ -848,7 +849,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: SingleChildScrollView(
                             child: Column(
                               children: [
-                                const SizedBox(height: 60),
+                                const SizedBox(height: 0),
                                 // Only Real Pigments toggle (ICC profile filter)
                                 Padding(
                                   padding: const EdgeInsets.only(bottom: 0.0),
@@ -895,6 +896,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   ),
                                 ),
+                                const SizedBox(height: 70),
                                 // Color palette grid
                                 ReorderableColorGridView(
                                   items: _colorPalette,
@@ -927,7 +929,67 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
 
+                    //---------------------------------------------------------------------------------------------------------------------
+                    // App Bar (overlays on top)
+                    //---------------------------------------------------------------------------------------------------------------------
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        color: bgColor, // Use current background color
+                        padding: const EdgeInsets.fromLTRB(40, 20, 40, 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.star_border,
+                                color: (bgColor ?? const Color(0xFF252525)).computeLuminance() > 0.5 ? Colors.black : Colors.white,
+                              ),
+                              onPressed: () {
+                                // TODO: Implement star functionality
+                              },
+                            ),
+                            Text('Palletator',
+                              style: TextStyle(
+                                color: (bgColor ?? const Color(0xFF252525)).computeLuminance() > 0.5 ? Colors.black : Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Hero(
+                              tag: 'menuButton',
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.menu,
+                                  color: (bgColor ?? const Color(0xFF252525)).computeLuminance() > 0.5 ? Colors.black : Colors.white,
+                                ),
+                                onPressed: () {
+                                  Navigator.push(context, PageRouteBuilder(
+                                    pageBuilder: (context, animation, secondaryAnimation) => const MenuScreen(),
+                                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                      const begin = Offset(1.0, 0.0); // Start from right
+                                      const end = Offset.zero;
+                                      const curve = Curves.ease;
 
+                                      var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+                                      return SlideTransition(
+                                        position: animation.drive(tween),
+                                        child: child,
+                                      );
+                                    },
+                                  ));
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    //---------------------------------------------------------------------------------------------------------------------
                     // Drag-to-delete zone (overlays on top)
                     Positioned(
                       top: 20,
