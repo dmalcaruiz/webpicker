@@ -5,7 +5,6 @@ import '../../models/extreme_color_item.dart';
 import 'oklch_gradient_slider.dart';
 import '../sliders/mixer_slider.dart' show MixedChannelSlider;
 
-
 /// A widget containing all the color picker slider controls
 class ColorPickerControls extends StatefulWidget {
   /// OKLCH change callback (source of truth)
