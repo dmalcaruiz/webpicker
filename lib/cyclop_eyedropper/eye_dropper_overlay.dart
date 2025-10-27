@@ -83,7 +83,8 @@ class _PixelGridPainter extends CustomPainter {
   final List<Color> colors;
 
   static const gridSize = 9;
-  
+  static const eyeRadius = 35.0;
+
   final blackStroke = Paint()
     ..color = Colors.black
     ..strokeWidth = 10
@@ -93,7 +94,10 @@ class _PixelGridPainter extends CustomPainter {
 
   @override
   void paint(ui.Canvas canvas, ui.Size size) {
-    
+    final stroke = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke;
+
     final blackLine = Paint()
       ..color = Colors.black
       ..strokeWidth = 2

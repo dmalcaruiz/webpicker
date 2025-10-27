@@ -47,7 +47,7 @@ class ExtremeColorCircle extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           color: displayColor,
-          borderRadius: BorderRadius.circular(8.0), // Changed from circle to rounded rectangle
+          shape: BoxShape.circle,
           border: Border.all(
             color: extreme.isSelected
                 ? (bgColor ?? Colors.white).computeLuminance() > 0.5 ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9)

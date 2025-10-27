@@ -86,7 +86,7 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0), // Added vertical padding
+      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 13.5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

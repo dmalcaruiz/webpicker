@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../utils/global_pointer_tracker.dart';
-import '../color_picker/extreme_color_circle.dart'; // New: ExtremeColorCircle
-import '../../models/extreme_color_item.dart'; // New: ExtremeColorItem
 
 /// Invisible slider that handles touch interactions but doesn't render a visible thumb
 class InvisibleSlider extends StatefulWidget {
@@ -262,12 +260,6 @@ class InvisibleSliderWithExternalThumb extends StatefulWidget {
   final double hitAreaExtension;
   final double thumbSize;
   final double thumbOffset;
-  final ExtremeColorItem? leftExtreme; // Make nullable
-  final ExtremeColorItem? rightExtreme; // Make nullable
-  final Function(String extremeId)? onExtremeTap; // Make nullable
-  final Color Function(ExtremeColorItem)? extremeColorFilter; // Already nullable
-  final Color? bgColor; // Already nullable
-  final Function(String extremeId, DragStartDetails details)? onPanStart; // Already nullable
 
   const InvisibleSliderWithExternalThumb({
     super.key,
@@ -284,12 +276,6 @@ class InvisibleSliderWithExternalThumb extends StatefulWidget {
     this.hitAreaExtension = 13.5,
     this.thumbSize = 27.0,
     this.thumbOffset = 8.0,
-    this.leftExtreme, // Remove required
-    this.rightExtreme, // Remove required
-    this.onExtremeTap, // Remove required
-    this.extremeColorFilter,
-    this.bgColor,
-    this.onPanStart,
   });
 
   @override
@@ -326,38 +312,6 @@ class _InvisibleSliderWithExternalThumbState extends State<InvisibleSliderWithEx
                 hitAreaExtension: widget.hitAreaExtension,
               ),
               
-              // Left extreme circle
-              if (widget.leftExtreme != null) // Conditionally render
-                Positioned(
-                  left: 0,
-                  top: 0, // Set top to 0
-                  bottom: 0, // Set bottom to 0
-                  child: ExtremeColorCircle(
-                    extreme: widget.leftExtreme!,
-                    onTap: () => widget.onExtremeTap?.call(widget.leftExtreme!.id),
-                    colorFilter: widget.extremeColorFilter,
-                    bgColor: widget.bgColor,
-                    onPanStart: widget.onPanStart != null ? (details) => widget.onPanStart!(widget.leftExtreme!.id, details) : null,
-                    size: widget.trackHeight, // Use trackHeight for extreme circle size
-                  ),
-                ),
-
-              // Right extreme circle
-              if (widget.rightExtreme != null) // Conditionally render
-                Positioned(
-                  right: 0,
-                  top: 0, // Set top to 0
-                  bottom: 0, // Set bottom to 0
-                  child: ExtremeColorCircle(
-                    extreme: widget.rightExtreme!,
-                    onTap: () => widget.onExtremeTap?.call(widget.rightExtreme!.id),
-                    colorFilter: widget.extremeColorFilter,
-                    bgColor: widget.bgColor,
-                    onPanStart: widget.onPanStart != null ? (details) => widget.onPanStart!(widget.rightExtreme!.id, details) : null,
-                    size: widget.trackHeight, // Use trackHeight for extreme circle size
-                  ),
-                ),
-
               // Thumb positioned on top
               ExternalThumb(
                 value: widget.value,
