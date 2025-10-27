@@ -4,7 +4,6 @@ import '../../models/extreme_color_item.dart';
 import '../../utils/color_operations.dart';
 import '../../utils/mixbox.dart';
 import '../../utils/color_utils.dart'; // Import the new utility file
-import '../color_picker/mixer_extremes_row.dart';
 import 'invisible_slider.dart';
 
 /// Mixed channel slider widget with extreme circle controls
@@ -105,7 +104,7 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 13.5),
+      padding: const EdgeInsets.symmetric(vertical: 4.0), // Added vertical padding
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -169,17 +168,13 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
               hitAreaExtension: 13.5,
               thumbSize: 27.0,
               thumbOffset: 8.0,
+              leftExtreme: widget.leftExtreme, // Pass left extreme
+              rightExtreme: widget.rightExtreme, // Pass right extreme
+              onExtremeTap: widget.onExtremeTap, // Pass extreme tap callback
+              extremeColorFilter: widget.extremeColorFilter, // Pass color filter
+              bgColor: widget.bgColor, // Pass bgColor
+              onPanStart: widget.onPanStartExtreme, // Pass pan start callback
             ),
-          ),
-
-          // Extreme circles below slider
-          MixerExtremesRow(
-            leftExtreme: widget.leftExtreme,
-            rightExtreme: widget.rightExtreme,
-            onExtremeTap: widget.onExtremeTap,
-            colorFilter: widget.extremeColorFilter,
-            bgColor: widget.bgColor, // Pass bgColor
-            onPanStart: widget.onPanStartExtreme, // Pass to MixerExtremesRow
           ),
 
           // Pigment mixing toggle
