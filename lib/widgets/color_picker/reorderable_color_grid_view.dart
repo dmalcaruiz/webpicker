@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import '../../models/color_palette_item.dart';
+import '../../state/palette_provider.dart';
 import 'color_item_widget.dart';
 
 /// A reorderable grid view for displaying and managing color palettes
-/// 
+///
 /// Features:
 /// - Drag and drop reordering
 /// - Add/remove colors
 /// - Selection management
 /// - Responsive grid layout
 /// - Empty state handling
+///
+/// Uses PaletteProvider for accessing the color palette items.
 class ReorderableColorGridView extends StatefulWidget {
-  /// List of color palette items to display
-  final List<ColorPaletteItem> items;
   
   /// Callback when items are reordered
   final Function(int oldIndex, int newIndex) onReorder;
@@ -58,7 +60,6 @@ class ReorderableColorGridView extends StatefulWidget {
 
   const ReorderableColorGridView({
     super.key,
-    required this.items,
     required this.onReorder,
     required this.onItemTap,
     required this.onItemLongPress,
@@ -81,15 +82,18 @@ class ReorderableColorGridView extends StatefulWidget {
 class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
   @override
   Widget build(BuildContext context) {
-    if (widget.items.isEmpty) {
+    // Get items from PaletteProvider
+    final items = context.watch<PaletteProvider>().items;
+
+    if (items.isEmpty) {
       return _buildEmptyState();
     }
-    
-    return _buildGridView();
+
+    return _buildGridView(items);
   }
   
   /// Build the main grid view with drag-and-drop support
-  Widget _buildGridView() {
+  Widget _buildGridView(List<ColorPaletteItem> items) {
     return Padding(
       padding: const EdgeInsets.all(8),
       child: ReorderableGridView.count(
@@ -104,7 +108,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
         onReorder: (oldIndex, newIndex) {
           // Call the drag ended callback before reordering
           final wasDeleted = widget.onDragEnded?.call() ?? false;
-          
+
           // Only perform reorder if item wasn't deleted
           if (!wasDeleted) {
             widget.onReorder(oldIndex, newIndex);
@@ -114,13 +118,13 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
         dragWidgetBuilderV2: DragWidgetBuilderV2(
           builder: (index, child, screenshot) {
             // Notify that drag has started
-            if (widget.onDragStarted != null && index < widget.items.length) {
+            if (widget.onDragStarted != null && index < items.length) {
               // Use post-frame callback to avoid calling setState during build
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                widget.onDragStarted!(widget.items[index]);
+                widget.onDragStarted!(items[index]);
               });
             }
-            
+
             // Use the child directly for smooth dragging experience
             return Transform.scale(
               scale: 1.1,
@@ -145,7 +149,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
             ),
           );
         },
-        children: widget.items.map((item) => _buildColorItem(item)).toList(),
+        children: items.map((item) => _buildColorItem(item)).toList(),
       ),
     );
   }

@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../utils/color_operations.dart';
 import '../../utils/mixbox.dart';
 import '../../models/extreme_color_item.dart';
+import '../../state/color_editor_provider.dart';
 import 'oklch_gradient_slider.dart';
 import '../sliders/mixer_slider.dart' show MixedChannelSlider;
 
 /// A widget containing all the color picker slider controls
+///
+/// Reads OKLCH from ColorEditorProvider but uses callback for coordination.
+/// HomeScreen handles updating Provider + selected items.
 class ColorPickerControls extends StatefulWidget {
-  /// OKLCH change callback (source of truth)
+  /// Callback when OKLCH values change (HomeScreen coordinates Provider updates)
   final Function({
     required double lightness,
     required double chroma,
@@ -16,12 +21,6 @@ class ColorPickerControls extends StatefulWidget {
   }) onOklchChanged;
 
   final Function(bool)? onSliderInteractionChanged;
-
-  /// External OKLCH values to set the sliders to (e.g., from palette selection)
-  final double? externalLightness;
-  final double? externalChroma;
-  final double? externalHue;
-  final double? externalAlpha;
 
   /// Mixer extreme colors (managed by parent)
   final ExtremeColorItem leftExtreme;
@@ -44,16 +43,12 @@ class ColorPickerControls extends StatefulWidget {
 
   final Color? bgColor;
 
-  final Function(String extremeId, DragStartDetails details)? onPanStartExtreme; // Add this line
+  final Function(String extremeId, DragStartDetails details)? onPanStartExtreme;
 
   const ColorPickerControls({
     super.key,
     required this.onOklchChanged,
     this.onSliderInteractionChanged,
-    this.externalLightness,
-    this.externalChroma,
-    this.externalHue,
-    this.externalAlpha,
     required this.leftExtreme,
     required this.rightExtreme,
     required this.onExtremeTap,
@@ -62,7 +57,7 @@ class ColorPickerControls extends StatefulWidget {
     this.extremeColorFilter,
     this.gradientColorFilter,
     this.bgColor,
-    this.onPanStartExtreme, // Add this line
+    this.onPanStartExtreme,
   });
 
   @override
@@ -96,49 +91,30 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
   void initState() {
     super.initState();
     debugPrint('ColorPickerControls initState - usePigmentMixing: $usePigmentMixing');
-    // Initialize from external OKLCH values if provided (no conversion!)
-    if (widget.externalLightness != null &&
-        widget.externalChroma != null &&
-        widget.externalHue != null) {
-      lightness = widget.externalLightness!;
-      chroma = widget.externalChroma!;
-      hue = widget.externalHue!;
-    }
-
-    // Defer the initial color update to avoid setState during build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateColor();
-    });
+    // Values will be loaded from Provider in didChangeDependencies
   }
 
   @override
-  void didUpdateWidget(ColorPickerControls oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    debugPrint('ColorPickerControls didUpdateWidget - usePigmentMixing: $usePigmentMixing');
-    // If external OKLCH values changed, update sliders
-    // BUT skip if we're the source of the change (prevent feedback loop)
-    if (widget.externalLightness != null &&
-        widget.externalChroma != null &&
-        widget.externalHue != null &&
-        (widget.externalLightness != oldWidget.externalLightness ||
-         widget.externalChroma != oldWidget.externalChroma ||
-         widget.externalHue != oldWidget.externalHue) &&
-        !_isInternalUpdate) {
-      setState(() {
-        // Direct OKLCH assignment - NO CONVERSION!
-        lightness = widget.externalLightness!;
-        chroma = widget.externalChroma!;
-        hue = widget.externalHue!;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
-        // Reset slider state when external values are set
-        sliderIsActive = false;
+    // Get OKLCH values from Provider
+    final colorEditor = context.watch<ColorEditorProvider>();
 
-        // Update display color
-        currentColor = colorFromOklch(lightness, chroma, hue);
-      });
+    // Update local state if Provider has values and we're not the source of the change
+    if (colorEditor.hasValues && !_isInternalUpdate) {
+      lightness = colorEditor.lightness!;
+      chroma = colorEditor.chroma!;
+      hue = colorEditor.hue!;
+
+      // Update display color
+      currentColor = colorEditor.currentColor;
+
+      // Reset slider state when values change from Provider
+      sliderIsActive = false;
     }
 
-    // Reset the flag after processing
+    // Reset the flag
     _isInternalUpdate = false;
   }
 
@@ -222,7 +198,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
           currentColor = globalColor;
         }
 
-        // Call OKLCH callback (source of truth)
+        // Call callback to let HomeScreen coordinate Provider updates
         widget.onOklchChanged(
           lightness: lightness,
           chroma: chroma,
