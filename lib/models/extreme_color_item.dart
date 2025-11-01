@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../utils/color_operations.dart';
-import 'color_palette_item.dart';
+import 'color_grid_item.dart';
 
 /// Represents a mixer extreme color (left or right)
 ///
-/// Behaves exactly like a palette box for selection and editing,
+/// Behaves exactly like a grid box for selection and editing,
 /// but with a fixed ID ('left' or 'right') and used for mixer interpolation.
 class ExtremeColorItem {
   /// Unique identifier ('left' or 'right')

@@ -12,7 +12,7 @@ import 'invisible_slider.dart';
 /// Features:
 /// 1. LCH sliders (always control global or selected extreme/box)
 /// 2. Mixed channel slider (controls global only while touched)
-/// 3. Extreme circles (tap to select, behave like palette boxes)
+/// 3. Extreme circles (tap to select, behave like grid boxes)
 class MixedChannelSlider extends StatefulWidget {
   /// Current slider value (0.0 to 1.0)
   final double value;

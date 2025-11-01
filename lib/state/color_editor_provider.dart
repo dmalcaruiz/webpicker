@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/color_palette_item.dart';
+import '../models/color_grid_item.dart';
 import '../utils/color_operations.dart';
 
 /// Provider for current OKLCH editing values

@@ -30,7 +30,7 @@ void main() {
         reason: 'EXPECTED FAILURE: Selection is lost when not explicitly passed to copyWith');
     });
     
-    test('BUG: selectedPaletteItem reference becomes stale after list modification', () {
+    test('BUG: selectedGridItem reference becomes stale after list modification', () {
       List<MockItem> items = [
         MockItem('1', Colors.red, false),
         MockItem('2', Colors.blue, false),

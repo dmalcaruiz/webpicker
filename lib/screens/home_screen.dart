@@ -7,11 +7,11 @@ import '../widgets/color_picker/reorderable_color_grid_view.dart';
 import '../widgets/home/sheet_grabbing_handle.dart';
 import '../widgets/home/action_buttons_row.dart';
 import '../widgets/common/undo_redo_buttons.dart';
-import '../models/color_palette_item.dart';
+import '../models/color_grid_item.dart';
 import '../services/undo_redo_manager.dart';
 import '../services/app_state_coordinator.dart';
 import '../state/color_editor_provider.dart';
-import '../state/palette_provider.dart';
+import '../state/grid_provider.dart';
 import '../state/extreme_colors_provider.dart';
 import '../state/bg_color_provider.dart';
 import '../state/settings_provider.dart';
@@ -25,7 +25,7 @@ import '../services/clipboard_service.dart';
 /// Color Picker Home Screen
 /// 
 /// Orchestrates the main color picker UI and manages:
-/// - Color palette state
+/// - Color grid state
 /// - Undo/redo history
 /// - Sheet interactions
 /// - Background vs. color edit modes
@@ -40,13 +40,13 @@ class _HomeScreenState extends State<HomeScreen> {
   // ========== Core State ==========
   // NOTE: All undoable state is now in Providers:
   // - ColorEditorProvider: current OKLCH editing values
-  // - PaletteProvider: color palette items
+  // - GridProvider: color grid items
   // - ExtremeColorsProvider: left/right extreme colors
   // - BgColorProvider: background color and OKLCH values
   // - SettingsProvider: ICC filter toggle and other settings
 
   /// Currently dragging item (for delete zone)
-  ColorPaletteItem? _draggingItem;
+  ColorGridItem? _draggingItem;
 
   /// Current pointer Y position during drag
   double _dragPointerY = double.infinity;
@@ -93,14 +93,14 @@ class _HomeScreenState extends State<HomeScreen> {
       // Initialize coordinator
       _coordinator = AppStateCoordinator(
         colorEditor: context.read<ColorEditorProvider>(),
-        palette: context.read<PaletteProvider>(),
+        grid: context.read<GridProvider>(),
         extremes: context.read<ExtremeColorsProvider>(),
         bgColor: context.read<BgColorProvider>(),
         settings: context.read<SettingsProvider>(),
         undoRedo: _undoRedoManager,
       );
 
-      _initializeSamplePalette();
+      _initializeSampleGrid();
       _coordinator.saveState('Initial state');
     });
 
@@ -115,14 +115,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   
   /// Initialize with sample colors
-  void _initializeSamplePalette() {
+  void _initializeSampleGrid() {
     final sampleColors = [
-      ColorPaletteItem.fromColor(const Color(0xFFE74C3C), name: 'Red'),
-      ColorPaletteItem.fromColor(const Color(0xFF3498DB), name: 'Blue'),
-      ColorPaletteItem.fromColor(const Color(0xFF2ECC71), name: 'Green'),
-      ColorPaletteItem.fromColor(const Color(0xFFF39C12), name: 'Orange'),
+      ColorGridItem.fromColor(const Color(0xFFE74C3C), name: 'Red'),
+      ColorGridItem.fromColor(const Color(0xFF3498DB), name: 'Blue'),
+      ColorGridItem.fromColor(const Color(0xFF2ECC71), name: 'Green'),
+      ColorGridItem.fromColor(const Color(0xFFF39C12), name: 'Orange'),
     ];
-    context.read<PaletteProvider>().syncFromSnapshot(sampleColors);
+    context.read<GridProvider>().syncFromSnapshot(sampleColors);
   }
 
   /// Initialize ICC color management
@@ -174,14 +174,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     // Coordinate with selected item
-    final paletteProvider = context.read<PaletteProvider>();
-    final selectedItem = paletteProvider.selectedItem;
+    final gridProvider = context.read<GridProvider>();
+    final selectedItem = gridProvider.selectedItem;
     final extremesProvider = context.read<ExtremeColorsProvider>();
     final bgColorProvider = context.read<BgColorProvider>();
 
     if (selectedItem != null) {
-      // Update selected palette item
-      paletteProvider.updateItemOklch(
+      // Update selected grid item
+      gridProvider.updateItemOklch(
         itemId: selectedItem.id,
         lightness: lightness,
         chroma: chroma,
@@ -294,22 +294,22 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // ========== Palette Item Operations ==========
+  // ========== Grid Item Operations ==========
   
-  void _onPaletteReorder(int oldIndex, int newIndex) {
-    context.read<PaletteProvider>().reorderItems(oldIndex, newIndex);
-    _coordinator.saveState('Reordered palette items');
+  void _onGridReorder(int oldIndex, int newIndex) {
+    context.read<GridProvider>().reorderItems(oldIndex, newIndex);
+    _coordinator.saveState('Reordered grid items');
   }
   
-  void _onPaletteItemTap(ColorPaletteItem item) {
+  void _onGridItemTap(ColorGridItem item) {
     // If tapping an already-selected item, deselect it
     if (item.isSelected) {
-      context.read<PaletteProvider>().deselectAll();
+      context.read<GridProvider>().deselectAll();
       return;
     }
 
     // Otherwise, select the item
-    context.read<PaletteProvider>().selectItem(item.id);
+    context.read<GridProvider>().selectItem(item.id);
 
     // Deselect extremes when a box is selected
     final extremesProvider = context.read<ExtremeColorsProvider>();
@@ -332,8 +332,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     // Otherwise, select the bg color box
-    // Deselect all palette boxes
-    context.read<PaletteProvider>().deselectAll();
+    // Deselect all grid boxes
+    context.read<GridProvider>().deselectAll();
 
     // Deselect extremes
     context.read<ExtremeColorsProvider>().deselectAll();
@@ -360,8 +360,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     // Otherwise, select the tapped extreme
-    // Deselect all palette boxes
-    context.read<PaletteProvider>().deselectAll();
+    // Deselect all grid boxes
+    context.read<GridProvider>().deselectAll();
 
     // Deselect bg color box
     context.read<BgColorProvider>().setSelected(false);
@@ -385,33 +385,33 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _onPaletteItemLongPress(ColorPaletteItem item) {
+  void _onGridItemLongPress(ColorGridItem item) {
     _showColorItemMenu(item);
   }
   
-  void _onPaletteItemDelete(ColorPaletteItem item) {
-    context.read<PaletteProvider>().removeColor(item.id);
-    _coordinator.saveState('Deleted ${item.name ?? "color"} from palette');
+  void _onGridItemDelete(ColorGridItem item) {
+    context.read<GridProvider>().removeColor(item.id);
+    _coordinator.saveState('Deleted ${item.name ?? "color"} from grid');
   }
   
   void _onAddColor() {
     // Determine color to add:
     // 1. If a box is selected, use its current color (which may have been edited via sliders)
     // 2. Otherwise, use current color from ColorEditorProvider
-    final paletteProvider = context.read<PaletteProvider>();
-    final selectedItem = paletteProvider.selectedItem;
+    final gridProvider = context.read<GridProvider>();
+    final selectedItem = gridProvider.selectedItem;
     final colorEditor = context.read<ColorEditorProvider>();
     final colorToAdd = selectedItem?.color ?? colorEditor.currentColor;
 
     if (colorToAdd != null) {
-      paletteProvider.addColor(colorToAdd, selectNew: true);
-      _coordinator.saveState('Added new color to palette');
+      gridProvider.addColor(colorToAdd, selectNew: true);
+      _coordinator.saveState('Added new color to grid');
     }
   }
   
   // ========== Drag & Drop Handlers ==========
   
-  void _onDragStarted(ColorPaletteItem item) {
+  void _onDragStarted(ColorGridItem item) {
     // Only reset if this is a NEW drag (not already dragging)
     if (_draggingItem == null) {
       setState(() {
@@ -426,14 +426,14 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _onDragEnded() {
     // Use the LAST known position since current might have been reset
     final shouldDelete = _draggingItem != null && _lastDragPointerY < _deleteZoneThreshold;
-    final paletteSizeBefore = context.read<PaletteProvider>().items.length;
+    final gridSizeBefore = context.read<GridProvider>().items.length;
 
-    debugPrint('Drag ended - Last Y: $_lastDragPointerY, Current Y: $_dragPointerY, InZone: $_isInDeleteZone, Should delete: $shouldDelete, Palette size before: $paletteSizeBefore');
+    debugPrint('Drag ended - Last Y: $_lastDragPointerY, Current Y: $_dragPointerY, InZone: $_isInDeleteZone, Should delete: $shouldDelete, Grid size before: $gridSizeBefore');
 
     if (shouldDelete) {
       _onDropToDelete();
-      final paletteSizeAfter = context.read<PaletteProvider>().items.length;
-      debugPrint('Palette size after delete: $paletteSizeAfter');
+      final gridSizeAfter = context.read<GridProvider>().items.length;
+      debugPrint('Grid size after delete: $gridSizeAfter');
     }
 
     setState(() {
@@ -463,8 +463,8 @@ class _HomeScreenState extends State<HomeScreen> {
       final itemToDelete = _draggingItem!;
       debugPrint('Deleting item: ${itemToDelete.id}');
 
-      // Remove item from palette
-      context.read<PaletteProvider>().removeColor(itemToDelete.id);
+      // Remove item from grid
+      context.read<GridProvider>().removeColor(itemToDelete.id);
       _coordinator.saveState('Deleted ${itemToDelete.name ?? "color"} via drag');
     }
   }
@@ -598,7 +598,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ========== UI Helpers ==========
   
-  void _showColorItemMenu(ColorPaletteItem item) {
+  void _showColorItemMenu(ColorGridItem item) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -639,7 +639,7 @@ class _HomeScreenState extends State<HomeScreen> {
               title: const Text('Delete'),
               onTap: () {
                 Navigator.pop(context);
-                _onPaletteItemDelete(item);
+                _onGridItemDelete(item);
               },
             ),
             const SizedBox(height: 16),
@@ -836,12 +836,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 70),
-                                // Color palette grid
+                                // Color grid grid
                                 ReorderableColorGridView(
-                                  onReorder: _onPaletteReorder,
-                                  onItemTap: _onPaletteItemTap,
-                                  onItemLongPress: _onPaletteItemLongPress,
-                                  onItemDelete: _onPaletteItemDelete,
+                                  onReorder: _onGridReorder,
+                                  onItemTap: _onGridItemTap,
+                                  onItemLongPress: _onGridItemLongPress,
+                                  onItemDelete: _onGridItemDelete,
                                   onAddColor: _onAddColor,
                                   onDragStarted: _onDragStarted,
                                   onDragEnded: _onDragEnded,
@@ -849,7 +849,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   spacing: 12.0,
                                   itemSize: 80.0,
                                   showAddButton: true,
-                                  emptyStateMessage: 'No colors in palette\nCreate a color above and tap + to add it',
+                                  emptyStateMessage: 'No colors in grid\nCreate a color above and tap + to add it',
                                   colorFilter: (item) => applyIccFilter(
                                     item.color,
                                     lightness: item.oklchValues.lightness,
@@ -994,7 +994,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
                             child: Row(
                               children: [
-                                // Background color button (acts like a palette box)
+                                // Background color button (acts like a grid box)
                                 GestureDetector(
                                   onTap: _onBgColorBoxTap,
                                   onPanStart: _startEyedropperForBgColor, // Add this line

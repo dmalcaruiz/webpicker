@@ -1,6 +1,6 @@
 import '../models/app_state_snapshot.dart';
 import '../state/color_editor_provider.dart';
-import '../state/palette_provider.dart';
+import '../state/grid_provider.dart';
 import '../state/extreme_colors_provider.dart';
 import '../state/bg_color_provider.dart';
 import '../state/settings_provider.dart';
@@ -14,7 +14,7 @@ import 'undo_redo_manager.dart';
 /// application state.
 class AppStateCoordinator {
   final ColorEditorProvider colorEditor;
-  final PaletteProvider palette;
+  final GridProvider grid;
   final ExtremeColorsProvider extremes;
   final BgColorProvider bgColor;
   final SettingsProvider settings;
@@ -22,7 +22,7 @@ class AppStateCoordinator {
 
   AppStateCoordinator({
     required this.colorEditor,
-    required this.palette,
+    required this.grid,
     required this.extremes,
     required this.bgColor,
     required this.settings,
@@ -32,9 +32,9 @@ class AppStateCoordinator {
   /// Capture current state across all providers
   AppStateSnapshot captureSnapshot(String description) {
     return AppStateSnapshot(
-      // Palette state
-      paletteItems: List.from(palette.items),
-      selectedPaletteItemId: palette.selectedItem?.id,
+      // Grid state
+      gridItems: List.from(grid.items),
+      selectedGridItemId: grid.selectedItem?.id,
 
       // Current editing color
       currentColor: colorEditor.currentColor,
@@ -66,14 +66,14 @@ class AppStateCoordinator {
   /// This method updates all providers in a coordinated manner to ensure
   /// the entire application state is consistent with the snapshot.
   void restoreSnapshot(AppStateSnapshot snapshot) {
-    // 1. Restore palette provider
-    palette.syncFromSnapshot(snapshot.paletteItems);
+    // 1. Restore grid provider
+    grid.syncFromSnapshot(snapshot.gridItems);
 
-    // Handle palette selection
-    if (snapshot.selectedPaletteItemId != null) {
-      palette.selectItem(snapshot.selectedPaletteItemId!);
+    // Handle grid selection
+    if (snapshot.selectedGridItemId != null) {
+      grid.selectItem(snapshot.selectedGridItemId!);
     } else {
-      palette.deselectAll();
+      grid.deselectAll();
     }
 
     // 2. Restore color editor provider

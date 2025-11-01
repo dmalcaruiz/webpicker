@@ -36,7 +36,7 @@ void main() {
   });
 }
 
-/// Simulate the ID generation from ColorPaletteItem (with counter)
+/// Simulate the ID generation from ColorGridItem (with counter)
 int _counter = 0;
 
 String _generateId() {

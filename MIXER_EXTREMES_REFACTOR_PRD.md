@@ -1,19 +1,19 @@
 # Mixer Extremes Refactor - Product Requirements Document
 
 ## Overview
-Simplify the mixer extreme controls by replacing the complex arrow button system (⬇️ takeIn / ⬆️ giveTo / disconnect) with simple circle widgets that behave exactly like palette boxes.
+Simplify the mixer extreme controls by replacing the complex arrow button system (⬇️ takeIn / ⬆️ giveTo / disconnect) with simple circle widgets that behave exactly like grid boxes.
 
 ## Current System (Overcomplicated)
 - Arrow buttons (⬇️⬆️) for each extreme
 - Three actions per extreme: takeIn, giveTo, disconnect
-- Tracking state managed separately from palette selection
+- Tracking state managed separately from grid selection
 - No visual indication of which extreme is selected
 - Users can't copy/paste extreme colors using global actions
 
 ## Proposed System (Simple & Unified)
 Two circles below the mixer slider that:
-- **Look like palette boxes** (circular instead of rounded squares)
-- **Tap to select** - deselects any selected palette box
+- **Look like grid boxes** (circular instead of rounded squares)
+- **Tap to select** - deselects any selected grid box
 - **Integrated with global copy/paste buttons** - no separate menus needed
 - **Only one selection at a time** - tapping a circle deselects boxes, tapping a box deselects circles
 - **Visual feedback** - selected circle shows same border/highlight as selected boxes
@@ -23,7 +23,7 @@ Two circles below the mixer slider that:
 ### Selection Behavior
 1. **Tap left circle** → Deselect any box, select left extreme, sliders show left extreme color
 2. **Tap right circle** → Deselect any box, select right extreme, sliders show right extreme color
-3. **Tap any palette box** → Deselect both circles, select box, sliders show box color
+3. **Tap any grid box** → Deselect both circles, select box, sliders show box color
 4. **Tap selected circle again** → Deselect it (sliders return to neutral state)
 
 ### Copy/Paste Behavior (Using Existing Global Buttons)
@@ -59,7 +59,7 @@ class ExtremeColorItem {
 
 A simple circular widget that:
 - Displays the extreme color
-- Shows selection state (border/highlight like palette boxes)
+- Shows selection state (border/highlight like grid boxes)
 - Handles tap gesture
 - Size: ~40-48px diameter
 
@@ -87,7 +87,7 @@ Changes:
 Changes:
 - Add state: `String? selectedExtremeId` (null, 'left', or 'right')
 - Add state: `ExtremeColorItem leftExtreme`, `ExtremeColorItem rightExtreme`
-- Update `_onPaletteItemTap`: deselect extremes when box is tapped
+- Update `_onGridItemTap`: deselect extremes when box is tapped
 - Add `_onExtremeTap`: deselect boxes, select extreme, update sliders
 - Update copy handler: check if extreme is selected
 - Update paste handler: check if extreme is selected
@@ -105,25 +105,25 @@ Changes:
 ### Unified Selection State (Only One Selected at a Time)
 ```dart
 // In HomeScreen state:
-String? selectedPaletteItemId;  // Existing
+String? selectedGridItemId;  // Existing
 String? selectedExtremeId;      // New: 'left', 'right', or null
 
 // Selection rules:
-// - If selectedPaletteItemId != null → selectedExtremeId = null
-// - If selectedExtremeId != null → selectedPaletteItemId = null
+// - If selectedGridItemId != null → selectedExtremeId = null
+// - If selectedExtremeId != null → selectedGridItemId = null
 // - Both can be null (nothing selected)
 ```
 
 ## Visual Design
 
 ### Circle Appearance
-- **Size**: 44px diameter (slightly smaller than palette boxes)
+- **Size**: 44px diameter (slightly smaller than grid boxes)
 - **Unselected**:
   - Border: 2px white with 30% opacity
   - No shadow
 - **Selected**:
   - Border: 3px white with 90% opacity
-  - Drop shadow: similar to selected palette boxes
+  - Drop shadow: similar to selected grid boxes
 - **Position**: Below mixer slider, aligned with slider endpoints
 
 ### Layout
@@ -148,7 +148,7 @@ String? selectedExtremeId;      // New: 'left', 'right', or null
 
 ## Benefits
 
-1. **Simpler mental model** - extremes work exactly like palette boxes
+1. **Simpler mental model** - extremes work exactly like grid boxes
 2. **Unified selection system** - one selection paradigm throughout the app
 3. **Less code** - remove complex tracking state and action handlers
 4. **Better UX** - visual feedback shows which extreme is selected
@@ -158,7 +158,7 @@ String? selectedExtremeId;      // New: 'left', 'right', or null
 
 - [ ] Tap left circle → left extreme selected, boxes deselected, sliders update
 - [ ] Tap right circle → right extreme selected, boxes deselected, sliders update
-- [ ] Tap palette box → box selected, extremes deselected
+- [ ] Tap grid box → box selected, extremes deselected
 - [ ] Copy with left extreme selected → copies left extreme color
 - [ ] Paste with left extreme selected → updates left extreme color
 - [ ] Copy with right extreme selected → copies right extreme color
@@ -172,4 +172,4 @@ String? selectedExtremeId;      // New: 'left', 'right', or null
 - **No changes to slider interpolation** - OKLCH interpolation stays as-is
 - **No long-press menus** - use existing global copy/paste buttons
 - **Extremes persist** - colors don't reset when deselected
-- **Independent from palette** - extreme colors are separate from palette items
+- **Independent from grid** - extreme colors are separate from grid items

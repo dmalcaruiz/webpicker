@@ -3,12 +3,12 @@
 ## ReorderableGridView Fix
 
 ### Problem
-When dragging color items in the palette, items would end up **one position before** their intended drop location. For example:
+When dragging color items in the grid, items would end up **one position before** their intended drop location. For example:
 - Dragging "Blue" to appear after "Orange" would place it before "Orange" instead
 - This made the UI feel unresponsive and confusing
 
 ### Root Cause
-The issue was in the `_onPaletteReorder` method in `home_screen.dart`. The code was applying the standard Flutter `ReorderableListView` index adjustment:
+The issue was in the `_onGridReorder` method in `home_screen.dart`. The code was applying the standard Flutter `ReorderableListView` index adjustment:
 
 ```dart
 if (oldIndex < newIndex) {
@@ -22,17 +22,17 @@ However, the `reorderable_grid_view` package **already provides the correct targ
 Removed the index adjustment logic:
 
 ```dart
-/// Handle palette item reordering
-void _onPaletteReorder(int oldIndex, int newIndex) {
+/// Handle grid item reordering
+void _onGridReorder(int oldIndex, int newIndex) {
   if (_isRestoringState) return;
   
   setState(() {
     // Note: ReorderableGridView package provides the exact target index
     // Unlike ReorderableListView, we do NOT need to adjust newIndex
     // Simply remove from oldIndex and insert at newIndex
-    final item = _colorPalette.removeAt(oldIndex);
-    _colorPalette.insert(newIndex, item);
-    _saveStateToHistory('Reordered palette items');
+    final item = _colorGrid.removeAt(oldIndex);
+    _colorGrid.insert(newIndex, item);
+    _saveStateToHistory('Reordered grid items');
   });
 }
 ```
@@ -64,12 +64,12 @@ All 7 tests pass ✓
 - **Eyedropper**: Pick colors from anywhere on screen using Cyclop
 
 ### 3. **Undo/Redo System** ✓
-- Tracks all color changes and palette modifications
+- Tracks all color changes and grid modifications
 - Keyboard shortcuts: `Ctrl+Z` (undo), `Ctrl+Y` or `Ctrl+Shift+Z` (redo)
 - Visual buttons showing availability
 - Tooltips with action descriptions
 - State snapshots include:
-  - All palette items
+  - All grid items
   - Current color
   - Background color
   - Selection state
@@ -80,7 +80,7 @@ All 7 tests pass ✓
 - Selection system with visual indicators
 - Long-press for context menu with delete option
 - Tap to select and edit
-- Real-time color updates reflected in palette
+- Real-time color updates reflected in grid
 - Hex code display on each color item
 
 ### 5. **Clipboard Service** ✓
@@ -109,7 +109,7 @@ All 7 tests pass ✓
 ## Files Created/Modified
 
 ### New Files
-- `lib/models/color_palette_item.dart` - Color item data model
+- `lib/models/color_grid_item.dart` - Color item data model
 - `lib/models/app_state_snapshot.dart` - Undo/redo state model
 - `lib/services/clipboard_service.dart` - Clipboard operations
 - `lib/services/undo_redo_manager.dart` - Undo/redo logic
@@ -154,7 +154,7 @@ All 7 tests pass ✓
 
 ## Performance Considerations
 
-- State snapshots are shallow copies of palette items
+- State snapshots are shallow copies of grid items
 - History limited to 50 states (configurable)
 - Clipboard checks are async and non-blocking
 - Grid uses `ValueKey` for efficient rebuilds during reordering

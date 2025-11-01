@@ -49,7 +49,7 @@ class ColorButtonState extends State<ColorButton> with WidgetsBindingObserver {
 
   late Color color;
 
-  // hide the palette during eyedropping
+  // hide the grid during eyedropping
   bool hidden = false;
 
   bool keyboardOn = false;

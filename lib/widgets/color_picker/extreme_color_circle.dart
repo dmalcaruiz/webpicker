@@ -3,7 +3,7 @@ import '../../models/extreme_color_item.dart';
 
 /// A circular widget displaying a mixer extreme color
 ///
-/// Behaves like a palette box but circular:
+/// Behaves like a grid box but circular:
 /// - Tap to select (shows in sliders)
 /// - Visual feedback for selection state
 /// - Integrates with global copy/paste

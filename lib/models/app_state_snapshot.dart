@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'color_palette_item.dart';
+import 'color_grid_item.dart';
 import 'extreme_color_item.dart';
 
 /// Represents a complete snapshot of the app state for undo/redo
 class AppStateSnapshot {
-  /// List of color palette items
-  final List<ColorPaletteItem> paletteItems;
+  /// List of color grid items
+  final List<ColorGridItem> gridItems;
 
   /// Current color being edited
   final Color? currentColor;
@@ -22,8 +22,8 @@ class AppStateSnapshot {
   /// Whether background color box is selected
   final bool isBgColorSelected;
 
-  /// ID of the selected palette item
-  final String? selectedPaletteItemId;
+  /// ID of the selected grid item
+  final String? selectedGridItemId;
 
   /// ID of the selected extreme ('left', 'right', or null)
   final String? selectedExtremeId;
@@ -45,7 +45,7 @@ class AppStateSnapshot {
   final String actionDescription;
   
   const AppStateSnapshot({
-    required this.paletteItems,
+    required this.gridItems,
     required this.currentColor,
     required this.bgColor,
     this.bgLightness,
@@ -53,7 +53,7 @@ class AppStateSnapshot {
     this.bgHue,
     this.bgAlpha,
     this.isBgColorSelected = false,
-    this.selectedPaletteItemId,
+    this.selectedGridItemId,
     this.selectedExtremeId,
     this.leftExtreme,
     this.rightExtreme,
@@ -64,7 +64,7 @@ class AppStateSnapshot {
   
   /// Create a deep copy of this snapshot
   AppStateSnapshot copyWith({
-    List<ColorPaletteItem>? paletteItems,
+    List<ColorGridItem>? gridItems,
     Color? currentColor,
     Color? bgColor,
     double? bgLightness,
@@ -72,7 +72,7 @@ class AppStateSnapshot {
     double? bgHue,
     double? bgAlpha,
     bool? isBgColorSelected,
-    String? selectedPaletteItemId,
+    String? selectedGridItemId,
     String? selectedExtremeId,
     ExtremeColorItem? leftExtreme,
     ExtremeColorItem? rightExtreme,
@@ -81,7 +81,7 @@ class AppStateSnapshot {
     String? actionDescription,
   }) {
     return AppStateSnapshot(
-      paletteItems: paletteItems ?? this.paletteItems.map((item) => item).toList(),
+      gridItems: gridItems ?? this.gridItems.map((item) => item).toList(),
       currentColor: currentColor ?? this.currentColor,
       bgColor: bgColor ?? this.bgColor,
       bgLightness: bgLightness ?? this.bgLightness,
@@ -89,7 +89,7 @@ class AppStateSnapshot {
       bgHue: bgHue ?? this.bgHue,
       bgAlpha: bgAlpha ?? this.bgAlpha,
       isBgColorSelected: isBgColorSelected ?? this.isBgColorSelected,
-      selectedPaletteItemId: selectedPaletteItemId ?? this.selectedPaletteItemId,
+      selectedGridItemId: selectedGridItemId ?? this.selectedGridItemId,
       selectedExtremeId: selectedExtremeId ?? this.selectedExtremeId,
       leftExtreme: leftExtreme ?? this.leftExtreme,
       rightExtreme: rightExtreme ?? this.rightExtreme,
@@ -101,6 +101,6 @@ class AppStateSnapshot {
   
   @override
   String toString() {
-    return 'AppStateSnapshot($actionDescription, ${paletteItems.length} items, ${timestamp.toIso8601String()})';
+    return 'AppStateSnapshot($actionDescription, ${gridItems.length} items, ${timestamp.toIso8601String()})';
   }
 }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
-import '../../models/color_palette_item.dart';
-import '../../state/palette_provider.dart';
+import '../../models/color_grid_item.dart';
+import '../../state/grid_provider.dart';
 import 'color_item_widget.dart';
 
-/// A reorderable grid view for displaying and managing color palettes
+/// A reorderable grid view for displaying and managing color grids
 ///
 /// Features:
 /// - Drag and drop reordering
@@ -14,26 +14,26 @@ import 'color_item_widget.dart';
 /// - Responsive grid layout
 /// - Empty state handling
 ///
-/// Uses PaletteProvider for accessing the color palette items.
+/// Uses GridProvider for accessing the color grid items.
 class ReorderableColorGridView extends StatefulWidget {
   
   /// Callback when items are reordered
   final Function(int oldIndex, int newIndex) onReorder;
   
   /// Callback when an item is tapped
-  final Function(ColorPaletteItem) onItemTap;
+  final Function(ColorGridItem) onItemTap;
   
   /// Callback when an item is long pressed
-  final Function(ColorPaletteItem) onItemLongPress;
+  final Function(ColorGridItem) onItemLongPress;
   
   /// Callback when an item should be deleted
-  final Function(ColorPaletteItem) onItemDelete;
+  final Function(ColorGridItem) onItemDelete;
   
   /// Callback when add button is pressed
   final VoidCallback onAddColor;
   
   /// Callback when drag starts (for showing delete zone)
-  final Function(ColorPaletteItem)? onDragStarted;
+  final Function(ColorGridItem)? onDragStarted;
   
   /// Callback when drag ends (for hiding delete zone)
   /// Returns true if item was deleted, false otherwise
@@ -55,8 +55,8 @@ class ReorderableColorGridView extends StatefulWidget {
   final String emptyStateMessage;
 
   /// Optional color filter for display (e.g., ICC profile filtering)
-  /// Takes the palette item and returns the display color
-  final Color Function(ColorPaletteItem)? colorFilter;
+  /// Takes the grid item and returns the display color
+  final Color Function(ColorGridItem)? colorFilter;
 
   const ReorderableColorGridView({
     super.key,
@@ -71,7 +71,7 @@ class ReorderableColorGridView extends StatefulWidget {
     this.spacing = 12.0,
     this.itemSize = 80.0,
     this.showAddButton = true,
-    this.emptyStateMessage = 'No colors in palette\nTap + to add your first color',
+    this.emptyStateMessage = 'No colors in grid\nTap + to add your first color',
     this.colorFilter,
   });
   
@@ -82,8 +82,8 @@ class ReorderableColorGridView extends StatefulWidget {
 class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
   @override
   Widget build(BuildContext context) {
-    // Get items from PaletteProvider
-    final items = context.watch<PaletteProvider>().items;
+    // Get items from GridProvider
+    final items = context.watch<GridProvider>().items;
 
     if (items.isEmpty) {
       return _buildEmptyState();
@@ -93,7 +93,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
   }
   
   /// Build the main grid view with drag-and-drop support
-  Widget _buildGridView(List<ColorPaletteItem> items) {
+  Widget _buildGridView(List<ColorGridItem> items) {
     return Padding(
       padding: const EdgeInsets.all(8),
       child: ReorderableGridView.count(
@@ -155,7 +155,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
   }
   
   /// Build a single color item
-  Widget _buildColorItem(ColorPaletteItem item) {
+  Widget _buildColorItem(ColorGridItem item) {
     return ColorItemWidget(
       key: ValueKey(item.id),
       item: item,

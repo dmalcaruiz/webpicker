@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/color_palette_item.dart';
+import '../../models/color_grid_item.dart';
 
 /// Individual color item widget for the reorderable grid
 /// 
@@ -10,8 +10,8 @@ import '../../models/color_palette_item.dart';
 /// - Tap to select/edit
 /// - Long press for context menu
 class ColorItemWidget extends StatelessWidget {
-  /// The color palette item to display
-  final ColorPaletteItem item;
+  /// The color grid item to display
+  final ColorGridItem item;
 
   /// Optional display color (e.g., ICC filtered)
   /// If provided, this is used instead of item.color for display only

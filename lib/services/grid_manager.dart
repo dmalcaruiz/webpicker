@@ -1,78 +1,78 @@
 import 'package:flutter/material.dart';
-import '../models/color_palette_item.dart';
+import '../models/color_grid_item.dart';
 import '../utils/color_operations.dart';
 
-/// Manages color palette operations
+/// Manages color grid operations
 /// 
 /// Handles:
 /// - Adding/removing colors
 /// - Reordering items
 /// - Selection management
 /// - Validation
-class PaletteManager {
-  /// Add a new color to the palette
-  static List<ColorPaletteItem> addColor({
-    required List<ColorPaletteItem> currentPalette,
+class ColorGridManager {
+  /// Add a new color to the grid
+  static List<ColorGridItem> addColor({
+    required List<ColorGridItem> currentGrid,
     required Color color,
     String? name,
     bool selectNew = true,
   }) {
     // Deselect all if we're selecting the new one
-    final updatedPalette = selectNew
-        ? currentPalette.map((item) => item.copyWith(isSelected: false)).toList()
-        : List<ColorPaletteItem>.from(currentPalette);
+    final updatedGrid = selectNew
+        ? currentGrid.map((item) => item.copyWith(isSelected: false)).toList()
+        : List<ColorGridItem>.from(currentGrid);
     
     // Create and add new item
-    final newItem = ColorPaletteItem.fromColor(color, name: name)
+    final newItem = ColorGridItem.fromColor(color, name: name)
         .copyWith(isSelected: selectNew);
     
-    updatedPalette.add(newItem);
+    updatedGrid.add(newItem);
     
-    return updatedPalette;
+    return updatedGrid;
   }
   
-  /// Remove a color from the palette
-  static List<ColorPaletteItem> removeColor({
-    required List<ColorPaletteItem> currentPalette,
+  /// Remove a color from the grid
+  static List<ColorGridItem> removeColor({
+    required List<ColorGridItem> currentGrid,
     required String itemId,
   }) {
-    return currentPalette.where((item) => item.id != itemId).toList();
+    return currentGrid.where((item) => item.id != itemId).toList();
   }
   
-  /// Reorder items in the palette
-  static List<ColorPaletteItem> reorderItems({
-    required List<ColorPaletteItem> currentPalette,
+  /// Reorder items in the grid
+  static List<ColorGridItem> reorderItems({
+    required List<ColorGridItem> currentGrid,
     required int oldIndex,
     required int newIndex,
   }) {
-    final palette = List<ColorPaletteItem>.from(currentPalette);
-    final item = palette.removeAt(oldIndex);
-    palette.insert(newIndex, item);
-    return palette;
+    final grid = List<ColorGridItem>.from(currentGrid);
+    final item = grid.removeAt(oldIndex);
+    grid.insert(newIndex, item);
+    return grid;
   }
   
   /// Select a specific item (deselects all others)
-  static List<ColorPaletteItem> selectItem({
-    required List<ColorPaletteItem> currentPalette,
+  static List<ColorGridItem> selectItem({
+    required List<ColorGridItem> currentGrid,
     required String itemId,
   }) {
-    return currentPalette.map((item) => 
+    return currentGrid.map((item) => 
       item.copyWith(isSelected: item.id == itemId)
     ).toList();
   }
   
   /// Deselect all items
-  static List<ColorPaletteItem> deselectAll({
-    required List<ColorPaletteItem> currentPalette,
+  static List<ColorGridItem> deselectAll({
+    required List<ColorGridItem> currentGrid,
   }) {
-    return currentPalette.map((item) => 
+    return currentGrid.map((item) => 
       item.copyWith(isSelected: false)
     ).toList();
   }
   
   /// Update color of a specific item (from sRGB Color)
-  static List<ColorPaletteItem> updateItemColor({
-    required List<ColorPaletteItem> currentPalette,
+  static List<ColorGridItem> updateItemColor({
+    required List<ColorGridItem> currentGrid,
     required String itemId,
     required Color color,
   }) {
@@ -85,7 +85,7 @@ class PaletteManager {
       alpha: oklch.alpha,
     );
 
-    return currentPalette.map((item) {
+    return currentGrid.map((item) {
       if (item.id == itemId) {
         return item.copyWith(
           color: color,
@@ -99,8 +99,8 @@ class PaletteManager {
   }
 
   /// Update color of a specific item (from OKLCH values - preferred)
-  static List<ColorPaletteItem> updateItemOklch({
-    required List<ColorPaletteItem> currentPalette,
+  static List<ColorGridItem> updateItemOklch({
+    required List<ColorGridItem> currentGrid,
     required String itemId,
     required double lightness,
     required double chroma,
@@ -117,7 +117,7 @@ class PaletteManager {
     // Convert to Color for display
     final color = colorFromOklch(lightness, chroma, hue, alpha);
 
-    return currentPalette.map((item) {
+    return currentGrid.map((item) {
       if (item.id == itemId) {
         return item.copyWith(
           color: color,
@@ -131,58 +131,58 @@ class PaletteManager {
   }
   
   /// Get the currently selected item
-  static ColorPaletteItem? getSelectedItem(List<ColorPaletteItem> palette) {
+  static ColorGridItem? getSelectedItem(List<ColorGridItem> grid) {
     try {
-      return palette.firstWhere((item) => item.isSelected);
+      return grid.firstWhere((item) => item.isSelected);
     } catch (e) {
       return null;
     }
   }
   
   /// Get item by ID
-  static ColorPaletteItem? getItemById({
-    required List<ColorPaletteItem> palette,
+  static ColorGridItem? getItemById({
+    required List<ColorGridItem> grid,
     required String itemId,
   }) {
     try {
-      return palette.firstWhere((item) => item.id == itemId);
+      return grid.firstWhere((item) => item.id == itemId);
     } catch (e) {
       return null;
     }
   }
   
   /// Check if an item is selected
-  static bool hasSelection(List<ColorPaletteItem> palette) {
-    return palette.any((item) => item.isSelected);
+  static bool hasSelection(List<ColorGridItem> grid) {
+    return grid.any((item) => item.isSelected);
   }
   
   /// Get index of item by ID
   static int getIndexById({
-    required List<ColorPaletteItem> palette,
+    required List<ColorGridItem> grid,
     required String itemId,
   }) {
-    return palette.indexWhere((item) => item.id == itemId);
+    return grid.indexWhere((item) => item.id == itemId);
   }
   
-  /// Validate palette doesn't have duplicate IDs
-  static bool validateNoDuplicateIds(List<ColorPaletteItem> palette) {
-    final ids = palette.map((item) => item.id).toSet();
-    return ids.length == palette.length;
+  /// Validate grid doesn't have duplicate IDs
+  static bool validateNoDuplicateIds(List<ColorGridItem> grid) {
+    final ids = grid.map((item) => item.id).toSet();
+    return ids.length == grid.length;
   }
   
   /// Ensure only one item is selected (fix inconsistent state)
-  static List<ColorPaletteItem> ensureSingleSelection({
-    required List<ColorPaletteItem> currentPalette,
+  static List<ColorGridItem> ensureSingleSelection({
+    required List<ColorGridItem> currentGrid,
   }) {
-    final selectedItems = currentPalette.where((item) => item.isSelected).toList();
+    final selectedItems = currentGrid.where((item) => item.isSelected).toList();
     
     if (selectedItems.length <= 1) {
-      return currentPalette; // Already consistent
+      return currentGrid; // Already consistent
     }
     
     // Keep only the first selected item
     final firstSelectedId = selectedItems.first.id;
-    return currentPalette.map((item) => 
+    return currentGrid.map((item) => 
       item.copyWith(isSelected: item.id == firstSelectedId)
     ).toList();
   }

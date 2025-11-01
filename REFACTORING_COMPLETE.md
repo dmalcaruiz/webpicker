@@ -6,14 +6,14 @@ Successfully refactored `home_screen.dart` from **634 lines** down to **~414 lin
 ## What Was Done
 
 ### 1. Created Service Layer
-**`lib/services/palette_manager.dart`** (148 lines)
-- Centralized all palette operations
+**`lib/services/grid_manager.dart`** (148 lines)
+- Centralized all grid operations
 - Pure functions for state management
 - Methods: `addColor`, `removeColor`, `reorderItems`, `selectItem`, `updateItemColor`, etc.
 - Testable, reusable business logic
 
 ### 2. Created State Model
-**`lib/models/color_palette_state.dart`** (118 lines)
+**`lib/models/color_grid_state.dart`** (118 lines)
 - Immutable state encapsulation
 - Helper methods for common queries
 - Better separation of concerns
@@ -41,18 +41,18 @@ Successfully refactored `home_screen.dart` from **634 lines** down to **~414 lin
 - Simple, reusable
 
 ### 4. Fixed Critical Bug: Slider Sync
-**Problem:** When tapping a palette item, the OKLCH sliders didn't update to show that color's values.
+**Problem:** When tapping a grid item, the OKLCH sliders didn't update to show that color's values.
 
 **Solution:**
 - Added `externalColor` parameter to `ColorPickerControls`
 - Implemented `didUpdateWidget` to detect color changes
 - Created `_setFromExternalColor()` to convert and update sliders
 - Fixed infinite loop by avoiding callback triggers during sync
-- Sliders now sync automatically when palette items are selected
+- Sliders now sync automatically when grid items are selected
 
 **Technical Details:**
 The key challenge was preventing an infinite `setState` loop:
-1. Palette tap → updates `currentColor` → rebuilds with new `externalColor`
+1. Grid tap → updates `currentColor` → rebuilds with new `externalColor`
 2. `didUpdateWidget` detects change → updates internal OKLCH values
 3. **Critical:** Only updates internal state, does NOT call `_updateColor()` callback
 4. This breaks the loop while still updating the UI correctly
@@ -67,7 +67,7 @@ The key challenge was preventing an infinite `setState` loop:
 ```
 home_screen.dart (634 lines)
 ├── All UI layout
-├── All palette logic
+├── All grid logic
 ├── All undo/redo logic
 ├── All navigation
 └── All state management
@@ -77,11 +77,11 @@ home_screen.dart (634 lines)
 ```
 home_screen.dart (414 lines) - Orchestrator only
 ├── services/
-│   ├── palette_manager.dart - Business logic
+│   ├── grid_manager.dart - Business logic
 │   └── undo_redo_manager.dart - History management
 ├── models/
-│   ├── color_palette_state.dart - State encapsulation
-│   ├── color_palette_item.dart - Item model
+│   ├── color_grid_state.dart - State encapsulation
+│   ├── color_grid_item.dart - Item model
 │   └── app_state_snapshot.dart - Snapshot model
 └── widgets/
     └── home/
@@ -97,12 +97,12 @@ home_screen.dart (414 lines) - Orchestrator only
 Each file has one clear purpose
 
 ### ✅ **Testability**
-- `PaletteManager` can be unit tested
+- `GridManager` can be unit tested
 - UI components can be widget tested
 - Logic decoupled from presentation
 
 ### ✅ **Reusability**
-- `PaletteManager` can be used in other screens
+- `GridManager` can be used in other screens
 - UI components can be reused
 - State model is portable
 
@@ -128,7 +128,7 @@ Each file has one clear purpose
 
 ## New Feature: Slider Sync
 
-When you tap a palette item:
+When you tap a grid item:
 1. Item becomes selected (visual feedback)
 2. `currentColor` updates in home screen
 3. `externalColor` prop passes to `ColorPickerControls`
@@ -136,7 +136,7 @@ When you tap a palette item:
 5. Color converts to OKLCH: `srgbToOklch(color)`
 6. Sliders update: `lightness`, `chroma`, `hue`
 7. Gradients regenerate
-8. Sliders reflect the palette item's values ✨
+8. Sliders reflect the grid item's values ✨
 
 ## Testing Status
 - ✅ All critical tests passing (28/30)
@@ -146,7 +146,7 @@ When you tap a palette item:
 
 ## Next Steps (Optional)
 1. Consider adding state management (Provider/Riverpod)
-2. Add more unit tests for `PaletteManager`
+2. Add more unit tests for `GridManager`
 3. Extract more UI components if needed
 4. Add integration tests
 5. Consider adding animations for transitions
@@ -156,8 +156,8 @@ When you tap a palette item:
 - `lib/widgets/color_picker/color_picker_controls.dart` - Added external color support
 
 ## Files Created
-- `lib/services/palette_manager.dart`
-- `lib/models/color_palette_state.dart`
+- `lib/services/grid_manager.dart`
+- `lib/models/color_grid_state.dart`
 - `lib/widgets/home/sheet_grabbing_handle.dart`
 - `lib/widgets/home/sheet_controls.dart`
 - `lib/widgets/home/action_buttons_row.dart`

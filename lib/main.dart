@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'cyclop_eyedropper/eye_dropper_layer.dart';
 import 'screens/home_screen.dart';
 import 'state/color_editor_provider.dart';
-import 'state/palette_provider.dart';
+import 'state/grid_provider.dart';
 import 'state/extreme_colors_provider.dart';
 import 'state/bg_color_provider.dart';
 import 'state/settings_provider.dart';
@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ColorEditorProvider()),
-        ChangeNotifierProvider(create: (_) => PaletteProvider()),
+        ChangeNotifierProvider(create: (_) => GridProvider()),
         ChangeNotifierProvider(create: (_) => ExtremeColorsProvider()),
         ChangeNotifierProvider(create: (_) => BgColorProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),

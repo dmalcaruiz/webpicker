@@ -29,14 +29,14 @@ test('check against named colors', test => {
 });
 
 test('nearest() with accessor', t => {
-	let palette = {
+	let grid = {
 		Burgundy: '#914e72',
 		Blue: '#0078bf',
 		Green: '#00a95c',
 		'Medium Blue': '#3255a4',
 		'Bright Red': '#f15060'
 	};
-	let names = Object.keys(palette);
-	let nearestColors = nearest(names, undefined, name => palette[name]);
+	let names = Object.keys(grid);
+	let nearestColors = nearest(names, undefined, name => grid[name]);
 	assert.deepEqual(nearestColors('red', 1), ['Bright Red']);
 });

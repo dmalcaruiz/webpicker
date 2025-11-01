@@ -4,7 +4,7 @@ import '../models/extreme_color_item.dart';
 /// Provider for mixer extreme colors (left and right)
 ///
 /// Manages the two extreme colors used for color mixing/interpolation.
-/// These colors behave like palette boxes (can be selected and edited),
+/// These colors behave like grid boxes (can be selected and edited),
 /// but with fixed IDs ('left' and 'right').
 class ExtremeColorsProvider extends ChangeNotifier {
   late ExtremeColorItem _leftExtreme;

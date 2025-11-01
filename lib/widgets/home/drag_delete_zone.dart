@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// A drag target zone that appears when dragging palette items
+/// A drag target zone that appears when dragging grid items
 /// Provides visual feedback for drag-to-delete functionality
 class DragDeleteZone extends StatefulWidget {
   /// Whether the zone is currently visible

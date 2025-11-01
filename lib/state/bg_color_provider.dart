@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../models/color_palette_item.dart';
+import '../models/color_grid_item.dart';
 import '../utils/color_operations.dart';
 
 /// Provider for background color state
 ///
 /// Manages the background color and its OKLCH values, as well as
 /// its selection state. The background color serves as the canvas
-/// on which palette colors are displayed.
+/// on which grid colors are displayed.
 class BgColorProvider extends ChangeNotifier {
   Color _bgColor = const Color(0xFF252525);
   double _lightness = 0.15;

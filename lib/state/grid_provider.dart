@@ -1,33 +1,33 @@
 import 'package:flutter/material.dart';
-import '../models/color_palette_item.dart';
-import '../services/palette_manager.dart';
+import '../models/color_grid_item.dart';
+import '../services/grid_manager.dart';
 
-/// Provider for the color palette
+/// Provider for the color grid
 ///
-/// Manages the list of color items in the palette along with selection state.
-/// All palette operations (add, delete, reorder, select) go through this provider.
-class PaletteProvider extends ChangeNotifier {
-  List<ColorPaletteItem> _items = [];
+/// Manages the list of color items in the grid along with selection state.
+/// All grid operations (add, delete, reorder, select) go through this provider.
+class GridProvider extends ChangeNotifier {
+  List<ColorGridItem> _items = [];
 
   // Getters
-  List<ColorPaletteItem> get items => _items;
+  List<ColorGridItem> get items => _items;
   int get itemCount => _items.length;
   bool get isEmpty => _items.isEmpty;
   bool get isNotEmpty => _items.isNotEmpty;
 
   /// Get the currently selected item (if any)
-  ColorPaletteItem? get selectedItem => PaletteManager.getSelectedItem(_items);
+  ColorGridItem? get selectedItem => ColorGridManager.getSelectedItem(_items);
 
   /// Get the ID of the selected item (if any)
   String? get selectedItemId => selectedItem?.id;
 
   /// Check if there's a selected item
-  bool get hasSelection => PaletteManager.hasSelection(_items);
+  bool get hasSelection => ColorGridManager.hasSelection(_items);
 
-  /// Add a new color to the palette
+  /// Add a new color to the grid
   void addColor(Color color, {String? name, bool selectNew = true}) {
-    _items = PaletteManager.addColor(
-      currentPalette: _items,
+    _items = ColorGridManager.addColor(
+      currentGrid: _items,
       color: color,
       name: name,
       selectNew: selectNew,
@@ -35,19 +35,19 @@ class PaletteProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Remove a color from the palette by ID
+  /// Remove a color from the grid by ID
   void removeColor(String itemId) {
-    _items = PaletteManager.removeColor(
-      currentPalette: _items,
+    _items = ColorGridManager.removeColor(
+      currentGrid: _items,
       itemId: itemId,
     );
     notifyListeners();
   }
 
-  /// Reorder items in the palette
+  /// Reorder items in the grid
   void reorderItems(int oldIndex, int newIndex) {
-    _items = PaletteManager.reorderItems(
-      currentPalette: _items,
+    _items = ColorGridManager.reorderItems(
+      currentGrid: _items,
       oldIndex: oldIndex,
       newIndex: newIndex,
     );
@@ -56,8 +56,8 @@ class PaletteProvider extends ChangeNotifier {
 
   /// Select a specific item (deselects all others)
   void selectItem(String itemId) {
-    _items = PaletteManager.selectItem(
-      currentPalette: _items,
+    _items = ColorGridManager.selectItem(
+      currentGrid: _items,
       itemId: itemId,
     );
     notifyListeners();
@@ -65,8 +65,8 @@ class PaletteProvider extends ChangeNotifier {
 
   /// Deselect all items
   void deselectAll() {
-    _items = PaletteManager.deselectAll(
-      currentPalette: _items,
+    _items = ColorGridManager.deselectAll(
+      currentGrid: _items,
     );
     notifyListeners();
   }
@@ -79,8 +79,8 @@ class PaletteProvider extends ChangeNotifier {
     required double hue,
     double? alpha,
   }) {
-    _items = PaletteManager.updateItemOklch(
-      currentPalette: _items,
+    _items = ColorGridManager.updateItemOklch(
+      currentGrid: _items,
       itemId: itemId,
       lightness: lightness,
       chroma: chroma,
@@ -95,8 +95,8 @@ class PaletteProvider extends ChangeNotifier {
     required String itemId,
     required Color color,
   }) {
-    _items = PaletteManager.updateItemColor(
-      currentPalette: _items,
+    _items = ColorGridManager.updateItemColor(
+      currentGrid: _items,
       itemId: itemId,
       color: color,
     );
@@ -104,29 +104,29 @@ class PaletteProvider extends ChangeNotifier {
   }
 
   /// Get item by ID
-  ColorPaletteItem? getItemById(String itemId) {
-    return PaletteManager.getItemById(
-      palette: _items,
+  ColorGridItem? getItemById(String itemId) {
+    return ColorGridManager.getItemById(
+      grid: _items,
       itemId: itemId,
     );
   }
 
-  /// Sync from snapshot (for undo/redo) - replaces entire palette
-  void syncFromSnapshot(List<ColorPaletteItem> snapshot) {
-    // Only notify if the palette actually changed
+  /// Sync from snapshot (for undo/redo) - replaces entire grid
+  void syncFromSnapshot(List<ColorGridItem> snapshot) {
+    // Only notify if the grid actually changed
     if (_items != snapshot) {
-      _items = List<ColorPaletteItem>.from(snapshot);
+      _items = List<ColorGridItem>.from(snapshot);
       notifyListeners();
     }
   }
 
-  /// Replace entire palette (used during restore/load operations)
-  void setPalette(List<ColorPaletteItem> newPalette) {
-    _items = List<ColorPaletteItem>.from(newPalette);
+  /// Replace entire grid (used during restore/load operations)
+  void setGrid(List<ColorGridItem> newGrid) {
+    _items = List<ColorGridItem>.from(newGrid);
     notifyListeners();
   }
 
-  /// Clear the entire palette
+  /// Clear the entire grid
   void clear() {
     if (_items.isNotEmpty) {
       _items = [];

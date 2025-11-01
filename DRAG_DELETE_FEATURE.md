@@ -1,7 +1,7 @@
 # Drag-to-Delete Feature Implementation
 
 ## Overview
-Implemented an intuitive drag-to-delete UX feature that shows a trash can zone at the top of the screen when dragging color palette items. Users can drag any color box to the trash zone to delete it.
+Implemented an intuitive drag-to-delete UX feature that shows a trash can zone at the top of the screen when dragging color grid items. Users can drag any color box to the trash zone to delete it.
 
 ## ✨ Features
 
@@ -12,7 +12,7 @@ Implemented an intuitive drag-to-delete UX feature that shows a trash can zone a
 - **Icon animation** - Switches from outline to filled icon on hover
 
 ### UX Flow
-1. **Long press** on any color box in the palette (200ms delay)
+1. **Long press** on any color box in the grid (200ms delay)
 2. **Drag starts** → Delete zone animates in at top of screen
 3. **Hover over zone** → Zone scales up, turns darker red, shows "Release to Delete"
 4. **Release** → Item is deleted, undo/redo history updated
@@ -43,7 +43,7 @@ DragDeleteZone(
 **File:** `lib/widgets/color_picker/reorderable_color_grid_view.dart`
 
 **Added callbacks:**
-- `onDragStarted(ColorPaletteItem)` - Fires when drag begins
+- `onDragStarted(ColorGridItem)` - Fires when drag begins
 - `onDragEnded()` - Fires when drag ends
 
 **Implementation:**
@@ -56,12 +56,12 @@ DragDeleteZone(
 
 **Added state:**
 ```dart
-ColorPaletteItem? _draggingItem;  // Track currently dragging item
+ColorGridItem? _draggingItem;  // Track currently dragging item
 ```
 
 **Added handlers:**
 ```dart
-void _onDragStarted(ColorPaletteItem item)
+void _onDragStarted(ColorGridItem item)
 void _onDragEnded()
 void _onDropToDelete()
 ```
@@ -93,7 +93,7 @@ void _onDropToDelete()
 **Problem:** Drag-delete needs to work with existing history system.
 
 **Solution:**
-- Reuse `PaletteManager.removeColor()` method
+- Reuse `GridManager.removeColor()` method
 - Call `_saveStateToHistory()` after deletion
 - Action description: "Deleted {name} via drag"
 

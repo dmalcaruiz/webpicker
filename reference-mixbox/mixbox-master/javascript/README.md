@@ -95,10 +95,10 @@ gl.uniform1i(gl.getUniformLocation(shaderProgram, "mixbox_lut"), 0);
 
 ## Examples
 
-| Gradients | Mountains | Palette Snakes |
+| Gradients | Mountains | Grid Snakes |
 |:---:|:---:|:---:|
-| <a href="https://scrtwpns.com/mixbox/examples/gradients.html"><img src="https://scrtwpns.com/mixbox/examples/gradients.png"/></a> | <a href="https://scrtwpns.com/mixbox/examples/mountains.html"><img src="https://scrtwpns.com/mixbox/examples/mountains.png"/></a> | <a href="https://scrtwpns.com/mixbox/examples/palette.html"><img src="https://scrtwpns.com/mixbox/examples/palette.png"/></a> |
-|  [source code](examples/gradients.js) |  [source code](examples/mountains.js) |  [source code](examples/palette.js) |
+| <a href="https://scrtwpns.com/mixbox/examples/gradients.html"><img src="https://scrtwpns.com/mixbox/examples/gradients.png"/></a> | <a href="https://scrtwpns.com/mixbox/examples/mountains.html"><img src="https://scrtwpns.com/mixbox/examples/mountains.png"/></a> | <a href="https://scrtwpns.com/mixbox/examples/grid.html"><img src="https://scrtwpns.com/mixbox/examples/grid.png"/></a> |
+|  [source code](examples/gradients.js) |  [source code](examples/mountains.js) |  [source code](examples/grid.js) |
 
 | Splash Art | Paint Mixer | Pigment Fluids |
 |:---:|:---:|:---:|

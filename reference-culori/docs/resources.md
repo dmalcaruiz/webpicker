@@ -16,7 +16,7 @@ These projects add more functionality to Culori, but they're separate as to keep
 -   [Moqups](https://moqups.com) — all our color-manipulation functions are handled by Culori.
 -   [Schemist](https://github.com/felixgirault/schemist) — color schemes builder backed by Culori.
 -   [Color Name API](https://github.com/meodai/color-name-api) — a REST API for color names that makes use Culori's [differenceCiede2000](https://culorijs.org/api/#differenceCiede2000) to return a fitting name for every color.
--   [Atmos](https://atmos.style) - a toolbox based on (OK)LCH color space for creating professional color palettes. Utilizing Culori for color manipulation allowed us to concentrate on our product's essence rather than getting bogged down in implementation details.
+-   [Atmos](https://atmos.style) - a toolbox based on (OK)LCH color space for creating professional color grids. Utilizing Culori for color manipulation allowed us to concentrate on our product's essence rather than getting bogged down in implementation details.
 -   [huetiful-js](https://github.com/prjctimg/huetiful) - Open source Typescript library for manipulating color and generating custom color scales based on Culori. With utilities for sorting, filtering and querying collections of colors, this library opens new ways of working with color programmatically.
 -   [oklch.com/](https://oklch.com/) - OKLCH picker with pretty plotting
 
@@ -53,7 +53,7 @@ _Does your product/project use Culori? Create a PR and add yourself to this list
 
 -   [Color: From Hexcodes to Eyeballs](http://jamie-wong.com/post/color/) by Jamie Wong
 -   [Okay, color spaces](https://ericportis.com/posts/2024/okay-color-spaces/) by Eric Portis
--   [How to generate color palettes for design systems](https://matthewstrom.com/writing/generating-color-palettes/) by Matthew Ström
+-   [How to generate color grids for design systems](https://matthewstrom.com/writing/generating-color-grids/) by Matthew Ström
 
 ### Books
 

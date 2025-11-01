@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../utils/color_operations.dart';
 
-/// Represents a single color item in a palette
-class ColorPaletteItem {
+/// Represents a single color item in a grid
+class ColorGridItem {
   /// Unique identifier for this color item
   final String id;
   
@@ -24,7 +24,7 @@ class ColorPaletteItem {
   /// OKLCH values for this color (source of truth)
   final OklchValues oklchValues;
 
-  const ColorPaletteItem({
+  const ColorGridItem({
     required this.id,
     required this.color,
     this.name,
@@ -35,7 +35,7 @@ class ColorPaletteItem {
   });
   
   /// Create a copy of this item with updated values
-  ColorPaletteItem copyWith({
+  ColorGridItem copyWith({
     String? id,
     Color? color,
     String? name,
@@ -44,7 +44,7 @@ class ColorPaletteItem {
     bool? isSelected,
     OklchValues? oklchValues,
   }) {
-    return ColorPaletteItem(
+    return ColorGridItem(
       id: id ?? this.id,
       color: color ?? this.color,
       name: name ?? this.name,
@@ -56,11 +56,11 @@ class ColorPaletteItem {
   }
   
   /// Create a new color item from a Color
-  factory ColorPaletteItem.fromColor(Color color, {String? name}) {
+  factory ColorGridItem.fromColor(Color color, {String? name}) {
     final now = DateTime.now();
     // Convert color to OKLCH immediately - OKLCH is the source of truth
     final oklch = _colorToOklchValues(color);
-    return ColorPaletteItem(
+    return ColorGridItem(
       id: _generateId(),
       color: color,
       name: name,
@@ -71,7 +71,7 @@ class ColorPaletteItem {
   }
 
   /// Create a new color item from OKLCH values (preferred method)
-  factory ColorPaletteItem.fromOklch({
+  factory ColorGridItem.fromOklch({
     required double lightness,
     required double chroma,
     required double hue,
@@ -87,7 +87,7 @@ class ColorPaletteItem {
     );
     // Convert OKLCH to Color for display
     final color = _oklchValuesToColor(oklch);
-    return ColorPaletteItem(
+    return ColorGridItem(
       id: _generateId(),
       color: color,
       name: name,
@@ -132,7 +132,7 @@ class ColorPaletteItem {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is ColorPaletteItem && other.id == id;
+    return other is ColorGridItem && other.id == id;
   }
   
   @override
@@ -140,7 +140,7 @@ class ColorPaletteItem {
   
   @override
   String toString() {
-    return 'ColorPaletteItem(id: $id, color: $color, name: $name)';
+    return 'ColorGridItem(id: $id, color: $color, name: $name)';
   }
 }
 

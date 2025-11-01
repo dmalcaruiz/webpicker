@@ -1202,15 +1202,15 @@ nearestNamedColors('lch(50% 70 60)', 3);
 
 By default, _colors_ needs to be an array of color values. If your array contains something other than a simple color value, you can provide the `accessor` argument to point to the color value associated with each item in the array.
 
-The example below shows a common data structure for a color palette: an object whose keys are the names and whose values are their associated color representations.
+The example below shows a common data structure for a color grid: an object whose keys are the names and whose values are their associated color representations.
 
 ```js
 import { nearest, differenceEuclidean } from 'culori';
 
 /*
-	Example: get the closest color from a palette
+	Example: get the closest color from a grid
  */
-let palette = {
+let grid = {
 	Burgundy: '#914e72',
 	Blue: '#0078bf',
 	Green: '#00a95c',
@@ -1218,12 +1218,12 @@ let palette = {
 	'Bright Red': '#f15060'
 };
 
-let names = Object.keys(palette);
+let names = Object.keys(grid);
 
 let nearestColors = nearest(
 	names,
 	differenceEuclidean(),
-	name => palette[name]
+	name => grid[name]
 );
 
 nearestColors('red', 1);

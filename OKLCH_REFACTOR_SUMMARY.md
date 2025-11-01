@@ -11,11 +11,11 @@ Refactor the color picker to use **OKLCH as the source of truth** throughout the
 
 ## ✅ What Was Changed
 
-### 1. ColorPaletteItem Model ([lib/models/color_palette_item.dart](lib/models/color_palette_item.dart))
+### 1. ColorGridItem Model ([lib/models/color_grid_item.dart](lib/models/color_grid_item.dart))
 
 **Before**:
 ```dart
-class ColorPaletteItem {
+class ColorGridItem {
   final Color color;
   final OklchValues? oklchValues;  // ❌ Optional, never used
 }
@@ -23,7 +23,7 @@ class ColorPaletteItem {
 
 **After**:
 ```dart
-class ColorPaletteItem {
+class ColorGridItem {
   final Color color;  // For display only
   final OklchValues oklchValues;  // ✅ Required, SOURCE OF TRUTH
 }
@@ -31,17 +31,17 @@ class ColorPaletteItem {
 
 **Changes**:
 - ✅ Made `oklchValues` **required** (no longer optional)
-- ✅ Added `ColorPaletteItem.fromOklch()` factory (preferred method)
-- ✅ Updated `ColorPaletteItem.fromColor()` to calculate and store OKLCH immediately
+- ✅ Added `ColorGridItem.fromOklch()` factory (preferred method)
+- ✅ Updated `ColorGridItem.fromColor()` to calculate and store OKLCH immediately
 - ✅ Added helper methods `_colorToOklchValues()` and `_oklchValuesToColor()`
 
 ---
 
-### 2. PaletteManager Service ([lib/services/palette_manager.dart](lib/services/palette_manager.dart))
+### 2. GridManager Service ([lib/services/grid_manager.dart](lib/services/grid_manager.dart))
 
 **Before**:
 ```dart
-static List<ColorPaletteItem> updateItemColor({
+static List<ColorGridItem> updateItemColor({
   required Color color,
 }) {
   // ❌ Only stored Color, OKLCH was lost
@@ -51,7 +51,7 @@ static List<ColorPaletteItem> updateItemColor({
 **After**:
 ```dart
 // New preferred method - works directly in OKLCH
-static List<ColorPaletteItem> updateItemOklch({
+static List<ColorGridItem> updateItemOklch({
   required double lightness,
   required double chroma,
   required double hue,
@@ -61,7 +61,7 @@ static List<ColorPaletteItem> updateItemOklch({
 }
 
 // Legacy method - converts to OKLCH internally
-static List<ColorPaletteItem> updateItemColor({
+static List<ColorGridItem> updateItemColor({
   required Color color,
 }) {
   final oklch = srgbToOklch(color);  // ✅ Convert once, store OKLCH
@@ -71,7 +71,7 @@ static List<ColorPaletteItem> updateItemColor({
 **Changes**:
 - ✅ Added `updateItemOklch()` - preferred method for updating colors
 - ✅ Updated `updateItemColor()` to calculate and store OKLCH values
-- ✅ All palette operations now preserve OKLCH data
+- ✅ All grid operations now preserve OKLCH data
 
 ---
 
@@ -82,7 +82,7 @@ static List<ColorPaletteItem> updateItemColor({
 class _HomeScreenState extends State<HomeScreen> {
   Color? currentColor;  // ❌ Only RGB state
 
-  void _onPaletteItemTap(ColorPaletteItem item) {
+  void _onGridItemTap(ColorGridItem item) {
     currentColor = item.color;  // ❌ Conversion every tap!
   }
 }
@@ -99,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Color? currentColor;  // Derived from OKLCH for display
 
-  void _onPaletteItemTap(ColorPaletteItem item) {
+  void _onGridItemTap(ColorGridItem item) {
     // ✅ Direct OKLCH copy - NO CONVERSION!
     currentLightness = item.oklchValues.lightness;
     currentChroma = item.oklchValues.chroma;
@@ -114,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
 - ✅ Added OKLCH state variables (`currentLightness`, `currentChroma`, `currentHue`, `currentAlpha`)
 - ✅ Added `_onOklchChanged()` - main callback for slider changes (source of truth)
 - ✅ Updated `_onColorChanged()` - legacy wrapper that converts to OKLCH
-- ✅ Updated `_onPaletteItemTap()` - copies OKLCH directly (no conversion!)
+- ✅ Updated `_onGridItemTap()` - copies OKLCH directly (no conversion!)
 - ✅ ColorPickerControls now receives OKLCH values directly
 
 ---
@@ -203,7 +203,7 @@ class ColorPickerControls extends StatefulWidget {
 └─────────────────────────────────────────┘
               ↓
 ┌─────────────────────────────────────────┐
-│ Save to Palette                          │
+│ Save to Grid                          │
 │   ❌ Saves as Color only                │
 │   ❌ OKLCH values LOST!                 │
 └─────────────────────────────────────────┘
@@ -238,7 +238,7 @@ class ColorPickerControls extends StatefulWidget {
 └─────────────────────────────────────────┘
               ↓
 ┌─────────────────────────────────────────┐
-│ Save to Palette                          │
+│ Save to Grid                          │
 │   ✅ Saves OKLCH as source of truth     │
 │   ✅ Color derived for display only     │
 └─────────────────────────────────────────┘
@@ -255,7 +255,7 @@ class ColorPickerControls extends StatefulWidget {
 | **Tap color box** | sRGB → OKLCH | Direct copy | ✅ **Zero conversions** |
 | **Move slider** | OKLCH → sRGB → OKLCH | OKLCH only | ✅ **50% fewer conversions** |
 | **Mixer interpolation** | sRGB lerp (wrong!) | OKLCH lerp (correct!) | ✅ **Perceptually uniform** |
-| **Save to palette** | sRGB only (OKLCH lost) | OKLCH stored | ✅ **Data preserved** |
+| **Save to grid** | sRGB only (OKLCH lost) | OKLCH stored | ✅ **Data preserved** |
 
 ### Conversion Count per User Action
 
@@ -263,7 +263,7 @@ class ColorPickerControls extends StatefulWidget {
 |--------|--------|-------|---------|
 | Tap color box | 1 conversion | 0 conversions | **100% reduction** |
 | Drag slider (60 FPS) | 120 conversions/sec | 60 conversions/sec | **50% reduction** |
-| Add to palette | 0 (data lost) | 1 conversion | **Data now preserved** |
+| Add to grid | 0 (data lost) | 1 conversion | **Data now preserved** |
 
 ---
 
@@ -382,8 +382,8 @@ As requested, hex parsing/conversion only happens when needed:
 
 ### Compilation Status
 ```bash
-flutter analyze lib/models/color_palette_item.dart \
-                lib/services/palette_manager.dart \
+flutter analyze lib/models/color_grid_item.dart \
+                lib/services/grid_manager.dart \
                 lib/screens/home_screen.dart \
                 lib/widgets/color_picker/color_picker_controls.dart
 ```
@@ -399,7 +399,7 @@ flutter analyze lib/models/color_palette_item.dart \
 - [ ] Drag chroma slider → smooth, no other sliders jump
 - [ ] Drag hue slider → smooth, no other sliders jump
 - [ ] Mixer slider → interpolates colors smoothly
-- [ ] Add color to palette → OKLCH values preserved
+- [ ] Add color to grid → OKLCH values preserved
 - [ ] Undo/redo → colors restore correctly
 - [ ] Eyedropper → picked color converts to OKLCH correctly
 - [ ] Clipboard paste → hex converts to OKLCH correctly
@@ -412,14 +412,14 @@ flutter analyze lib/models/color_palette_item.dart \
 ### Backward Compatibility
 
 The refactor maintains backward compatibility:
-- ✅ `ColorPaletteItem.fromColor()` still works (converts to OKLCH internally)
-- ✅ `PaletteManager.updateItemColor()` still works (converts to OKLCH internally)
+- ✅ `ColorGridItem.fromColor()` still works (converts to OKLCH internally)
+- ✅ `GridManager.updateItemColor()` still works (converts to OKLCH internally)
 - ✅ Eyedropper and clipboard operations work unchanged (convert on input/output)
 
 ### Migration Path
 
-For any existing saved palettes:
-1. Old palettes without OKLCH values will need a migration
+For any existing saved grids:
+1. Old grids without OKLCH values will need a migration
 2. On load, convert `Color` to `OklchValues` for all items
 3. Future saves will include OKLCH automatically
 
