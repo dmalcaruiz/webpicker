@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'cyclop_eyedropper/eye_dropper_layer.dart';
 import 'screens/home_screen.dart';
 import 'state/color_editor_provider.dart';
-import 'state/grid_provider.dart';
+import 'state/color_grid_provider.dart';
 import 'state/extreme_colors_provider.dart';
 import 'state/bg_color_provider.dart';
 import 'state/settings_provider.dart';

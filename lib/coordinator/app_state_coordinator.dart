@@ -1,10 +1,10 @@
 import '../models/app_state_snapshot.dart';
 import '../state/color_editor_provider.dart';
-import '../state/grid_provider.dart';
+import '../state/color_grid_provider.dart';
 import '../state/extreme_colors_provider.dart';
 import '../state/bg_color_provider.dart';
 import '../state/settings_provider.dart';
-import 'undo_redo_manager.dart';
+import '../services/undo_redo_manager.dart';
 
 /// Coordinates state across all providers for undo/redo operations
 ///

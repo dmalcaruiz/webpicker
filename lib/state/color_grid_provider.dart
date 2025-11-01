@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/color_grid_item.dart';
-import '../services/grid_manager.dart';
+import '../services/color_grid_manager.dart';
 
 /// Provider for the color grid
 ///

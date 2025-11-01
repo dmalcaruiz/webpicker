@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import '../../models/color_grid_item.dart';
-import '../../state/grid_provider.dart';
+import '../../state/color_grid_provider.dart';
 import 'color_item_widget.dart';
 
 /// A reorderable grid view for displaying and managing color grids
