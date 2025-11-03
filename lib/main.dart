@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ColorEditorProvider()),
-        ChangeNotifierProvider(create: (_) => GridProvider()),
+        ChangeNotifierProvider(create: (_) => ColorGridProvider()),
         ChangeNotifierProvider(create: (_) => ExtremeColorsProvider()),
         ChangeNotifierProvider(create: (_) => BgColorProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),

@@ -83,7 +83,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
   @override
   Widget build(BuildContext context) {
     // Get items from GridProvider
-    final items = context.watch<GridProvider>().items;
+    final items = context.watch<ColorGridProvider>().items;
 
     if (items.isEmpty) {
       return _buildEmptyState();

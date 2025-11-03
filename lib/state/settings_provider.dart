@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 /// and other preferences that should be part of the undo/redo history.
 class SettingsProvider extends ChangeNotifier {
   bool _useRealPigmentsOnly = false;
+  bool _autoCopyEnabled = true;
 
   // Getters
   bool get useRealPigmentsOnly => _useRealPigmentsOnly;
+  bool get autoCopyEnabled => _autoCopyEnabled;
 
   /// Enable or disable real pigments only filter (ICC profile filtering)
   void setRealPigmentsOnly(bool value) {
@@ -21,6 +23,22 @@ class SettingsProvider extends ChangeNotifier {
   /// Toggle the real pigments filter on/off
   void toggleRealPigmentsOnly() {
     _useRealPigmentsOnly = !_useRealPigmentsOnly;
+    notifyListeners();
+  }
+
+  /// Enable or disable auto-copy to clipboard
+  void setAutoCopyEnabled(bool value) {
+    if (_autoCopyEnabled != value) {
+      _autoCopyEnabled = value;
+      debugPrint('SettingsProvider: autoCopyEnabled changed to $value');
+      notifyListeners();
+    }
+  }
+
+  /// Toggle auto-copy to clipboard on/off
+  void toggleAutoCopy() {
+    _autoCopyEnabled = !_autoCopyEnabled;
+    debugPrint('SettingsProvider: autoCopyEnabled toggled to $_autoCopyEnabled');
     notifyListeners();
   }
 

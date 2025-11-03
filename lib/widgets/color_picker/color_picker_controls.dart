@@ -4,6 +4,8 @@ import '../../utils/color_operations.dart';
 import '../../utils/mixbox.dart';
 import '../../models/extreme_color_item.dart';
 import '../../state/color_editor_provider.dart';
+import '../../state/settings_provider.dart';
+import '../../services/clipboard_service.dart';
 import 'oklch_gradient_slider.dart';
 import '../sliders/mixer_slider.dart' show MixedChannelSlider;
 
@@ -225,11 +227,40 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
   }
 
   void _handleSliderTouchEnd() {
+    debugPrint('_handleSliderTouchEnd - Mixer slider released');
     setState(() {
       sliderIsActive = false;
       // Slider position stays fixed, global disconnects
       _updateColor();
     });
+
+    // Copy to clipboard if auto-copy is enabled
+    _copyToClipboardIfEnabled();
+  }
+
+  /// Copy current color to clipboard if auto-copy setting is enabled
+  void _copyToClipboardIfEnabled() {
+    final settings = context.read<SettingsProvider>();
+    debugPrint('_copyToClipboardIfEnabled - autoCopyEnabled: ${settings.autoCopyEnabled}, currentColor: $currentColor');
+    if (settings.autoCopyEnabled && currentColor != null) {
+      ClipboardService.copyColorToClipboard(currentColor!);
+      final hexString = '#${currentColor!.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
+      debugPrint('Copied to clipboard: $hexString');
+    }
+  }
+
+  /// Wrapper for slider interaction that adds clipboard copying
+  void _handleSliderInteraction(bool isInteracting) {
+    debugPrint('_handleSliderInteraction - isInteracting: $isInteracting');
+
+    // Call parent callback
+    widget.onSliderInteractionChanged?.call(isInteracting);
+
+    // Copy to clipboard when interaction ends
+    if (!isInteracting) {
+      debugPrint('Slider interaction ended, triggering clipboard copy');
+      _copyToClipboardIfEnabled();
+    }
   }
 
   Widget _buildLightnessSlider() {
@@ -255,7 +286,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
         useRealPigmentsOnly: widget.useRealPigmentsOnly,
       ),
       showSplitView: true,
-      onInteractionChanged: widget.onSliderInteractionChanged,
+      onInteractionChanged: _handleSliderInteraction,
       bgColor: widget.bgColor, // Pass bgColor
     );
   }
@@ -283,7 +314,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
         useRealPigmentsOnly: widget.useRealPigmentsOnly,
       ),
       showSplitView: true,
-      onInteractionChanged: widget.onSliderInteractionChanged,
+      onInteractionChanged: _handleSliderInteraction,
       bgColor: widget.bgColor, // Pass bgColor
     );
   }
@@ -311,7 +342,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
         useRealPigmentsOnly: widget.useRealPigmentsOnly,
       ),
       showSplitView: true,
-      onInteractionChanged: widget.onSliderInteractionChanged,
+      onInteractionChanged: _handleSliderInteraction,
       bgColor: widget.bgColor, // Pass bgColor
     );
   }
@@ -344,7 +375,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
       onExtremeTap: widget.onExtremeTap,
       onSliderTouchStart: _handleSliderTouchStart,
       onSliderTouchEnd: _handleSliderTouchEnd,
-      onInteractionChanged: widget.onSliderInteractionChanged,
+      onInteractionChanged: _handleSliderInteraction,
       bgColor: widget.bgColor, // Pass bgColor
       onPanStartExtreme: widget.onPanStartExtreme, // Pass to MixedChannelSlider
     );

@@ -93,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // Initialize coordinator
       _coordinator = AppStateCoordinator(
         colorEditor: context.read<ColorEditorProvider>(),
-        grid: context.read<GridProvider>(),
+        grid: context.read<ColorGridProvider>(),
         extremes: context.read<ExtremeColorsProvider>(),
         bgColor: context.read<BgColorProvider>(),
         settings: context.read<SettingsProvider>(),
@@ -122,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ColorGridItem.fromColor(const Color(0xFF2ECC71), name: 'Green'),
       ColorGridItem.fromColor(const Color(0xFFF39C12), name: 'Orange'),
     ];
-    context.read<GridProvider>().syncFromSnapshot(sampleColors);
+    context.read<ColorGridProvider>().syncFromSnapshot(sampleColors);
   }
 
   /// Initialize ICC color management
@@ -174,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     // Coordinate with selected item
-    final gridProvider = context.read<GridProvider>();
+    final gridProvider = context.read<ColorGridProvider>();
     final selectedItem = gridProvider.selectedItem;
     final extremesProvider = context.read<ExtremeColorsProvider>();
     final bgColorProvider = context.read<BgColorProvider>();
@@ -297,19 +297,19 @@ class _HomeScreenState extends State<HomeScreen> {
   // ========== Grid Item Operations ==========
   
   void _onGridReorder(int oldIndex, int newIndex) {
-    context.read<GridProvider>().reorderItems(oldIndex, newIndex);
+    context.read<ColorGridProvider>().reorderItems(oldIndex, newIndex);
     _coordinator.saveState('Reordered grid items');
   }
   
   void _onGridItemTap(ColorGridItem item) {
     // If tapping an already-selected item, deselect it
     if (item.isSelected) {
-      context.read<GridProvider>().deselectAll();
+      context.read<ColorGridProvider>().deselectAll();
       return;
     }
 
     // Otherwise, select the item
-    context.read<GridProvider>().selectItem(item.id);
+    context.read<ColorGridProvider>().selectItem(item.id);
 
     // Deselect extremes when a box is selected
     final extremesProvider = context.read<ExtremeColorsProvider>();
@@ -320,6 +320,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Update ColorEditorProvider with the selected item's OKLCH values
     context.read<ColorEditorProvider>().setFromOklchValues(item.oklchValues);
+
+    // Copy to clipboard if auto-copy is enabled
+    final settings = context.read<SettingsProvider>();
+    if (settings.autoCopyEnabled) {
+      ClipboardService.copyColorToClipboard(item.color);
+    }
   }
 
   void _onBgColorBoxTap() {
@@ -333,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Otherwise, select the bg color box
     // Deselect all grid boxes
-    context.read<GridProvider>().deselectAll();
+    context.read<ColorGridProvider>().deselectAll();
 
     // Deselect extremes
     context.read<ExtremeColorsProvider>().deselectAll();
@@ -361,7 +367,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Otherwise, select the tapped extreme
     // Deselect all grid boxes
-    context.read<GridProvider>().deselectAll();
+    context.read<ColorGridProvider>().deselectAll();
 
     // Deselect bg color box
     context.read<BgColorProvider>().setSelected(false);
@@ -390,7 +396,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   
   void _onGridItemDelete(ColorGridItem item) {
-    context.read<GridProvider>().removeColor(item.id);
+    context.read<ColorGridProvider>().removeColor(item.id);
     _coordinator.saveState('Deleted ${item.name ?? "color"} from grid');
   }
   
@@ -398,7 +404,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Determine color to add:
     // 1. If a box is selected, use its current color (which may have been edited via sliders)
     // 2. Otherwise, use current color from ColorEditorProvider
-    final gridProvider = context.read<GridProvider>();
+    final gridProvider = context.read<ColorGridProvider>();
     final selectedItem = gridProvider.selectedItem;
     final colorEditor = context.read<ColorEditorProvider>();
     final colorToAdd = selectedItem?.color ?? colorEditor.currentColor;
@@ -426,13 +432,13 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _onDragEnded() {
     // Use the LAST known position since current might have been reset
     final shouldDelete = _draggingItem != null && _lastDragPointerY < _deleteZoneThreshold;
-    final gridSizeBefore = context.read<GridProvider>().items.length;
+    final gridSizeBefore = context.read<ColorGridProvider>().items.length;
 
     debugPrint('Drag ended - Last Y: $_lastDragPointerY, Current Y: $_dragPointerY, InZone: $_isInDeleteZone, Should delete: $shouldDelete, Grid size before: $gridSizeBefore');
 
     if (shouldDelete) {
       _onDropToDelete();
-      final gridSizeAfter = context.read<GridProvider>().items.length;
+      final gridSizeAfter = context.read<ColorGridProvider>().items.length;
       debugPrint('Grid size after delete: $gridSizeAfter');
     }
 
@@ -464,7 +470,7 @@ class _HomeScreenState extends State<HomeScreen> {
       debugPrint('Deleting item: ${itemToDelete.id}');
 
       // Remove item from grid
-      context.read<GridProvider>().removeColor(itemToDelete.id);
+      context.read<ColorGridProvider>().removeColor(itemToDelete.id);
       _coordinator.saveState('Deleted ${itemToDelete.name ?? "color"} via drag');
     }
   }

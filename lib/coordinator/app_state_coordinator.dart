@@ -14,7 +14,7 @@ import '../services/undo_redo_manager.dart';
 /// application state.
 class AppStateCoordinator {
   final ColorEditorProvider colorEditor;
-  final GridProvider grid;
+  final ColorGridProvider grid;
   final ExtremeColorsProvider extremes;
   final BgColorProvider bgColor;
   final SettingsProvider settings;

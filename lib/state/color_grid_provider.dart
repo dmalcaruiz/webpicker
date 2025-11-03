@@ -6,7 +6,7 @@ import '../services/color_grid_manager.dart';
 ///
 /// Manages the list of color items in the grid along with selection state.
 /// All grid operations (add, delete, reorder, select) go through this provider.
-class GridProvider extends ChangeNotifier {
+class ColorGridProvider extends ChangeNotifier {
   List<ColorGridItem> _items = [];
 
   // Getters

@@ -6,7 +6,9 @@ class ClipboardService {
   /// Copy a color to the clipboard as hex string
   static Future<void> copyColorToClipboard(Color color) async {
     final hexString = '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
+    debugPrint('ClipboardService: Copying "$hexString" to clipboard');
     await Clipboard.setData(ClipboardData(text: hexString));
+    debugPrint('ClipboardService: Copy complete');
   }
   
   /// Get color from clipboard if valid hex string exists

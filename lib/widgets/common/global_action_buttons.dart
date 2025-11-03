@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
+import 'package:provider/provider.dart';
 import '../../services/clipboard_service.dart';
 import '../../cyclop_eyedropper/eye_dropper_layer.dart';
-import '../../utils/color_utils.dart'; // Import the new utility file
+import '../../utils/color_utils.dart';
+import '../../state/color_editor_provider.dart';
 
 /// Global action buttons for copy, paste, and eyedropper
 ///
@@ -147,6 +149,9 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
         ? widget.colorFilter!(widget.currentColor!)
         : widget.currentColor;
 
+    // Watch ColorEditorProvider for paste button preview
+    final pastePreviewColor = context.watch<ColorEditorProvider>().currentColor;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
@@ -164,16 +169,16 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
             onPanStart: widget.currentColor != null ? (details) => _startEyedropper() : null,
             parentBgColor: widget.bgColor, // Pass bgColor
           ),
-          
+
           const SizedBox(width: 12),
-          
+
           // Paste button
           _buildActionButton(
             icon: Icons.paste,
             label: 'Paste',
             onPressed: _clipboardColor != null ? _handlePaste : null,
-            previewColor: _clipboardColor,
-            tooltip: _clipboardColor != null 
+            previewColor: pastePreviewColor,
+            tooltip: _clipboardColor != null
                 ? 'Paste ${ClipboardService.colorToHex(_clipboardColor!)}'
                 : 'No color in clipboard',
             onTap: _checkClipboard, // Check clipboard on tap if disabled
