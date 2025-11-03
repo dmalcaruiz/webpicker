@@ -378,6 +378,12 @@ class _HomeScreenState extends State<HomeScreen> {
     // Update ColorEditorProvider with the selected extreme's OKLCH values
     final selectedExtreme = extremeId == 'left' ? extremesProvider.leftExtreme : extremesProvider.rightExtreme;
     context.read<ColorEditorProvider>().setFromOklchValues(selectedExtreme.oklchValues);
+
+    // Copy to clipboard if auto-copy is enabled
+    final settings = context.read<SettingsProvider>();
+    if (settings.autoCopyEnabled) {
+      ClipboardService.copyColorToClipboard(selectedExtreme.color);
+    }
   }
 
   void _onMixerSliderTouched() {

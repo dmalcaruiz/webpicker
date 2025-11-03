@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
-import 'package:provider/provider.dart';
+// import 'package:provider/provider.dart';
 import '../../services/clipboard_service.dart';
 import '../../cyclop_eyedropper/eye_dropper_layer.dart';
 import '../../utils/color_utils.dart';
-import '../../state/color_editor_provider.dart';
+// import '../../state/color_editor_provider.dart';
 
 /// Global action buttons for copy, paste, and eyedropper
 ///
@@ -145,12 +145,12 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
   @override
   Widget build(BuildContext context) {
     // Apply filter to preview color if provided
-    final displayColor = widget.currentColor != null && widget.colorFilter != null
-        ? widget.colorFilter!(widget.currentColor!)
-        : widget.currentColor;
+    // final displayColor = widget.currentColor != null && widget.colorFilter != null
+    //     ? widget.colorFilter!(widget.currentColor!)
+    //     : widget.currentColor;
 
     // Watch ColorEditorProvider for paste button preview
-    final pastePreviewColor = context.watch<ColorEditorProvider>().currentColor;
+    // final pastePreviewColor = context.watch<ColorEditorProvider>().currentColor;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -158,30 +158,41 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Copy button
-          _buildActionButton(
-            icon: Icons.copy,
-            label: 'Copy',
-            onPressed: widget.currentColor != null ? _handleCopy : null,
-            previewColor: displayColor,
-            tooltip: displayColor != null
-                ? 'Copy ${ClipboardService.colorToHex(displayColor)}'
-                : 'No color to copy',
-            onPanStart: widget.currentColor != null ? (details) => _startEyedropper() : null,
-            parentBgColor: widget.bgColor, // Pass bgColor
-          ),
+          // _buildActionButton(
+          //   icon: Icons.copy,
+          //   label: 'Copy',
+          //   onPressed: widget.currentColor != null ? _handleCopy : null,
+          //   previewColor: displayColor,
+          //   tooltip: displayColor != null
+          //       ? 'Copy ${ClipboardService.colorToHex(displayColor)}'
+          //       : 'No color to copy',
+          //   parentBgColor: widget.bgColor, // Pass bgColor
+          // ),
 
-          const SizedBox(width: 12),
+          // const SizedBox(width: 12),
 
           // Paste button
+          // _buildActionButton(
+          //   icon: Icons.paste,
+          //   label: 'Paste',
+          //   onPressed: _clipboardColor != null ? _handlePaste : null,
+          //   previewColor: pastePreviewColor,
+          //   tooltip: _clipboardColor != null
+          //       ? 'Paste ${ClipboardService.colorToHex(_clipboardColor!)}'
+          //       : 'No color in clipboard',
+          //   onTap: _checkClipboard, // Check clipboard on tap if disabled
+          //   parentBgColor: widget.bgColor, // Pass bgColor
+          // ),
+
+          // const SizedBox(width: 12),
+
+          // Eyedropper button
           _buildActionButton(
-            icon: Icons.paste,
-            label: 'Paste',
-            onPressed: _clipboardColor != null ? _handlePaste : null,
-            previewColor: pastePreviewColor,
-            tooltip: _clipboardColor != null
-                ? 'Paste ${ClipboardService.colorToHex(_clipboardColor!)}'
-                : 'No color in clipboard',
-            onTap: _checkClipboard, // Check clipboard on tap if disabled
+            icon: Icons.colorize,
+            label: 'Pick',
+            onPressed: _startEyedropper,
+            tooltip: 'Pick color from screen',
+            onPanStart: (details) => _startEyedropper(),
             parentBgColor: widget.bgColor, // Pass bgColor
           ),
         ],
