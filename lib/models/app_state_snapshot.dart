@@ -34,10 +34,6 @@ class AppStateSnapshot {
   /// Right extreme color state
   final ExtremeColorItem? rightExtreme;
 
-  /// Whether to constrain colors to real pigment gamut (ICC profile)
-  /// This is a DISPLAY FILTER - doesn't modify stored OKLCH values
-  final bool useRealPigmentsOnly;
-
   /// Timestamp when this snapshot was created
   final DateTime timestamp;
 
@@ -57,10 +53,9 @@ class AppStateSnapshot {
     this.selectedExtremeId,
     this.leftExtreme,
     this.rightExtreme,
-    bool? useRealPigmentsOnly,
     required this.timestamp,
     required this.actionDescription,
-  }) : useRealPigmentsOnly = useRealPigmentsOnly ?? false;
+  });
   
   /// Create a deep copy of this snapshot
   AppStateSnapshot copyWith({
@@ -76,7 +71,6 @@ class AppStateSnapshot {
     String? selectedExtremeId,
     ExtremeColorItem? leftExtreme,
     ExtremeColorItem? rightExtreme,
-    bool? useRealPigmentsOnly,
     DateTime? timestamp,
     String? actionDescription,
   }) {
@@ -93,7 +87,6 @@ class AppStateSnapshot {
       selectedExtremeId: selectedExtremeId ?? this.selectedExtremeId,
       leftExtreme: leftExtreme ?? this.leftExtreme,
       rightExtreme: rightExtreme ?? this.rightExtreme,
-      useRealPigmentsOnly: useRealPigmentsOnly ?? this.useRealPigmentsOnly,
       timestamp: timestamp ?? this.timestamp,
       actionDescription: actionDescription ?? this.actionDescription,
     );

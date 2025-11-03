@@ -7,10 +7,12 @@ import 'package:flutter/material.dart';
 class SettingsProvider extends ChangeNotifier {
   bool _useRealPigmentsOnly = false;
   bool _autoCopyEnabled = true;
+  bool _usePigmentMixing = false;
 
   // Getters
   bool get useRealPigmentsOnly => _useRealPigmentsOnly;
   bool get autoCopyEnabled => _autoCopyEnabled;
+  bool get usePigmentMixing => _usePigmentMixing;
 
   /// Enable or disable real pigments only filter (ICC profile filtering)
   void setRealPigmentsOnly(bool value) {
@@ -42,13 +44,17 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sync from snapshot (for undo/redo) - optimized to avoid unnecessary rebuilds
-  void syncFromSnapshot({
-    required bool useRealPigmentsOnly,
-  }) {
-    if (_useRealPigmentsOnly != useRealPigmentsOnly) {
-      _useRealPigmentsOnly = useRealPigmentsOnly;
+  /// Enable or disable pigment mixing (Mixbox)
+  void setUsePigmentMixing(bool value) {
+    if (_usePigmentMixing != value) {
+      _usePigmentMixing = value;
       notifyListeners();
     }
+  }
+
+  /// Toggle pigment mixing on/off
+  void toggleUsePigmentMixing() {
+    _usePigmentMixing = !_usePigmentMixing;
+    notifyListeners();
   }
 }

@@ -50,9 +50,6 @@ class MixedChannelSlider extends StatefulWidget {
   /// Whether to use pigment mixing (Mixbox) instead of OKLCH
   final bool usePigmentMixing;
 
-  /// Callback when pigment mixing toggle changes
-  final Function(bool)? onPigmentMixingChanged;
-
   /// Whether to use ICC profile filtering (real pigments only)
   final bool useRealPigmentsOnly;
 
@@ -81,7 +78,6 @@ class MixedChannelSlider extends StatefulWidget {
     this.samples = 300,
     this.onInteractionChanged,
     this.usePigmentMixing = false,
-    this.onPigmentMixingChanged,
     this.useRealPigmentsOnly = false,
     this.extremeColorFilter,
     this.gradientColorFilter,
@@ -180,52 +176,6 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
             colorFilter: widget.extremeColorFilter,
             bgColor: widget.bgColor, // Pass bgColor
             onPanStart: widget.onPanStartExtreme, // Pass to MixerExtremesRow
-          ),
-
-          // Pigment mixing toggle
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: () {
-              widget.onPigmentMixingChanged?.call(!widget.usePigmentMixing);
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: widget.usePigmentMixing
-                    ? getTextColor(widget.bgColor ?? Colors.black).withOpacity(0.15)
-                    : (widget.bgColor ?? Colors.black).withOpacity(0.05),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: widget.usePigmentMixing
-                      ? getTextColor(widget.bgColor ?? Colors.black).withOpacity(0.3)
-                      : getTextColor(widget.bgColor ?? Colors.black).withOpacity(0.1),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    widget.usePigmentMixing ? Icons.check_box : Icons.check_box_outline_blank,
-                    size: 16,
-                    color: widget.usePigmentMixing
-                        ? getTextColor(widget.bgColor ?? Colors.black)
-                        : getTextColor(widget.bgColor ?? Colors.black).withOpacity(0.7),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Pigment Mixing',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: widget.usePigmentMixing
-                          ? getTextColor(widget.bgColor ?? Colors.black)
-                          : getTextColor(widget.bgColor ?? Colors.black).withOpacity(0.7),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
         ],
       ),

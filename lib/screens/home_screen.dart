@@ -235,12 +235,19 @@ class _HomeScreenState extends State<HomeScreen> {
   ///
   /// This is a DISPLAY FILTER - doesn't modify stored OKLCH values.
   /// When toggled ON, colors are filtered through ICC profile for display only.
+  /// Settings are not part of undo/redo history.
   void _onRealPigmentsOnlyChanged(bool value) {
     final settingsProvider = context.read<SettingsProvider>();
     settingsProvider.setRealPigmentsOnly(value);
-    _coordinator.saveState(
-      value ? 'Enabled real pigments filter' : 'Disabled real pigments filter'
-    );
+  }
+
+  /// Handle pigment mixing toggle
+  ///
+  /// Controls the interpolation algorithm: Mixbox (pigment mixing) vs OKLCH (perceptual).
+  /// Settings are not part of undo/redo history.
+  void _onUsePigmentMixingChanged(bool value) {
+    final settingsProvider = context.read<SettingsProvider>();
+    settingsProvider.setUsePigmentMixing(value);
   }
 
   /// ========== ICC Display Filter Operations ==========

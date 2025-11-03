@@ -76,9 +76,6 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
   // Slider interaction state
   bool sliderIsActive = false;
 
-  // Pigment mixing toggle state
-  bool usePigmentMixing = false;
-
   // Flag to prevent feedback loop when we update the color internally
   bool _isInternalUpdate = false;
 
@@ -92,7 +89,6 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
   @override
   void initState() {
     super.initState();
-    debugPrint('ColorPickerControls initState - usePigmentMixing: $usePigmentMixing');
     // Values will be loaded from Provider in didChangeDependencies
   }
 
@@ -159,6 +155,10 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
 
         // Get current global OKLCH color
         final globalColor = colorFromOklch(lightness, chroma, hue);
+
+        // Get pigment mixing setting from provider
+        final settings = context.read<SettingsProvider>();
+        final usePigmentMixing = settings.usePigmentMixing;
 
         // Calculate final values
         if (sliderIsActive) {
@@ -348,13 +348,16 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
   }
 
   Widget _buildMixerSlider() {
+    // Read pigment mixing setting from provider
+    final settings = context.watch<SettingsProvider>();
+
     return MixedChannelSlider(
       value: mixValue,
       currentColor: colorFromOklch(lightness, chroma, hue),
       leftExtreme: widget.leftExtreme,
       rightExtreme: widget.rightExtreme,
       sliderIsActive: sliderIsActive,
-      usePigmentMixing: usePigmentMixing,
+      usePigmentMixing: settings.usePigmentMixing,
       useRealPigmentsOnly: widget.useRealPigmentsOnly,
       extremeColorFilter: widget.extremeColorFilter,
       gradientColorFilter: widget.gradientColorFilter,
@@ -364,12 +367,6 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
           if (sliderIsActive) {
             _updateColor();
           }
-        });
-      },
-      onPigmentMixingChanged: (value) {
-        setState(() {
-          usePigmentMixing = value;
-          debugPrint('ColorPickerControls onPigmentMixingChanged - usePigmentMixing: $usePigmentMixing');
         });
       },
       onExtremeTap: widget.onExtremeTap,

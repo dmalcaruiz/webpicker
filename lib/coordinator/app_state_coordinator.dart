@@ -52,9 +52,6 @@ class AppStateCoordinator {
       bgAlpha: bgColor.alpha,
       isBgColorSelected: bgColor.isSelected,
 
-      // Settings state
-      useRealPigmentsOnly: settings.useRealPigmentsOnly,
-
       // Metadata
       timestamp: DateTime.now(),
       actionDescription: description,
@@ -103,11 +100,6 @@ class AppStateCoordinator {
       hue: snapshot.bgHue,
       alpha: snapshot.bgAlpha,
       isSelected: snapshot.isBgColorSelected,
-    );
-
-    // 5. Restore settings provider
-    settings.syncFromSnapshot(
-      useRealPigmentsOnly: snapshot.useRealPigmentsOnly,
     );
   }
 
