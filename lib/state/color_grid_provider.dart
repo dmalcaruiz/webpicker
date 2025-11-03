@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/color_grid_item.dart';
 import '../services/color_grid_manager.dart';
@@ -132,5 +133,36 @@ class ColorGridProvider extends ChangeNotifier {
       _items = [];
       notifyListeners();
     }
+  }
+
+  /// Randomize colors for all grid items
+  void randomizeAllColors() {
+    final random = Random();
+    _items = _items.map((item) {
+      // Generate random OKLCH values
+      // Lightness: 0.3 to 0.9 (avoid very dark and very light colors)
+      final lightness = 0.3 + random.nextDouble() * 0.6;
+      // Chroma: 0 to 0.37 (full gamut range)
+      final chroma = random.nextDouble() * 0.37;
+      // Hue: 0 to 360 degrees
+      final hue = random.nextDouble() * 360;
+
+      // Create new item with randomized OKLCH values
+      final newItem = ColorGridItem.fromOklch(
+        lightness: lightness,
+        chroma: chroma,
+        hue: hue,
+        alpha: item.oklchValues.alpha, // Preserve alpha
+        name: item.name, // Preserve name
+      );
+
+      // Preserve selection state and ID
+      return newItem.copyWith(
+        id: item.id, // Keep the same ID
+        isSelected: item.isSelected, // Keep selection state
+      );
+    }).toList();
+
+    notifyListeners();
   }
 }

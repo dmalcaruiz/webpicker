@@ -608,6 +608,14 @@ class _HomeScreenState extends State<HomeScreen> {
     _coordinator.redo();
   }
 
+  void _handleGenerateColors() {
+    final colorGridProvider = context.read<ColorGridProvider>();
+    // Save state before randomizing
+    _coordinator.saveState('Randomize colors');
+    // Randomize all colors in the grid
+    colorGridProvider.randomizeAllColors();
+  }
+
   // ========== UI Helpers ==========
   
   void _showColorItemMenu(ColorGridItem item) {
@@ -1048,6 +1056,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     undoRedoManager: _undoRedoManager,
                                     onUndo: _handleUndo,
                                     onRedo: _handleRedo,
+                                    onGenerateColors: _handleGenerateColors,
                                     colorFilter: (color) => applyIccFilter(color),
                                     bgColor: bgColor, // Pass bgColor to ActionButtonsRow
                                   ),

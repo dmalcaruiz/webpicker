@@ -30,6 +30,9 @@ class ActionButtonsRow extends StatelessWidget {
   /// Callback for redo action
   final VoidCallback onRedo;
 
+  /// Callback for generate colors action
+  final VoidCallback? onGenerateColors;
+
   /// Optional color filter to apply before copying (e.g., ICC profile filter)
   final Color Function(Color)? colorFilter;
 
@@ -45,6 +48,7 @@ class ActionButtonsRow extends StatelessWidget {
     required this.undoRedoManager,
     required this.onUndo,
     required this.onRedo,
+    this.onGenerateColors,
     this.colorFilter,
     this.bgColor,
   });
@@ -77,6 +81,7 @@ class ActionButtonsRow extends StatelessWidget {
           child: GlobalActionButtons(
             currentColor: colorToUse,
             onColorSelected: onColorSelected,
+            onGenerateColors: onGenerateColors,
             colorFilter: colorFilter,
             bgColor: bgColor,
           ),

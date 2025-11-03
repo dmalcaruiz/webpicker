@@ -24,6 +24,9 @@ class GlobalActionButtons extends StatefulWidget {
   /// Callback when copy action is performed
   final VoidCallback? onCopy;
 
+  /// Callback when generate colors action is performed
+  final VoidCallback? onGenerateColors;
+
   /// Optional color filter to apply before copying (e.g., ICC profile filter)
   /// If provided, this transforms the color before copying to clipboard
   final Color Function(Color)? colorFilter;
@@ -35,6 +38,7 @@ class GlobalActionButtons extends StatefulWidget {
     required this.currentColor,
     required this.onColorSelected,
     this.onCopy,
+    this.onGenerateColors,
     this.colorFilter,
     this.bgColor,
   });
@@ -185,6 +189,17 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
           // ),
 
           // const SizedBox(width: 12),
+
+          // Generate button
+          _buildActionButton(
+            icon: Icons.shuffle,
+            label: 'Generate',
+            onPressed: widget.onGenerateColors,
+            tooltip: 'Randomize all colors',
+            parentBgColor: widget.bgColor, // Pass bgColor
+          ),
+
+          const SizedBox(width: 12),
 
           // Eyedropper button
           _buildActionButton(
