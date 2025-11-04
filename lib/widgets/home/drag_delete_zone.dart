@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 
-/// A drag target zone that appears when dragging grid items
-/// Provides visual feedback for drag-to-delete functionality
+// A drag target zone that appears when dragging grid items
+// Provides visual feedback for drag-to-delete functionality
 class DragDeleteZone extends StatefulWidget {
-  /// Whether the zone is currently visible
+  // Whether the zone is currently visible
   final bool isVisible;
   
-  /// Callback when an item is dropped on the delete zone
+  // Callback when an item is dropped on the delete zone
   final VoidCallback onItemDropped;
   
-  /// The item being dragged (for type checking)
+  // The item being dragged (for type checking)
   final String? draggingItemId;
   
-  /// Callback for pointer position updates
+  // Callback for pointer position updates
   final Function(Offset)? onPointerMove;
   
-  /// Callback for pointer up
+  // Callback for pointer up
   final VoidCallback? onPointerUp;
   
   const DragDeleteZone({

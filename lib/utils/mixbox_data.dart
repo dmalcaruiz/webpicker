@@ -7,12 +7,12 @@
 //  License: Creative Commons Attribution-NonCommercial 4.0
 // ==========================================================
 
-/// Mixbox Lookup Table (LUT) Data
-///
-/// This is a 64×64×64 lookup table that maps RGB colors to a
-/// 7-dimensional latent space representing pigment mixing behavior.
-///
-/// Size: 786,432 bytes (64 * 64 * 64 * 3)
+// Mixbox Lookup Table (LUT) Data
+//
+// This is a 64×64×64 lookup table that maps RGB colors to a
+// 7-dimensional latent space representing pigment mixing behavior.
+//
+// Size: 786,432 bytes (64 * 64 * 64 * 3)
 const List<int> mixboxLutData = [
   126, 126, 126, 126, 126, 126, 126, 125, 125, 125, 123, 122, 119, 115, 111, 105,
   99, 93, 87, 81, 76, 72, 69, 65, 62, 60, 57, 54, 51, 48, 46, 43,

@@ -4,31 +4,31 @@ import 'package:flutter/rendering.dart';
 // import 'package:provider/provider.dart';
 import '../../services/clipboard_service.dart';
 import '../../cyclop_eyedropper/eye_dropper_layer.dart';
-import '../../utils/color_utils.dart';
+import '../../utils/ui_color_utils.dart';
 // import '../../state/color_editor_provider.dart';
 
-/// Global action buttons for copy, paste, and eyedropper
-///
-/// Features:
-/// - Copy current color to clipboard with preview
-/// - Applies ICC filter to copy if "Only Real Pigments" mode is enabled
-/// - Paste color from clipboard with preview
-/// - Eyedropper for picking colors from screen
+// Global action buttons for copy, paste, and eyedropper
+//
+// Features:
+// - Copy current color to clipboard with preview
+// - Applies ICC filter to copy if "Only Real Pigments" mode is enabled
+// - Paste color from clipboard with preview
+// - Eyedropper for picking colors from screen
 class GlobalActionButtons extends StatefulWidget {
-  /// Current color being edited (unfiltered)
+  // Current color being edited (unfiltered)
   final Color? currentColor;
 
-  /// Callback when color is pasted or picked
+  // Callback when color is pasted or picked
   final Function(Color) onColorSelected;
 
-  /// Callback when copy action is performed
+  // Callback when copy action is performed
   final VoidCallback? onCopy;
 
-  /// Callback when generate colors action is performed
+  // Callback when generate colors action is performed
   final VoidCallback? onGenerateColors;
 
-  /// Optional color filter to apply before copying (e.g., ICC profile filter)
-  /// If provided, this transforms the color before copying to clipboard
+  // Optional color filter to apply before copying (e.g., ICC profile filter)
+  // If provided, this transforms the color before copying to clipboard
   final Color Function(Color)? colorFilter;
 
   final Color? bgColor;
@@ -48,10 +48,10 @@ class GlobalActionButtons extends StatefulWidget {
 }
 
 class _GlobalActionButtonsState extends State<GlobalActionButtons> {
-  /// Color currently in clipboard
+  // Color currently in clipboard
   Color? _clipboardColor;
   
-  /// Whether we're checking clipboard
+  // Whether we're checking clipboard
   bool _isCheckingClipboard = false;
   
   @override
@@ -60,7 +60,7 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
     _checkClipboard();
   }
   
-  /// Check if clipboard has a valid color
+  // Check if clipboard has a valid color
   Future<void> _checkClipboard() async {
     if (_isCheckingClipboard) return;
     
@@ -78,9 +78,9 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
     }
   }
   
-  /// Handle copy action
-  /// Applies color filter (if provided) before copying to ensure
-  /// the copied color matches what's displayed on screen.
+  // Handle copy action
+  // Applies color filter (if provided) before copying to ensure
+  // the copied color matches what's displayed on screen.
   Future<void> _handleCopy() async {
     if (widget.currentColor != null) {
       // Apply filter if provided (e.g., ICC profile filter for "Only Real Pigments")
@@ -102,7 +102,7 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
     }
   }
   
-  /// Handle paste action
+  // Handle paste action
   Future<void> _handlePaste() async {
     final color = await ClipboardService.getColorFromClipboard();
     if (color != null) {
@@ -215,7 +215,7 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
     );
   }
   
-  /// Build a single action button with color preview
+  // Build a single action button with color preview
   Widget _buildActionButton({
     required IconData icon,
     required String label,

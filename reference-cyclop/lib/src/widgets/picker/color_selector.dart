@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import '../../theme.dart';
 import 'hex_textfield.dart';
 
-/// toolbar with :
-/// - a color preview
-/// - a hex color field
-/// - an optional eyeDropper button
+// toolbar with :
+// - a color preview
+// - a hex color field
+// - an optional eyeDropper button
 class ColorSelector extends StatelessWidget {
   final Color color;
 

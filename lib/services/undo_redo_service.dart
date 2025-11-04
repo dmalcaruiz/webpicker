@@ -1,41 +1,41 @@
 import 'package:flutter/foundation.dart';
 import '../models/app_state_snapshot.dart';
 
-/// Manages undo/redo history for the application
-class UndoRedoManager extends ChangeNotifier {
-  /// Maximum number of undo states to keep
+// Manages undo/redo history for the application
+class UndoRedoService extends ChangeNotifier {
+  // Maximum number of undo states to keep
   final int maxHistorySize;
   
-  /// Stack of previous states
+  // Stack of previous states
   final List<AppStateSnapshot> _undoStack = [];
   
-  /// Stack of future states (for redo)
+  // Stack of future states (for redo)
   final List<AppStateSnapshot> _redoStack = [];
   
-  /// Current state
+  // Current state
   AppStateSnapshot? _currentState;
   
-  UndoRedoManager({this.maxHistorySize = 100});
+  UndoRedoService({this.maxHistorySize = 100});
   
-  /// Get current state
+  // Get current state
   AppStateSnapshot? get currentState => _currentState;
   
-  /// Check if undo is available
+  // Check if undo is available
   bool get canUndo => _undoStack.isNotEmpty;
   
-  /// Check if redo is available
+  // Check if redo is available
   bool get canRedo => _redoStack.isNotEmpty;
   
-  /// Get number of undo states available
+  // Get number of undo states available
   int get undoCount => _undoStack.length;
   
-  /// Get number of redo states available
+  // Get number of redo states available
   int get redoCount => _redoStack.length;
   
-  /// Get the last action description
+  // Get the last action description
   String? get lastActionDescription => _currentState?.actionDescription;
   
-  /// Push a new state to the undo stack
+  // Push a new state to the undo stack
   void pushState(AppStateSnapshot newState) {
     // If we have a current state, push it to undo stack
     if (_currentState != null) {
@@ -56,7 +56,7 @@ class UndoRedoManager extends ChangeNotifier {
     notifyListeners();
   }
   
-  /// Undo the last action
+  // Undo the last action
   AppStateSnapshot? undo() {
     if (!canUndo) return null;
     
@@ -73,7 +73,7 @@ class UndoRedoManager extends ChangeNotifier {
     return _currentState;
   }
   
-  /// Redo the last undone action
+  // Redo the last undone action
   AppStateSnapshot? redo() {
     if (!canRedo) return null;
     
@@ -95,7 +95,7 @@ class UndoRedoManager extends ChangeNotifier {
     return _currentState;
   }
   
-  /// Clear all history
+  // Clear all history
   void clear() {
     _undoStack.clear();
     _redoStack.clear();
@@ -103,13 +103,13 @@ class UndoRedoManager extends ChangeNotifier {
     notifyListeners();
   }
   
-  /// Get a preview of what would be undone
+  // Get a preview of what would be undone
   String? getUndoPreview() {
     if (!canUndo) return null;
     return _undoStack.last.actionDescription;
   }
   
-  /// Get a preview of what would be redone
+  // Get a preview of what would be redone
   String? getRedoPreview() {
     if (!canRedo) return null;
     return _redoStack.last.actionDescription;

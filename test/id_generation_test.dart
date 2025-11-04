@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-/// Test to verify ID generation doesn't produce duplicates
+// Test to verify ID generation doesn't produce duplicates
 void main() {
   group('ID Generation Tests', () {
     test('Should generate unique IDs', () {
@@ -36,7 +36,7 @@ void main() {
   });
 }
 
-/// Simulate the ID generation from ColorGridItem (with counter)
+// Simulate the ID generation from ColorGridItem (with counter)
 int _counter = 0;
 
 String _generateId() {

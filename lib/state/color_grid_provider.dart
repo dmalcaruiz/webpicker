@@ -1,12 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/color_grid_item.dart';
-import '../services/color_grid_manager.dart';
+import '../utils/color_grid_operations.dart';
 
-/// Provider for the color grid
-///
-/// Manages the list of color items in the grid along with selection state.
-/// All grid operations (add, delete, reorder, select) go through this provider.
+// Provider for the color grid
+//
+// Manages the list of color items in the grid along with selection state.
+// All grid operations (add, delete, reorder, select) go through this provider.
 class ColorGridProvider extends ChangeNotifier {
   List<ColorGridItem> _items = [];
 
@@ -16,16 +16,16 @@ class ColorGridProvider extends ChangeNotifier {
   bool get isEmpty => _items.isEmpty;
   bool get isNotEmpty => _items.isNotEmpty;
 
-  /// Get the currently selected item (if any)
+  // Get the currently selected item (if any)
   ColorGridItem? get selectedItem => ColorGridManager.getSelectedItem(_items);
 
-  /// Get the ID of the selected item (if any)
+  // Get the ID of the selected item (if any)
   String? get selectedItemId => selectedItem?.id;
 
-  /// Check if there's a selected item
+  // Check if there's a selected item
   bool get hasSelection => ColorGridManager.hasSelection(_items);
 
-  /// Add a new color to the grid
+  // Add a new color to the grid
   void addColor(Color color, {String? name, bool selectNew = true}) {
     _items = ColorGridManager.addColor(
       currentGrid: _items,
@@ -36,7 +36,7 @@ class ColorGridProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Remove a color from the grid by ID
+  // Remove a color from the grid by ID
   void removeColor(String itemId) {
     _items = ColorGridManager.removeColor(
       currentGrid: _items,
@@ -45,7 +45,7 @@ class ColorGridProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Reorder items in the grid
+  // Reorder items in the grid
   void reorderItems(int oldIndex, int newIndex) {
     _items = ColorGridManager.reorderItems(
       currentGrid: _items,
@@ -55,7 +55,7 @@ class ColorGridProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Select a specific item (deselects all others)
+  // Select a specific item (deselects all others)
   void selectItem(String itemId) {
     _items = ColorGridManager.selectItem(
       currentGrid: _items,
@@ -64,7 +64,7 @@ class ColorGridProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Deselect all items
+  // Deselect all items
   void deselectAll() {
     _items = ColorGridManager.deselectAll(
       currentGrid: _items,
@@ -72,7 +72,7 @@ class ColorGridProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Update the OKLCH values of a specific item
+  // Update the OKLCH values of a specific item
   void updateItemOklch({
     required String itemId,
     required double lightness,
@@ -91,7 +91,7 @@ class ColorGridProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Update the color of a specific item (from Color)
+  // Update the color of a specific item (from Color)
   void updateItemColor({
     required String itemId,
     required Color color,
@@ -104,7 +104,7 @@ class ColorGridProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Get item by ID
+  // Get item by ID
   ColorGridItem? getItemById(String itemId) {
     return ColorGridManager.getItemById(
       grid: _items,
@@ -112,7 +112,7 @@ class ColorGridProvider extends ChangeNotifier {
     );
   }
 
-  /// Sync from snapshot (for undo/redo) - replaces entire grid
+  // Sync from snapshot (for undo/redo) - replaces entire grid
   void syncFromSnapshot(List<ColorGridItem> snapshot) {
     // Only notify if the grid actually changed
     if (_items != snapshot) {
@@ -121,13 +121,13 @@ class ColorGridProvider extends ChangeNotifier {
     }
   }
 
-  /// Replace entire grid (used during restore/load operations)
+  // Replace entire grid (used during restore/load operations)
   void setGrid(List<ColorGridItem> newGrid) {
     _items = List<ColorGridItem>.from(newGrid);
     notifyListeners();
   }
 
-  /// Clear the entire grid
+  // Clear the entire grid
   void clear() {
     if (_items.isNotEmpty) {
       _items = [];
@@ -135,7 +135,7 @@ class ColorGridProvider extends ChangeNotifier {
     }
   }
 
-  /// Randomize colors for all grid items
+  // Randomize colors for all grid items
   void randomizeAllColors() {
     final random = Random();
     _items = _items.map((item) {

@@ -19,20 +19,20 @@
 // ==========================================================
 
 import 'package:flutter/material.dart';
-import 'mixbox_lut_data.dart';
+import 'mixbox_data.dart';
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-/// Size of the latent vector (7 dimensions)
+// Size of the latent vector (7 dimensions)
 const int _latentSize = 7;
 
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 
-/// Clamps a value between 0.0 and 1.0
+// Clamps a value between 0.0 and 1.0
 double _clamp01(double x) {
   return x.clamp(0.0, 1.0);
 }
@@ -41,14 +41,14 @@ double _clamp01(double x) {
 // RGB TO LATENT CONVERSION
 // ============================================================================
 
-/// Converts RGB color to 7D latent space using trilinear interpolation
-///
-/// Parameters:
-/// - r: Red channel (0.0 to 1.0)
-/// - g: Green channel (0.0 to 1.0)
-/// - b: Blue channel (0.0 to 1.0)
-///
-/// Returns a 7D latent vector [c0, c1, c2, c3, r_offset, g_offset, b_offset]
+// Converts RGB color to 7D latent space using trilinear interpolation
+//
+// Parameters:
+// - r: Red channel (0.0 to 1.0)
+// - g: Green channel (0.0 to 1.0)
+// - b: Blue channel (0.0 to 1.0)
+//
+// Returns a 7D latent vector [c0, c1, c2, c3, r_offset, g_offset, b_offset]
 List<double> _rgbToLatent(double r, double g, double b) {
   // Clamp input to valid range
   r = _clamp01(r);
@@ -280,7 +280,7 @@ List<double> _rgbToLatent(double r, double g, double b) {
 // LATENT TO RGB CONVERSION
 // ============================================================================
 
-/// Evaluates polynomial to convert 4 pigment components to RGB
+// Evaluates polynomial to convert 4 pigment components to RGB
 List<double> _evalPolynomial(double c0, double c1, double c2, double c3) {
   double r = 0.0;
   double g = 0.0;
@@ -399,7 +399,7 @@ List<double> _evalPolynomial(double c0, double c1, double c2, double c3) {
   return [r, g, b];
 }
 
-/// Converts 7D latent vector back to RGB
+// Converts 7D latent vector back to RGB
 List<double> _latentToRgb(List<double> latent) {
   final rgb = _evalPolynomial(latent[0], latent[1], latent[2], latent[3]);
   return [
@@ -413,24 +413,24 @@ List<double> _latentToRgb(List<double> latent) {
 // PUBLIC API
 // ============================================================================
 
-/// Interpolates between two colors using Mixbox pigment mixing
-///
-/// This function simulates real-world pigment mixing, producing natural
-/// and saturated color transitions with proper hue shifts.
-///
-/// Parameters:
-/// - colorA: First color
-/// - colorB: Second color
-/// - t: Interpolation factor (0.0 = colorA, 1.0 = colorB)
-///
-/// Returns: Mixed color
-///
-/// Example:
-/// ```dart
-/// final yellow = Color(0xFFFCE300);
-/// final blue = Color(0xFF0021AB);
-/// final green = lerpMixbox(yellow, blue, 0.5); // Natural green!
-/// ```
+// Interpolates between two colors using Mixbox pigment mixing
+//
+// This function simulates real-world pigment mixing, producing natural
+// and saturated color transitions with proper hue shifts.
+//
+// Parameters:
+// - colorA: First color
+// - colorB: Second color
+// - t: Interpolation factor (0.0 = colorA, 1.0 = colorB)
+//
+// Returns: Mixed color
+//
+// Example:
+// ```dart
+// final yellow = Color(0xFFFCE300);
+// final blue = Color(0xFF0021AB);
+// final green = lerpMixbox(yellow, blue, 0.5); // Natural green!
+// ```
 Color lerpMixbox(Color colorA, Color colorB, double t) {
   // Convert colors to 0.0-1.0 range
   final r1 = colorA.red / 255.0;

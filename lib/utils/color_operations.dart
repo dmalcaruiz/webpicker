@@ -1,19 +1,19 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'icc_color_manager.dart';
+import '../services/icc_color_service.dart';
 
-/// OKLCH Color Operations
-/// 
-/// This file contains pure color space conversion functions and gamut mapping
-/// based on the Culori library's implementation.
-/// 
-/// Reference: https://github.com/Evercoder/culori
+// OKLCH Color Operations
+// 
+// This file contains pure color space conversion functions and gamut mapping
+// based on the Culori library's implementation.
+// 
+// Reference: https://github.com/Evercoder/culori
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-/// OKLCH ranges
+// OKLCH ranges
 const double oklchLMin = 0.0;
 const double oklchLMax = 1.0;
 const double oklchCMin = 0.0;
@@ -21,21 +21,21 @@ const double oklchCMax = 0.4;
 const double oklchHMin = 0.0;
 const double oklchHMax = 360.0;
 
-/// Epsilon for binary search
-/// Calculated as (chroma_max - chroma_min) / 4000, matching Culori exactly
-/// For OKLCH: (0.4 - 0.0) / 4000 = 0.0001
+// Epsilon for binary search
+// Calculated as (chroma_max - chroma_min) / 4000, matching Culori exactly
+// For OKLCH: (0.4 - 0.0) / 4000 = 0.0001
 const double gamutEpsilon = 0.4 / 4000;
 
-/// Just-noticeable difference threshold for gamut mapping
-/// Colors within this delta from the clipped version are considered acceptable
-/// even if slightly out of gamut (CSS Color Level 4 spec)
+// Just-noticeable difference threshold for gamut mapping
+// Colors within this delta from the clipped version are considered acceptable
+// even if slightly out of gamut (CSS Color Level 4 spec)
 const double jnd = 0.02;
 
 // ============================================================================
 // COLOR CLASSES
 // ============================================================================
 
-/// Represents a color in OKLCH space
+// Represents a color in OKLCH space
 class OklchColor {
   final double l; // Lightness: 0-1
   final double c; // Chroma: 0-0.4
@@ -48,7 +48,7 @@ class OklchColor {
   String toString() => 'oklch($l, $c, $h, $alpha)';
 }
 
-/// Represents a color in OKLab space
+// Represents a color in OKLab space
 class OklabColor {
   final double l;
   final double a;
@@ -61,7 +61,7 @@ class OklabColor {
   String toString() => 'oklab($l, $a, $b, $alpha)';
 }
 
-/// Represents a color in Linear RGB space (before gamma correction)
+// Represents a color in Linear RGB space (before gamma correction)
 class LinearRgbColor {
   final double r;
   final double g;
@@ -74,15 +74,15 @@ class LinearRgbColor {
   String toString() => 'lrgb($r, $g, $b, $alpha)';
 }
 
-/// Represents a color in CIE Lab space (CIELAB / L*a*b*)
-///
-/// This is different from OKLab - CIE Lab is the standard device-independent
-/// color space used by ICC profiles for color management.
-///
-/// Ranges (typical):
-/// - L: 0 to 100 (lightness)
-/// - a: -128 to +127 (green to red)
-/// - b: -128 to +127 (blue to yellow)
+// Represents a color in CIE Lab space (CIELAB / L*a*b*)
+//
+// This is different from OKLab - CIE Lab is the standard device-independent
+// color space used by ICC profiles for color management.
+//
+// Ranges (typical):
+// - L: 0 to 100 (lightness)
+// - a: -128 to +127 (green to red)
+// - b: -128 to +127 (blue to yellow)
 class CieLabColor {
   final double l; // Lightness: 0-100
   final double a; // Green (-) to Red (+)
@@ -95,7 +95,7 @@ class CieLabColor {
   String toString() => 'Lab($l, $a, $b, $alpha)';
 }
 
-/// Represents a color in CIE XYZ space with D65 illuminant
+// Represents a color in CIE XYZ space with D65 illuminant
 class XyzD65Color {
   final double x;
   final double y;
@@ -112,11 +112,11 @@ class XyzD65Color {
 // CONVERSION: OKLCH ↔ OKLab
 // ============================================================================
 
-/// Converts OKLCH to OKLab
-/// 
-/// Formula:
-/// - a = c * cos(h * π / 180)
-/// - b = c * sin(h * π / 180)
+// Converts OKLCH to OKLab
+// 
+// Formula:
+// - a = c * cos(h * π / 180)
+// - b = c * sin(h * π / 180)
 OklabColor oklchToOklab(OklchColor color) {
   final double l = color.l;
   final double c = color.c;
@@ -132,11 +132,11 @@ OklabColor oklchToOklab(OklchColor color) {
   return OklabColor(l, a, b, color.alpha);
 }
 
-/// Converts OKLab to OKLCH
-/// 
-/// Formula:
-/// - c = sqrt(a² + b²)
-/// - h = atan2(b, a) * 180 / π
+// Converts OKLab to OKLCH
+// 
+// Formula:
+// - c = sqrt(a² + b²)
+// - h = atan2(b, a) * 180 / π
 OklchColor oklabToOklch(OklabColor color) {
   final double l = color.l;
   final double a = color.a;
@@ -160,10 +160,10 @@ OklchColor oklabToOklch(OklabColor color) {
 // CONVERSION: OKLab ↔ Linear RGB
 // ============================================================================
 
-/// Converts OKLab to Linear RGB
-/// 
-/// Uses the OKLab → LMS → Linear RGB transformation matrices.
-/// Reference: https://bottosson.github.io/posts/oklab/
+// Converts OKLab to Linear RGB
+// 
+// Uses the OKLab → LMS → Linear RGB transformation matrices.
+// Reference: https://bottosson.github.io/posts/oklab/
 LinearRgbColor oklabToLinearRgb(OklabColor color) {
   final double l = color.l;
   final double a = color.a;
@@ -189,9 +189,9 @@ LinearRgbColor oklabToLinearRgb(OklabColor color) {
   return LinearRgbColor(r, g, bValue, color.alpha);
 }
 
-/// Converts Linear RGB to OKLab
-/// 
-/// Reverse of oklabToLinearRgb.
+// Converts Linear RGB to OKLab
+// 
+// Reverse of oklabToLinearRgb.
 OklabColor linearRgbToOklab(LinearRgbColor color) {
   final double r = color.r;
   final double g = color.g;
@@ -217,7 +217,7 @@ OklabColor linearRgbToOklab(LinearRgbColor color) {
   return OklabColor(lOklab, aOklab, bOklab, color.alpha);
 }
 
-/// Cube root function (handles negative values correctly)
+// Cube root function (handles negative values correctly)
 double _cubeRoot(double x) {
   if (x >= 0) {
     return pow(x, 1.0 / 3.0).toDouble();
@@ -230,9 +230,9 @@ double _cubeRoot(double x) {
 // CONVERSION: Linear RGB ↔ sRGB (Gamma Correction)
 // ============================================================================
 
-/// Applies gamma correction to a single channel (Linear RGB → sRGB)
-/// 
-/// Uses the sRGB gamma curve.
+// Applies gamma correction to a single channel (Linear RGB → sRGB)
+// 
+// Uses the sRGB gamma curve.
 double _gammaCorrection(double channel) {
   final double abs = channel.abs();
   
@@ -245,7 +245,7 @@ double _gammaCorrection(double channel) {
   }
 }
 
-/// Removes gamma correction from a single channel (sRGB → Linear RGB)
+// Removes gamma correction from a single channel (sRGB → Linear RGB)
 double _gammaExpansion(double channel) {
   final double abs = channel.abs();
   
@@ -258,7 +258,7 @@ double _gammaExpansion(double channel) {
   }
 }
 
-/// Converts Linear RGB to sRGB (gamma correction)
+// Converts Linear RGB to sRGB (gamma correction)
 Color linearRgbToSrgb(LinearRgbColor color) {
   final double r = _gammaCorrection(color.r);
   final double g = _gammaCorrection(color.g);
@@ -273,7 +273,7 @@ Color linearRgbToSrgb(LinearRgbColor color) {
   return Color.fromARGB(aInt, rInt, gInt, bInt);
 }
 
-/// Converts sRGB to Linear RGB (gamma expansion)
+// Converts sRGB to Linear RGB (gamma expansion)
 LinearRgbColor srgbToLinearRgb(Color color) {
   // Convert [0, 255] to [0, 1]
   final double r = color.r;
@@ -294,10 +294,10 @@ LinearRgbColor srgbToLinearRgb(Color color) {
 // CONVERSION: Linear RGB ↔ XYZ D65
 // ============================================================================
 
-/// Converts Linear RGB to CIE XYZ (D65 illuminant)
-///
-/// Uses the sRGB to XYZ D65 transformation matrix.
-/// Reference: https://www.color.org/srgb.pdf
+// Converts Linear RGB to CIE XYZ (D65 illuminant)
+//
+// Uses the sRGB to XYZ D65 transformation matrix.
+// Reference: https://www.color.org/srgb.pdf
 XyzD65Color linearRgbToXyzD65(LinearRgbColor color) {
   final double r = color.r;
   final double g = color.g;
@@ -311,9 +311,9 @@ XyzD65Color linearRgbToXyzD65(LinearRgbColor color) {
   return XyzD65Color(x, y, z, color.alpha);
 }
 
-/// Converts CIE XYZ (D65 illuminant) to Linear RGB
-///
-/// Reverse of linearRgbToXyzD65.
+// Converts CIE XYZ (D65 illuminant) to Linear RGB
+//
+// Reverse of linearRgbToXyzD65.
 LinearRgbColor xyzD65ToLinearRgb(XyzD65Color color) {
   final double x = color.x;
   final double y = color.y;
@@ -331,17 +331,17 @@ LinearRgbColor xyzD65ToLinearRgb(XyzD65Color color) {
 // CONVERSION: XYZ D65 ↔ CIE Lab
 // ============================================================================
 
-/// D65 white point reference values for CIE Lab
+// D65 white point reference values for CIE Lab
 const double _d65Xn = 0.95047;
 const double _d65Yn = 1.00000;
 const double _d65Zn = 1.08883;
 
-/// CIE Lab f(t) function helper
-///
-/// This is the nonlinear transformation used in CIE Lab color space.
-/// - If t > δ³: f(t) = t^(1/3)
-/// - Otherwise: f(t) = t/(3δ²) + 4/29
-/// where δ = 6/29
+// CIE Lab f(t) function helper
+//
+// This is the nonlinear transformation used in CIE Lab color space.
+// - If t > δ³: f(t) = t^(1/3)
+// - Otherwise: f(t) = t/(3δ²) + 4/29
+// where δ = 6/29
 double _labF(double t) {
   const double delta = 6.0 / 29.0;
   const double delta3 = delta * delta * delta; // (6/29)³ ≈ 0.008856
@@ -355,7 +355,7 @@ double _labF(double t) {
   }
 }
 
-/// Inverse of CIE Lab f(t) function
+// Inverse of CIE Lab f(t) function
 double _labFInv(double t) {
   const double delta = 6.0 / 29.0;
   const double threshold = delta; // 6/29
@@ -369,10 +369,10 @@ double _labFInv(double t) {
   }
 }
 
-/// Converts CIE XYZ (D65) to CIE Lab
-///
-/// Uses D65 illuminant as the white point.
-/// Formula from CIE 1976 L*a*b* standard.
+// Converts CIE XYZ (D65) to CIE Lab
+//
+// Uses D65 illuminant as the white point.
+// Formula from CIE 1976 L*a*b* standard.
 CieLabColor xyzD65ToCieLab(XyzD65Color color) {
   // Normalize by D65 white point
   final double xr = color.x / _d65Xn;
@@ -392,9 +392,9 @@ CieLabColor xyzD65ToCieLab(XyzD65Color color) {
   return CieLabColor(l, a, b, color.alpha);
 }
 
-/// Converts CIE Lab to CIE XYZ (D65)
-///
-/// Reverse of xyzD65ToCieLab.
+// Converts CIE Lab to CIE XYZ (D65)
+//
+// Reverse of xyzD65ToCieLab.
 XyzD65Color cieLabToXyzD65(CieLabColor color) {
   // Calculate intermediate values
   final double fy = (color.l + 16.0) / 116.0;
@@ -418,10 +418,10 @@ XyzD65Color cieLabToXyzD65(CieLabColor color) {
 // CONVERSION: OKLCH ↔ CIE Lab (High-Level Helpers)
 // ============================================================================
 
-/// Converts OKLCH to CIE Lab
-///
-/// Full conversion chain: OKLCH → OKLab → Linear RGB → XYZ D65 → CIE Lab
-/// This is used for ICC profile transformations.
+// Converts OKLCH to CIE Lab
+//
+// Full conversion chain: OKLCH → OKLab → Linear RGB → XYZ D65 → CIE Lab
+// This is used for ICC profile transformations.
 CieLabColor oklchToCieLab(double l, double c, double h) {
   // OKLCH → OKLab
   final oklch = OklchColor(l, c, h);
@@ -437,10 +437,10 @@ CieLabColor oklchToCieLab(double l, double c, double h) {
   return xyzD65ToCieLab(xyz);
 }
 
-/// Converts CIE Lab to OKLCH
-///
-/// Full conversion chain: CIE Lab → XYZ D65 → Linear RGB → OKLab → OKLCH
-/// This is used to convert back from ICC profile transformations.
+// Converts CIE Lab to OKLCH
+//
+// Full conversion chain: CIE Lab → XYZ D65 → Linear RGB → OKLab → OKLCH
+// This is used to convert back from ICC profile transformations.
 OklchColor cieLabToOklch(double l, double a, double b) {
   // CIE Lab → XYZ D65
   final cieLab = CieLabColor(l, a, b);
@@ -460,9 +460,9 @@ OklchColor cieLabToOklch(double l, double a, double b) {
 // GAMUT CHECKING & CLAMPING
 // ============================================================================
 
-/// Checks if a Linear RGB color is within the sRGB gamut
-/// 
-/// Returns true if all channels are in [0, 1] range (with small epsilon for floating-point errors)
+// Checks if a Linear RGB color is within the sRGB gamut
+// 
+// Returns true if all channels are in [0, 1] range (with small epsilon for floating-point errors)
 bool isInGamut(LinearRgbColor color) {
   const double epsilon = 0.0001;
   return color.r >= -epsilon && color.r <= 1.0 + epsilon &&
@@ -470,7 +470,7 @@ bool isInGamut(LinearRgbColor color) {
          color.b >= -epsilon && color.b <= 1.0 + epsilon;
 }
 
-/// Clamps Linear RGB channels to [0, 1] range
+// Clamps Linear RGB channels to [0, 1] range
 LinearRgbColor clampRgb(LinearRgbColor color) {
   return LinearRgbColor(
     color.r.clamp(0.0, 1.0),
@@ -480,13 +480,13 @@ LinearRgbColor clampRgb(LinearRgbColor color) {
   );
 }
 
-/// Calculate Euclidean distance between two OKLCH colors
-/// Used for the JND (just-noticeable difference) optimization
-/// 
-/// Uses the proper cylindrical coordinate distance formula:
-/// - Lightness: simple difference
-/// - Chroma: simple difference  
-/// - Hue: weighted by chroma using differenceHueChroma formula
+// Calculate Euclidean distance between two OKLCH colors
+// Used for the JND (just-noticeable difference) optimization
+// 
+// Uses the proper cylindrical coordinate distance formula:
+// - Lightness: simple difference
+// - Chroma: simple difference  
+// - Hue: weighted by chroma using differenceHueChroma formula
 double _deltaOklch(OklchColor a, OklchColor b) {
   // Lightness difference
   final double dL = a.l - b.l;
@@ -520,20 +520,20 @@ double _deltaOklch(OklchColor a, OklchColor b) {
 // MAIN GAMUT MAPPING ALGORITHM
 // ============================================================================
 
-/// Converts OKLCH to sRGB with gamut mapping
-/// 
-/// This is the main function that ensures colors fit within the sRGB gamut.
-/// Uses binary search to find the maximum chroma that produces a valid sRGB color.
-/// 
-/// Implements the CSS Color Level 4 gamut mapping algorithm with JND optimization:
-/// https://drafts.csswg.org/css-color/#css-gamut-mapping
-/// 
-/// Colors are accepted if they are either:
-/// 1. Strictly within the sRGB gamut, OR
-/// 2. "Roughly in gamut" - the perceptual difference (delta) from the clipped
-///    version is below the JND (just-noticeable difference) threshold of 0.02
-/// 
-/// This produces more vivid colors while staying perceptually correct.
+// Converts OKLCH to sRGB with gamut mapping
+// 
+// This is the main function that ensures colors fit within the sRGB gamut.
+// Uses binary search to find the maximum chroma that produces a valid sRGB color.
+// 
+// Implements the CSS Color Level 4 gamut mapping algorithm with JND optimization:
+// https://drafts.csswg.org/css-color/#css-gamut-mapping
+// 
+// Colors are accepted if they are either:
+// 1. Strictly within the sRGB gamut, OR
+// 2. "Roughly in gamut" - the perceptual difference (delta) from the clipped
+//    version is below the JND (just-noticeable difference) threshold of 0.02
+// 
+// This produces more vivid colors while staying perceptually correct.
 Color oklchToSrgbWithGamut(OklchColor color) {
   // Handle edge cases: pure white
   if (color.l >= oklchLMax) {
@@ -607,9 +607,9 @@ Color oklchToSrgbWithGamut(OklchColor color) {
   );
 }
 
-/// Converts Flutter Color (sRGB) to OKLCH
-/// 
-/// This is the reverse operation - useful for color pickers.
+// Converts Flutter Color (sRGB) to OKLCH
+// 
+// This is the reverse operation - useful for color pickers.
 OklchColor srgbToOklch(Color color) {
   final LinearRgbColor linearRgb = srgbToLinearRgb(color);
   final OklabColor oklab = linearRgbToOklab(linearRgb);
@@ -620,12 +620,12 @@ OklchColor srgbToOklch(Color color) {
 // CONVENIENCE FUNCTIONS
 // ============================================================================
 
-/// Creates a Flutter Color from OKLCH values with gamut mapping
+// Creates a Flutter Color from OKLCH values with gamut mapping
 Color colorFromOklch(double l, double c, double h, [double alpha = 1.0]) {
   return oklchToSrgbWithGamut(OklchColor(l, c, h, alpha));
 }
 
-/// Extracts OKLCH values from a Flutter Color
+// Extracts OKLCH values from a Flutter Color
 Map<String, double> colorToOklch(Color color) {
   final oklch = srgbToOklch(color);
   return {
@@ -636,7 +636,7 @@ Map<String, double> colorToOklch(Color color) {
   };
 }
 
-/// Tests if an OKLCH color is displayable in sRGB
+// Tests if an OKLCH color is displayable in sRGB
 bool isOklchDisplayable(double l, double c, double h) {
   final oklch = OklchColor(l, c, h);
   final oklab = oklchToOklab(oklch);
@@ -644,7 +644,7 @@ bool isOklchDisplayable(double l, double c, double h) {
   return isInGamut(linearRgb);
 }
 
-/// Gets the maximum displayable chroma for a given L and H
+// Gets the maximum displayable chroma for a given L and H
 double getMaxChroma(double l, double h, {double maxSearch = 0.5}) {
   double low = 0.0;
   double high = maxSearch;
@@ -666,16 +666,16 @@ double getMaxChroma(double l, double h, {double maxSearch = 0.5}) {
 // GRADIENT GENERATION FOR SLIDERS
 // ============================================================
 
-/// Represents a gradient stop with both requested and fallback colors
-/// for split-view rendering when colors are out of sRGB gamut
+// Represents a gradient stop with both requested and fallback colors
+// for split-view rendering when colors are out of sRGB gamut
 class GradientStop {
-  /// The requested color (may be out of gamut)
+  // The requested color (may be out of gamut)
   final Color requestedColor;
   
-  /// The gamut-mapped fallback color (always in sRGB)
+  // The gamut-mapped fallback color (always in sRGB)
   final Color fallbackColor;
   
-  /// Whether this color is within sRGB gamut
+  // Whether this color is within sRGB gamut
   final bool isInGamut;
   
   const GradientStop({
@@ -685,8 +685,8 @@ class GradientStop {
   });
 }
 
-/// 1. Generate gradient stops for lightness slider (L axis)
-/// Varies lightness from 0 to 1 while keeping chroma and hue constant
+// 1. Generate gradient stops for lightness slider (L axis)
+// Varies lightness from 0 to 1 while keeping chroma and hue constant
 List<GradientStop> generateLightnessGradient(
   double chroma,
   double hue,
@@ -736,8 +736,8 @@ List<GradientStop> generateLightnessGradient(
   return stops;
 }
 
-/// 2. Generate gradient stops for chroma slider (C axis)
-/// Varies chroma from 0 to max while keeping lightness and hue constant
+// 2. Generate gradient stops for chroma slider (C axis)
+// Varies chroma from 0 to max while keeping lightness and hue constant
 List<GradientStop> generateChromaGradient(
   double lightness,
   double hue,
@@ -788,8 +788,8 @@ List<GradientStop> generateChromaGradient(
   return stops;
 }
 
-/// 3. Generate gradient stops for hue slider (H axis)
-/// Varies hue from 0 to 360 while keeping lightness and chroma constant
+// 3. Generate gradient stops for hue slider (H axis)
+// Varies hue from 0 to 360 while keeping lightness and chroma constant
 List<GradientStop> generateHueGradient(
   double lightness,
   double chroma,
@@ -839,8 +839,8 @@ List<GradientStop> generateHueGradient(
   return stops;
 }
 
-/// 4. Generate gradient stops for alpha slider
-/// Varies alpha from 0 to 1 while keeping color constant
+// 4. Generate gradient stops for alpha slider
+// Varies alpha from 0 to 1 while keeping color constant
 List<Color> generateAlphaGradient(
   Color baseColor,
   int samples,
@@ -863,20 +863,20 @@ List<Color> generateAlphaGradient(
 // OKLCH COLOR INTERPOLATION
 // ============================================================
 
-/// Interpolates between two colors in OKLCH color space
-///
-/// This function performs perceptually uniform interpolation by:
-/// 1. Converting both colors to OKLCH
-/// 2. Interpolating L, C, H, and alpha channels separately
-/// 3. Using the shortest path for hue interpolation (handles wraparound)
-/// 4. Converting back to sRGB with gamut mapping
-///
-/// Parameters:
-/// - colorA: Starting color
-/// - colorB: Ending color
-/// - t: Interpolation factor (0.0 = colorA, 1.0 = colorB)
-///
-/// Returns the interpolated color in sRGB space
+// Interpolates between two colors in OKLCH color space
+//
+// This function performs perceptually uniform interpolation by:
+// 1. Converting both colors to OKLCH
+// 2. Interpolating L, C, H, and alpha channels separately
+// 3. Using the shortest path for hue interpolation (handles wraparound)
+// 4. Converting back to sRGB with gamut mapping
+//
+// Parameters:
+// - colorA: Starting color
+// - colorB: Ending color
+// - t: Interpolation factor (0.0 = colorA, 1.0 = colorB)
+//
+// Returns the interpolated color in sRGB space
 Color lerpOklch(Color colorA, Color colorB, double t) {
   // Convert both colors to OKLCH
   final oklchA = srgbToOklch(colorA);

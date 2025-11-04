@@ -1,13 +1,13 @@
 import 'color_grid_item.dart';
 
-/// Encapsulates the complete color grid state
-/// 
-/// Immutable state object that can be easily snapshotted for undo/redo
+// Encapsulates the complete color grid state
+// 
+// Immutable state object that can be easily snapshotted for undo/redo
 class ColorGridState {
-  /// List of all grid items
+  // List of all grid items
   final List<ColorGridItem> items;
   
-  /// ID of the currently selected item (if any)
+  // ID of the currently selected item (if any)
   final String? selectedItemId;
   
   const ColorGridState({
@@ -15,12 +15,12 @@ class ColorGridState {
     this.selectedItemId,
   });
   
-  /// Create an empty grid state
+  // Create an empty grid state
   factory ColorGridState.empty() {
     return const ColorGridState(items: []);
   }
   
-  /// Create from a list of items
+  // Create from a list of items
   factory ColorGridState.fromItems(List<ColorGridItem> items) {
     final selectedItem = items.where((item) => item.isSelected).firstOrNull;
     return ColorGridState(
@@ -29,7 +29,7 @@ class ColorGridState {
     );
   }
   
-  /// Get the selected item
+  // Get the selected item
   ColorGridItem? get selectedItem {
     if (selectedItemId == null) return null;
     try {
@@ -39,19 +39,19 @@ class ColorGridState {
     }
   }
   
-  /// Check if there's a selection
+  // Check if there's a selection
   bool get hasSelection => selectedItemId != null;
   
-  /// Get the number of items
+  // Get the number of items
   int get itemCount => items.length;
   
-  /// Check if grid is empty
+  // Check if grid is empty
   bool get isEmpty => items.isEmpty;
   
-  /// Check if grid is not empty
+  // Check if grid is not empty
   bool get isNotEmpty => items.isNotEmpty;
   
-  /// Create a copy with updated values
+  // Create a copy with updated values
   ColorGridState copyWith({
     List<ColorGridItem>? items,
     String? selectedItemId,
@@ -63,7 +63,7 @@ class ColorGridState {
     );
   }
   
-  /// Create a copy with a new list of items
+  // Create a copy with a new list of items
   ColorGridState withItems(List<ColorGridItem> items) {
     // Automatically update selectedItemId based on items
     final selectedItem = items.where((item) => item.isSelected).firstOrNull;

@@ -1,28 +1,28 @@
 import 'package:flutter/material.dart';
 import '../../utils/color_operations.dart';
 
-/// Custom painter that renders a color gradient with optional split-view
-/// for out-of-gamut colors
-/// 
-/// When showSplitView is true and colors are out of sRGB gamut:
-/// - Top half: Shows the requested color (may be out of gamut)
-/// - Bottom half: Shows the gamut-mapped fallback color
+// Custom painter that renders a color gradient with optional split-view
+// for out-of-gamut colors
+// 
+// When showSplitView is true and colors are out of sRGB gamut:
+// - Top half: Shows the requested color (may be out of gamut)
+// - Bottom half: Shows the gamut-mapped fallback color
 class GradientPainter extends CustomPainter {
-  /// Gradient stops containing color information
+  // Gradient stops containing color information
   final List<GradientStop> stops;
   
-  /// Whether to show split-view for out-of-gamut colors
+  // Whether to show split-view for out-of-gamut colors
   final bool showSplitView;
   
-  /// Border radius for the gradient rectangle
+  // Border radius for the gradient rectangle
   final double borderRadius;
   
-  /// Whether to constrain colors to real pigment gamut (ICC profile)
+  // Whether to constrain colors to real pigment gamut (ICC profile)
   final bool useRealPigmentsOnly;
   
-  /// Constructor
-  /// 
-  /// Step 1: Initialize painter with gradient stops and options
+  // Constructor
+  // 
+  // Step 1: Initialize painter with gradient stops and options
   const GradientPainter({
     required this.stops,
     this.showSplitView = true,
@@ -146,23 +146,23 @@ class GradientPainter extends CustomPainter {
   }
 }
 
-/// Custom painter for alpha slider with checkered background
+// Custom painter for alpha slider with checkered background
 class AlphaGradientPainter extends CustomPainter {
-  /// Alpha gradient colors from transparent to opaque
+  // Alpha gradient colors from transparent to opaque
   final List<Color> gradientColors;
   
-  /// Background color for checkered pattern
+  // Background color for checkered pattern
   final Color backgroundColor;
   
-  /// Size of each checkered square in pixels
+  // Size of each checkered square in pixels
   final double checkerSize;
   
-  /// Border radius for the gradient rectangle
+  // Border radius for the gradient rectangle
   final double borderRadius;
   
-  /// Constructor
-  /// 
-  /// Step 1: Initialize painter with gradient and background settings
+  // Constructor
+  // 
+  // Step 1: Initialize painter with gradient and background settings
   const AlphaGradientPainter({
     required this.gradientColors,
     required this.backgroundColor,
@@ -211,7 +211,7 @@ class AlphaGradientPainter extends CustomPainter {
     );
   }
   
-  /// Step 7: Helper function to paint checkered background
+  // Step 7: Helper function to paint checkered background
   void _paintCheckeredBackground(Canvas canvas, Size size) {
     // Step 7a: Calculate lighter and darker shades
     final lightColor = backgroundColor;
@@ -243,7 +243,7 @@ class AlphaGradientPainter extends CustomPainter {
     }
   }
   
-  /// Step 8: Helper function to paint alpha gradient
+  // Step 8: Helper function to paint alpha gradient
   void _paintAlphaGradient(Canvas canvas, Size size) {
     final double width = size.width;
     final double height = size.height;

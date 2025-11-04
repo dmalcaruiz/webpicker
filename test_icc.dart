@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:icc_parser/icc_parser.dart';
 
-/// Test ICC profile transformations
+// Test ICC profile transformations
 void main() async {
   print('=== Testing Canon PRO-1000 ICC Profile ===\n');
 

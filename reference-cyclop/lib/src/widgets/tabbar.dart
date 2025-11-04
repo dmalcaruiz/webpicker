@@ -8,7 +8,7 @@ import '../theme.dart';
 
 const _kTabWidth = 86.0;
 
-/// custom Tabbar component
+// custom Tabbar component
 class Tabs extends StatefulWidget {
   final int selectedIndex;
 

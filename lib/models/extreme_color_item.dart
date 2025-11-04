@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import '../utils/color_operations.dart';
 import 'color_grid_item.dart';
 
-/// Represents a mixer extreme color (left or right)
-///
-/// Behaves exactly like a grid box for selection and editing,
-/// but with a fixed ID ('left' or 'right') and used for mixer interpolation.
+// Represents a mixer extreme color (left or right)
+//
+// Behaves exactly like a grid box for selection and editing,
+// but with a fixed ID ('left' or 'right') and used for mixer interpolation.
 class ExtremeColorItem {
-  /// Unique identifier ('left' or 'right')
+  // Unique identifier ('left' or 'right')
   final String id;
 
-  /// The actual color value
+  // The actual color value
   final Color color;
 
-  /// Whether this extreme is currently selected
+  // Whether this extreme is currently selected
   final bool isSelected;
 
-  /// OKLCH values for this color (source of truth)
+  // OKLCH values for this color (source of truth)
   final OklchValues oklchValues;
 
   const ExtremeColorItem({
@@ -26,7 +26,7 @@ class ExtremeColorItem {
     required this.oklchValues,
   });
 
-  /// Create a copy of this item with updated values
+  // Create a copy of this item with updated values
   ExtremeColorItem copyWith({
     String? id,
     Color? color,
@@ -41,7 +41,7 @@ class ExtremeColorItem {
     );
   }
 
-  /// Create a new extreme from OKLCH values (preferred method)
+  // Create a new extreme from OKLCH values (preferred method)
   factory ExtremeColorItem.fromOklch({
     required String id,
     required double lightness,

@@ -1,41 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../utils/color_utils.dart'; // Import the new utility file
+import '../../utils/ui_color_utils.dart'; // Import the new utility file
 
-/// Widget for adjusting numeric values with +/- buttons and editable text field
-/// 
-/// Features:
-/// - Black background with white text
-/// - Minus button on left, plus button on right
-/// - Editable text field in center
-/// - Configurable step size and decimal places
-/// - Instant gesture detection for sheet dragging prevention
+// Widget for adjusting numeric values with +/- buttons and editable text field
+// 
+// Features:
+// - Black background with white text
+// - Minus button on left, plus button on right
+// - Editable text field in center
+// - Configurable step size and decimal places
+// - Instant gesture detection for sheet dragging prevention
 class ValueAdjuster extends StatefulWidget {
-  /// Current value
+  // Current value
   final double value;
   
-  /// Minimum allowed value
+  // Minimum allowed value
   final double min;
   
-  /// Maximum allowed value
+  // Maximum allowed value
   final double max;
   
-  /// Step size for +/- buttons
+  // Step size for +/- buttons
   final double step;
   
-  /// Number of decimal places to display
+  // Number of decimal places to display
   final int decimalPlaces;
   
-  /// Callback when value changes
+  // Callback when value changes
   final Function(double) onChanged;
   
-  /// Callback when interaction with adjuster starts/ends (for sheet dragging prevention)
+  // Callback when interaction with adjuster starts/ends (for sheet dragging prevention)
   final Function(bool)? onInteractionChanged;
   
-  /// Background color for the adjuster
+  // Background color for the adjuster
   final Color? bgColor;
   
-  /// Constructor
+  // Constructor
   const ValueAdjuster({
     super.key,
     required this.value,
@@ -53,10 +53,10 @@ class ValueAdjuster extends StatefulWidget {
 }
 
 class _ValueAdjusterState extends State<ValueAdjuster> {
-  /// Text controller for the editable field
+  // Text controller for the editable field
   late TextEditingController _controller;
   
-  /// Focus node to handle text field focus
+  // Focus node to handle text field focus
   final FocusNode _focusNode = FocusNode();
   
   @override
@@ -82,19 +82,19 @@ class _ValueAdjusterState extends State<ValueAdjuster> {
     super.dispose();
   }
   
-  /// Handle increment button press
+  // Handle increment button press
   void _increment() {
     final newValue = (widget.value + widget.step).clamp(widget.min, widget.max);
     widget.onChanged(newValue);
   }
   
-  /// Handle decrement button press
+  // Handle decrement button press
   void _decrement() {
     final newValue = (widget.value - widget.step).clamp(widget.min, widget.max);
     widget.onChanged(newValue);
   }
   
-  /// Handle text field submission
+  // Handle text field submission
   void _handleTextSubmit() {
     final text = _controller.text.trim();
     final parsed = double.tryParse(text);
@@ -243,7 +243,7 @@ class _ValueAdjusterState extends State<ValueAdjuster> {
     );
   }
   
-  /// Build button widget (visual only)
+  // Build button widget (visual only)
   Widget _buildButton({required IconData icon, Color? bgColor}) {
     return SizedBox(
       width: 36,

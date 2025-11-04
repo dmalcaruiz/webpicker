@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// Step 1: Custom slider thumb that looks like a diamond (rotated square)
-/// 
-/// This replicates the reference project's slider design with:
-/// - 27x27px diamond-shaped thumb
-/// - Checkerboard pattern background
-/// - 4px white border
-/// - Shadow effects for depth
+// Step 1: Custom slider thumb that looks like a diamond (rotated square)
+// 
+// This replicates the reference project's slider design with:
+// - 27x27px diamond-shaped thumb
+// - Checkerboard pattern background
+// - 4px white border
+// - Shadow effects for depth
 class DiamondSliderThumb extends SliderComponentShape {
   final double thumbSize;
   final Color color;
@@ -78,9 +78,9 @@ class DiamondSliderThumb extends SliderComponentShape {
     );
   }
   
-  /// Step 7: Create diamond path by defining 4 points
-  /// 
-  /// Creates a diamond shape (square rotated 45 degrees)
+  // Step 7: Create diamond path by defining 4 points
+  // 
+  // Creates a diamond shape (square rotated 45 degrees)
   Path _createDiamondPath(Offset center, double halfSize) {
     return Path()
       ..moveTo(center.dx, center.dy - halfSize)  // Top point
@@ -90,9 +90,9 @@ class DiamondSliderThumb extends SliderComponentShape {
       ..close();
   }
   
-  /// Step 8: Draw checkerboard pattern like the reference project
-  /// 
-  /// Creates a small checkerboard with 2.75px squares (5.5px / 2)
+  // Step 8: Draw checkerboard pattern like the reference project
+  // 
+  // Creates a small checkerboard with 2.75px squares (5.5px / 2)
   void _drawCheckerboard(Canvas canvas, Offset center, double size) {
     final double squareSize = 2.75; // 5.5px / 2 (matches reference)
     final int gridCount = (size / squareSize).ceil();

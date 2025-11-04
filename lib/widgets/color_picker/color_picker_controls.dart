@@ -9,12 +9,12 @@ import '../../services/clipboard_service.dart';
 import 'oklch_gradient_slider.dart';
 import '../sliders/mixer_slider.dart' show MixedChannelSlider;
 
-/// A widget containing all the color picker slider controls
-///
-/// Reads OKLCH from ColorEditorProvider but uses callback for coordination.
-/// HomeScreen handles updating Provider + selected items.
+// A widget containing all the color picker slider controls
+//
+// Reads OKLCH from ColorEditorProvider but uses callback for coordination.
+// HomeScreen handles updating Provider + selected items.
 class ColorPickerControls extends StatefulWidget {
-  /// Callback when OKLCH values change (HomeScreen coordinates Provider updates)
+  // Callback when OKLCH values change (HomeScreen coordinates Provider updates)
   final Function({
     required double lightness,
     required double chroma,
@@ -24,23 +24,23 @@ class ColorPickerControls extends StatefulWidget {
 
   final Function(bool)? onSliderInteractionChanged;
 
-  /// Mixer extreme colors (managed by parent)
+  // Mixer extreme colors (managed by parent)
   final ExtremeColorItem leftExtreme;
   final ExtremeColorItem rightExtreme;
 
-  /// Callback when an extreme is tapped
+  // Callback when an extreme is tapped
   final Function(String extremeId) onExtremeTap;
 
-  /// Callback when mixer slider is touched (to deselect extremes)
+  // Callback when mixer slider is touched (to deselect extremes)
   final VoidCallback? onMixerSliderTouched;
 
-  /// Whether to constrain colors to real pigment gamut (ICC profile)
+  // Whether to constrain colors to real pigment gamut (ICC profile)
   final bool useRealPigmentsOnly;
 
-  /// Optional color filter for extreme colors (ICC profile display)
+  // Optional color filter for extreme colors (ICC profile display)
   final Color Function(ExtremeColorItem)? extremeColorFilter;
 
-  /// Optional color filter for gradient colors (ICC profile display)
+  // Optional color filter for gradient colors (ICC profile display)
   final Color Function(Color color, double l, double c, double h, double a)? gradientColorFilter;
 
   final Color? bgColor;
@@ -116,12 +116,12 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
     _isInternalUpdate = false;
   }
 
-  /// Linear interpolation for double values
+  // Linear interpolation for double values
   double _lerpDouble(double a, double b, double t) {
     return a + (b - a) * t;
   }
 
-  /// Hue interpolation with wraparound (shortest path around color wheel)
+  // Hue interpolation with wraparound (shortest path around color wheel)
   double _lerpHue(double h1, double h2, double t) {
     // Normalize hues to [0, 360)
     h1 = h1 % 360;
@@ -238,7 +238,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
     _copyToClipboardIfEnabled();
   }
 
-  /// Copy current color to clipboard if auto-copy setting is enabled
+  // Copy current color to clipboard if auto-copy setting is enabled
   void _copyToClipboardIfEnabled() {
     final settings = context.read<SettingsProvider>();
     debugPrint('_copyToClipboardIfEnabled - autoCopyEnabled: ${settings.autoCopyEnabled}, currentColor: $currentColor');
@@ -249,7 +249,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
     }
   }
 
-  /// Wrapper for slider interaction that adds clipboard copying
+  // Wrapper for slider interaction that adds clipboard copying
   void _handleSliderInteraction(bool isInteracting) {
     debugPrint('_handleSliderInteraction - isInteracting: $isInteracting');
 

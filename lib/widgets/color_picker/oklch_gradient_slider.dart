@@ -1,60 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../../utils/color_operations.dart';
-import '../../utils/color_utils.dart'; // Import the new utility file
+import '../../utils/ui_color_utils.dart'; // Import the new utility file
 import '../common/gradient_painter.dart';
 import '../common/plus_minus_adjuster_buttons.dart';
 import '../sliders/invisible_slider.dart';
 
-/// OKLCH gradient slider widget with live color gradient background
-/// 
-/// This widget displays a slider with a gradient showing the range of colors
-/// available for the current OKLCH parameters. When colors are out of sRGB
-/// gamut, it shows a split-view with the requested color on top and the
-/// gamut-mapped fallback on bottom.
+// OKLCH gradient slider widget with live color gradient background
+// 
+// This widget displays a slider with a gradient showing the range of colors
+// available for the current OKLCH parameters. When colors are out of sRGB
+// gamut, it shows a split-view with the requested color on top and the
+// gamut-mapped fallback on bottom.
 class OklchGradientSlider extends StatefulWidget {
-  /// Current slider value
+  // Current slider value
   final double value;
   
-  /// Minimum slider value
+  // Minimum slider value
   final double min;
   
-  /// Maximum slider value
+  // Maximum slider value
   final double max;
   
-  /// Slider label text
+  // Slider label text
   final String label;
   
-  /// Description text shown below the label
+  // Description text shown below the label
   final String description;
   
-  /// Callback when value changes
+  // Callback when value changes
   final Function(double) onChanged;
   
-  /// Function to generate gradient stops for this slider
+  // Function to generate gradient stops for this slider
   final List<GradientStop> Function() generateGradient;
   
-  /// Whether to show split-view for out-of-gamut colors
+  // Whether to show split-view for out-of-gamut colors
   final bool showSplitView;
   
-  /// Number of color samples for smooth gradient (default 300)
+  // Number of color samples for smooth gradient (default 300)
   final int samples;
   
-  /// Step size for +/- buttons
+  // Step size for +/- buttons
   final double step;
   
-  /// Number of decimal places to display
+  // Number of decimal places to display
   final int decimalPlaces;
   
-  /// Callback when interaction with slider starts/ends
+  // Callback when interaction with slider starts/ends
   final Function(bool)? onInteractionChanged;
   
-  /// Whether to constrain colors to real pigment gamut (ICC profile)
+  // Whether to constrain colors to real pigment gamut (ICC profile)
   final bool useRealPigmentsOnly;
   
-  /// Constructor
-  /// 
-  /// Step 1: Initialize slider with all required parameters
+  // Constructor
+  // 
+  // Step 1: Initialize slider with all required parameters
   const OklchGradientSlider({
     super.key,
     required this.value,
@@ -80,7 +80,7 @@ class OklchGradientSlider extends StatefulWidget {
 }
 
 class _OklchGradientSliderState extends State<OklchGradientSlider> {
-  /// Cached gradient stops to avoid regenerating on every build
+  // Cached gradient stops to avoid regenerating on every build
   List<GradientStop>? _cachedGradient;
   
   @override
@@ -169,7 +169,7 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
     );
   }
   
-  /// Step 8: Get or generate gradient stops with caching
+  // Step 8: Get or generate gradient stops with caching
   List<GradientStop> _getGradientStops() {
     // Step 8a: Return cached gradient if available
     if (_cachedGradient != null) {
@@ -181,9 +181,9 @@ class _OklchGradientSliderState extends State<OklchGradientSlider> {
     return _cachedGradient!;
   }
   
-  /// Step 9: Get current color for the thumb based on slider value
-  /// 
-  /// Interpolates between gradient stops to find the color at current position
+  // Step 9: Get current color for the thumb based on slider value
+  // 
+  // Interpolates between gradient stops to find the color at current position
   Color _getCurrentThumbColor() {
     final stops = _getGradientStops();
     if (stops.isEmpty) return Colors.white;

@@ -10,7 +10,7 @@ import 'eye_dropper_overlay.dart';
 final captureKey = GlobalKey();
 
 class EyeDropperModel {
-  /// based on PointerEvent.kind
+  // based on PointerEvent.kind
   bool touchable = false;
 
   OverlayEntry? eyeOverlayEntry;

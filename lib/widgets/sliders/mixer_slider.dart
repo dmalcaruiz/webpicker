@@ -3,61 +3,61 @@ import 'package:flutter/foundation.dart';
 import '../../models/extreme_color_item.dart';
 import '../../utils/color_operations.dart';
 import '../../utils/mixbox.dart';
-import '../../utils/color_utils.dart'; // Import the new utility file
+import '../../utils/ui_color_utils.dart'; // Import the new utility file
 import '../color_picker/mixer_extremes_row.dart';
 import 'invisible_slider.dart';
 
-/// Mixed channel slider widget with extreme circle controls
-///
-/// Features:
-/// 1. LCH sliders (always control global or selected extreme/box)
-/// 2. Mixed channel slider (controls global only while touched)
-/// 3. Extreme circles (tap to select, behave like grid boxes)
+// Mixed channel slider widget with extreme circle controls
+//
+// Features:
+// 1. LCH sliders (always control global or selected extreme/box)
+// 2. Mixed channel slider (controls global only while touched)
+// 3. Extreme circles (tap to select, behave like grid boxes)
 class MixedChannelSlider extends StatefulWidget {
-  /// Current slider value (0.0 to 1.0)
+  // Current slider value (0.0 to 1.0)
   final double value;
 
-  /// Current global OKLCH color (for display reference)
+  // Current global OKLCH color (for display reference)
   final Color currentColor;
 
-  /// Left extreme
+  // Left extreme
   final ExtremeColorItem leftExtreme;
 
-  /// Right extreme
+  // Right extreme
   final ExtremeColorItem rightExtreme;
 
-  /// Is slider currently active (being touched)
+  // Is slider currently active (being touched)
   final bool sliderIsActive;
 
-  /// Callback when slider value changes
+  // Callback when slider value changes
   final Function(double) onChanged;
 
-  /// Callback when an extreme is tapped
+  // Callback when an extreme is tapped
   final Function(String extremeId) onExtremeTap;
 
-  /// Callback when slider is touched
+  // Callback when slider is touched
   final VoidCallback onSliderTouchStart;
 
-  /// Callback when slider is released
+  // Callback when slider is released
   final VoidCallback onSliderTouchEnd;
 
-  /// Number of color samples for smooth gradient (default 300)
+  // Number of color samples for smooth gradient (default 300)
   final int samples;
 
-  /// Callback when interaction with slider starts/ends
+  // Callback when interaction with slider starts/ends
   final Function(bool)? onInteractionChanged;
 
-  /// Whether to use pigment mixing (Mixbox) instead of OKLCH
+  // Whether to use pigment mixing (Mixbox) instead of OKLCH
   final bool usePigmentMixing;
 
-  /// Whether to use ICC profile filtering (real pigments only)
+  // Whether to use ICC profile filtering (real pigments only)
   final bool useRealPigmentsOnly;
 
-  /// Optional color filter for extreme colors (ICC profile display)
+  // Optional color filter for extreme colors (ICC profile display)
   final Color Function(ExtremeColorItem)? extremeColorFilter;
 
-  /// Optional color filter for gradient colors (ICC profile display)
-  /// Takes color and OKLCH values, returns filtered color
+  // Optional color filter for gradient colors (ICC profile display)
+  // Takes color and OKLCH values, returns filtered color
   final Color Function(Color color, double l, double c, double h, double a)? gradientColorFilter;
 
   final Color? bgColor;
@@ -182,8 +182,8 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
     );
   }
 
-  /// Interpolates between left and right extreme colors
-  /// Uses either OKLCH or Mixbox pigment mixing based on toggle
+  // Interpolates between left and right extreme colors
+  // Uses either OKLCH or Mixbox pigment mixing based on toggle
   Color _getCurrentThumbColor() {
     Color color;
     double l, c, h, a;
@@ -346,7 +346,7 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
   }
 }
 
-/// Custom painter for mixed channel gradient
+// Custom painter for mixed channel gradient
 class MixedChannelGradientPainter extends CustomPainter {
   final List<Color> gradientColors;
   final double borderRadius;

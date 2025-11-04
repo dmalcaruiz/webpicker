@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../utils/color_utils.dart'; // Import the new utility file
+import '../../utils/ui_color_utils.dart'; // Import the new utility file
 
-/// Sheet grabbing handle widget with pin functionality and chips
+// Sheet grabbing handle widget with pin functionality and chips
 class SheetGrabbingHandle extends StatelessWidget {
-  /// States of the toggleable chips
+  // States of the toggleable chips
   final List<bool> chipStates;
   
-  /// Callback when a chip is toggled
+  // Callback when a chip is toggled
   final Function(int index) onChipToggle;
 
   final Color? bgColor;

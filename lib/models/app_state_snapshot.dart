@@ -2,42 +2,42 @@ import 'package:flutter/material.dart';
 import 'color_grid_item.dart';
 import 'extreme_color_item.dart';
 
-/// Represents a complete snapshot of the app state for undo/redo
+// Represents a complete snapshot of the app state for undo/redo
 class AppStateSnapshot {
-  /// List of color grid items
+  // List of color grid items
   final List<ColorGridItem> gridItems;
 
-  /// Current color being edited
+  // Current color being edited
   final Color? currentColor;
 
-  /// Background color
+  // Background color
   final Color? bgColor;
 
-  /// Background color OKLCH values
+  // Background color OKLCH values
   final double? bgLightness;
   final double? bgChroma;
   final double? bgHue;
   final double? bgAlpha;
 
-  /// Whether background color box is selected
+  // Whether background color box is selected
   final bool isBgColorSelected;
 
-  /// ID of the selected grid item
+  // ID of the selected grid item
   final String? selectedGridItemId;
 
-  /// ID of the selected extreme ('left', 'right', or null)
+  // ID of the selected extreme ('left', 'right', or null)
   final String? selectedExtremeId;
 
-  /// Left extreme color state
+  // Left extreme color state
   final ExtremeColorItem? leftExtreme;
 
-  /// Right extreme color state
+  // Right extreme color state
   final ExtremeColorItem? rightExtreme;
 
-  /// Timestamp when this snapshot was created
+  // Timestamp when this snapshot was created
   final DateTime timestamp;
 
-  /// Description of the action that created this snapshot
+  // Description of the action that created this snapshot
   final String actionDescription;
   
   const AppStateSnapshot({
@@ -57,7 +57,7 @@ class AppStateSnapshot {
     required this.actionDescription,
   });
   
-  /// Create a deep copy of this snapshot
+  // Create a deep copy of this snapshot
   AppStateSnapshot copyWith({
     List<ColorGridItem>? gridItems,
     Color? currentColor,

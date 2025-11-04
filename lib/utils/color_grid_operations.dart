@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import '../models/color_grid_item.dart';
-import '../utils/color_operations.dart';
+import 'color_operations.dart';
 
-/// Manages color grid operations
-/// 
-/// Handles:
-/// - Adding/removing colors
-/// - Reordering items
-/// - Selection management
-/// - Validation
+// Manages color grid operations
+// 
+// Handles:
+// - Adding/removing colors
+// - Reordering items
+// - Selection management
+// - Validation
 class ColorGridManager {
-  /// Add a new color to the grid
+  // Add a new color to the grid
   static List<ColorGridItem> addColor({
     required List<ColorGridItem> currentGrid,
     required Color color,
@@ -31,7 +31,7 @@ class ColorGridManager {
     return updatedGrid;
   }
   
-  /// Remove a color from the grid
+  // Remove a color from the grid
   static List<ColorGridItem> removeColor({
     required List<ColorGridItem> currentGrid,
     required String itemId,
@@ -39,7 +39,7 @@ class ColorGridManager {
     return currentGrid.where((item) => item.id != itemId).toList();
   }
   
-  /// Reorder items in the grid
+  // Reorder items in the grid
   static List<ColorGridItem> reorderItems({
     required List<ColorGridItem> currentGrid,
     required int oldIndex,
@@ -51,7 +51,7 @@ class ColorGridManager {
     return grid;
   }
   
-  /// Select a specific item (deselects all others)
+  // Select a specific item (deselects all others)
   static List<ColorGridItem> selectItem({
     required List<ColorGridItem> currentGrid,
     required String itemId,
@@ -61,7 +61,7 @@ class ColorGridManager {
     ).toList();
   }
   
-  /// Deselect all items
+  // Deselect all items
   static List<ColorGridItem> deselectAll({
     required List<ColorGridItem> currentGrid,
   }) {
@@ -70,7 +70,7 @@ class ColorGridManager {
     ).toList();
   }
   
-  /// Update color of a specific item (from sRGB Color)
+  // Update color of a specific item (from sRGB Color)
   static List<ColorGridItem> updateItemColor({
     required List<ColorGridItem> currentGrid,
     required String itemId,
@@ -98,7 +98,7 @@ class ColorGridManager {
     }).toList();
   }
 
-  /// Update color of a specific item (from OKLCH values - preferred)
+  // Update color of a specific item (from OKLCH values - preferred)
   static List<ColorGridItem> updateItemOklch({
     required List<ColorGridItem> currentGrid,
     required String itemId,
@@ -130,7 +130,7 @@ class ColorGridManager {
     }).toList();
   }
   
-  /// Get the currently selected item
+  // Get the currently selected item
   static ColorGridItem? getSelectedItem(List<ColorGridItem> grid) {
     try {
       return grid.firstWhere((item) => item.isSelected);
@@ -139,7 +139,7 @@ class ColorGridManager {
     }
   }
   
-  /// Get item by ID
+  // Get item by ID
   static ColorGridItem? getItemById({
     required List<ColorGridItem> grid,
     required String itemId,
@@ -151,12 +151,12 @@ class ColorGridManager {
     }
   }
   
-  /// Check if an item is selected
+  // Check if an item is selected
   static bool hasSelection(List<ColorGridItem> grid) {
     return grid.any((item) => item.isSelected);
   }
   
-  /// Get index of item by ID
+  // Get index of item by ID
   static int getIndexById({
     required List<ColorGridItem> grid,
     required String itemId,
@@ -164,13 +164,13 @@ class ColorGridManager {
     return grid.indexWhere((item) => item.id == itemId);
   }
   
-  /// Validate grid doesn't have duplicate IDs
+  // Validate grid doesn't have duplicate IDs
   static bool validateNoDuplicateIds(List<ColorGridItem> grid) {
     final ids = grid.map((item) => item.id).toSet();
     return ids.length == grid.length;
   }
   
-  /// Ensure only one item is selected (fix inconsistent state)
+  // Ensure only one item is selected (fix inconsistent state)
   static List<ColorGridItem> ensureSingleSelection({
     required List<ColorGridItem> currentGrid,
   }) {

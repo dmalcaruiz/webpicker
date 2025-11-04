@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../services/undo_redo_manager.dart';
-import '../../utils/color_utils.dart'; // Import the new utility file
+import '../../services/undo_redo_service.dart';
+import '../../utils/ui_color_utils.dart'; // Import the new utility file
 
-/// Undo/Redo buttons with keyboard shortcuts
+// Undo/Redo buttons with keyboard shortcuts
 class UndoRedoButtons extends StatelessWidget {
-  /// Undo/Redo manager instance
-  final UndoRedoManager undoRedoManager;
+  // Undo/Redo manager instance
+  final UndoRedoService undoRedoManager;
   
-  /// Callback when undo is triggered
+  // Callback when undo is triggered
   final VoidCallback onUndo;
   
-  /// Callback when redo is triggered
+  // Callback when redo is triggered
   final VoidCallback onRedo;
   
   final Color? bgColor;
@@ -109,7 +109,7 @@ class UndoRedoButtons extends StatelessWidget {
   }
 }
 
-/// Keyboard shortcuts handler for undo/redo
+// Keyboard shortcuts handler for undo/redo
 class UndoRedoShortcuts extends StatelessWidget {
   final Widget child;
   final VoidCallback onUndo;

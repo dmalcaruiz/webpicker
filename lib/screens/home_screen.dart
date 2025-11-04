@@ -5,30 +5,29 @@ import 'package:snapping_sheet_2/snapping_sheet.dart';
 import '../widgets/color_picker/color_picker_controls.dart';
 import '../widgets/color_picker/reorderable_color_grid_view.dart';
 import '../widgets/home/sheet_grabbing_handle.dart';
-import '../widgets/home/action_buttons_row.dart';
+import '../widgets/home/home_app_bar.dart';
+import '../widgets/home/delete_zone_overlay.dart';
+import '../widgets/home/real_pigments_toggle.dart';
+import '../widgets/home/bottom_action_bar.dart';
 import '../widgets/common/undo_redo_buttons.dart';
 import '../models/color_grid_item.dart';
-import '../services/undo_redo_manager.dart';
-import '../coordinator/app_state_coordinator.dart';
+import '../services/undo_redo_service.dart';
+import '../services/clipboard_service.dart';
+import '../coordinator/state_history_coordinator.dart';
+import '../controllers/drag_drop_controller.dart';
 import '../state/color_editor_provider.dart';
 import '../state/color_grid_provider.dart';
 import '../state/extreme_colors_provider.dart';
 import '../state/bg_color_provider.dart';
 import '../state/settings_provider.dart';
+import '../services/icc_color_service.dart';
 import '../utils/color_operations.dart';
-import '../utils/icc_color_manager.dart';
-import '../utils/color_utils.dart';
-import 'menu_screen.dart';
 import '../cyclop_eyedropper/eye_dropper_layer.dart';
-import '../services/clipboard_service.dart';
 
-/// Color Picker Home Screen
-/// 
-/// Orchestrates the main color picker UI and manages:
-/// - Color grid state
-/// - Undo/redo history
-/// - Sheet interactions
-/// - Background vs. color edit modes
+// Color Picker Home Screen
+//
+// Orchestrates the main color picker UI using Providers for state management.
+// Coordination logic lives here where we have easy access to all providers.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -37,136 +36,163 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // ========== Core State ==========
-  // NOTE: All undoable state is now in Providers:
-  // - ColorEditorProvider: current OKLCH editing values
-  // - GridProvider: color grid items
-  // - ExtremeColorsProvider: left/right extreme colors
-  // - BgColorProvider: background color and OKLCH values
-  // - SettingsProvider: ICC filter toggle and other settings
 
-  /// Currently dragging item (for delete zone)
-  ColorGridItem? _draggingItem;
+  // ================================================
+  // ========== Widget-Scoped Objects ===============
+  // ================================================
+  //
+  // These live in the widget's state and are disposed with the widget.
+  //
+  // DragDropController:
+  //   - Manages UI state for drag-drop behavior (drag position, delete zone)
+  //   - Extends ChangeNotifier for reactive UI updates
+  //   - Lives here because it's widget-scoped, not app-wide
+  //
+  // StateHistoryCoordinator:
+  //   - Orchestrates undo/redo across ALL providers
+  //   - Captures and restores state snapshots
+  //   - Lives here because it needs references to all providers
+  //
+  // UndoRedoService:
+  //   - Manages the undo/redo history stack
+  //   - Maintains state (undo stack, redo stack, current state)
+  //   - Extends ChangeNotifier to notify on history changes
 
-  /// Current pointer Y position during drag
-  double _dragPointerY = double.infinity;
+  late DragDropController _dragDropController;
+  late StateHistoryCoordinator _coordinator;
+  final UndoRedoService _undoRedoService = UndoRedoService(maxHistorySize: 100);
 
-  /// Last known pointer Y before drag ended
-  double _lastDragPointerY = double.infinity;
+  // ================================================
+  // ========== Widget UI State =====================
+  // ================================================
+  //
+  // Local UI state that doesn't need to be shared across the app.
+  // This is ephemeral state tied to this widget's lifecycle.
+  //
+  // - SnappingSheetController: Controls the bottom sheet position/animations
+  // - _currentSheetHeight: Tracks sheet height for layout adjustments
+  // - ScrollController: Controls scrolling behavior
+  // - _isInteractingWithSlider: Prevents sheet dragging during slider interaction
+  // - _selectedChips: Toggle states for chip filters (currently unused?)
 
-  /// Threshold for delete zone (pixels from top)
-  static const double _deleteZoneThreshold = 120.0;
-
-  // ========== UI State ==========
-
-  /// Sheet controller for programmatic control
   final SnappingSheetController snappingSheetController = SnappingSheetController();
-
-  /// Scroll controller for the sheet content
+  double _currentSheetHeight = 0.0;
   final ScrollController scrollController = ScrollController();
-
-  /// Track when user is interacting with sliders
   bool _isInteractingWithSlider = false;
-
-  /// Track selected chips (placeholder feature)
   final List<bool> _selectedChips = [false, true, false, false];
 
-  /// Current height of the snapping sheet
-  double _currentSheetHeight = 0.0;
+  // ================================================
+  // ========== Lifecycle & Initialization ==========
+  // ================================================
+  // Widget lifecycle methods that set up and tear down resources.
 
-  // ========== Undo/Redo Management ==========
-
-  /// Undo/redo manager
-  final UndoRedoManager _undoRedoManager = UndoRedoManager(maxHistorySize: 50);
-
-  /// State coordinator for undo/redo across all providers
-  late AppStateCoordinator _coordinator;
-
-  // ========== Lifecycle ==========
-
+  // initState():
+  //   1. Creates widget-scoped objects (Coordinator, Controller, Service)
+  //   2. Loads sample grid data (deferred to postFrameCallback)
+  //   3. Initializes ICC color profile asynchronously
   @override
   void initState() {
     super.initState();
 
-    // Defer Provider updates and initialization to after build phase
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Initialize coordinator
-      _coordinator = AppStateCoordinator(
-        colorEditor: context.read<ColorEditorProvider>(),
-        grid: context.read<ColorGridProvider>(),
-        extremes: context.read<ExtremeColorsProvider>(),
-        bgColor: context.read<BgColorProvider>(),
-        settings: context.read<SettingsProvider>(),
-        undoRedo: _undoRedoManager,
-      );
+    // Create state history coordinator (needs references to all providers)
+    _coordinator = StateHistoryCoordinator(
+      colorEditor: context.read<ColorEditorProvider>(),
+      grid: context.read<ColorGridProvider>(),
+      extremes: context.read<ExtremeColorsProvider>(),
+      bgColor: context.read<BgColorProvider>(),
+      settings: context.read<SettingsProvider>(),
+      undoRedo: _undoRedoService,
+    );
 
+    // Create drag & drop controller (manages drag UI state)
+    _dragDropController = DragDropController(
+      gridProvider: context.read<ColorGridProvider>(),
+      coordinator: _coordinator,
+    );
+
+    // Defer state-modifying operations until after first build
+    // (Can't modify provider state during initState)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeSampleGrid();
       _coordinator.saveState('Initial state');
     });
 
+    // Load ICC profile asynchronously (doesn't block UI)
     _initializeIccProfile();
   }
-  
-  @override
-  void dispose() {
-    IccColorManager.instance.dispose();
-    _undoRedoManager.dispose();
-    super.dispose();
-  }
-  
-  /// Initialize with sample colors
+
+  // Loads sample colors into the grid on first launch
   void _initializeSampleGrid() {
     final sampleColors = [
-      ColorGridItem.fromColor(const Color(0xFFE74C3C), name: 'Red'),
-      ColorGridItem.fromColor(const Color(0xFF3498DB), name: 'Blue'),
-      ColorGridItem.fromColor(const Color(0xFF2ECC71), name: 'Green'),
-      ColorGridItem.fromColor(const Color(0xFFF39C12), name: 'Orange'),
+      ColorGridItem.fromColor(const Color.fromARGB(255, 240, 98, 82), name: 'Red'),
+      ColorGridItem.fromColor(const Color.fromARGB(255, 87, 165, 218), name: 'Blue'),
+      ColorGridItem.fromColor(const Color.fromARGB(255, 85, 219, 141), name: 'Green'),
+      ColorGridItem.fromColor(const Color.fromARGB(255, 255, 190, 86), name: 'Orange'),
     ];
     context.read<ColorGridProvider>().syncFromSnapshot(sampleColors);
   }
 
-  /// Initialize ICC color management
-  ///
-  /// Loads Canon PRO-1000 profile from assets for real-time filtering.
-  /// App continues normally if this fails (graceful degradation).
+  // Loads ICC color profile for "Real Pigments Only" feature
+  //
+  // Runs asynchronously - app works fine if this fails
   Future<void> _initializeIccProfile() async {
     try {
       const profilePath = 'reference-icc/Canon ImagePROGRAPH PRO-1000.icc';
-
-      // Load profile from assets
       final profileData = await rootBundle.load(profilePath);
       final bytes = profileData.buffer.asUint8List();
-
-      // Initialize ICC manager
       final success = await IccColorManager.instance.initialize(bytes);
 
       if (success) {
         debugPrint('✓ ICC Profile loaded successfully');
-        debugPrint('  Profile: Canon ImagePROGRAPH PRO-1000');
-        debugPrint('  Size: ${bytes.length} bytes');
-        debugPrint('  Mode: Real-time display filter');
       } else {
         debugPrint('⚠ ICC Profile initialization failed');
-        debugPrint('  "Only Real Pigments" toggle will have no effect');
       }
-
     } catch (e) {
       debugPrint('⚠ ICC Profile loading error: $e');
-      debugPrint('  App will continue with sRGB-only mode');
     }
   }
 
-  // ========== Color Change Handlers ==========
+  // dispose():
+  //   Cleans up all resources to prevent memory leaks
+  @override
+  void dispose() {
+    // Clean up singleton service
+    IccColorManager.instance.dispose();
 
-  /// Handle OKLCH value changes from sliders (source of truth)
-  void _onOklchChanged({
+    // Clean up widget-scoped objects
+    _undoRedoService.dispose();
+    _dragDropController.dispose();
+
+    // Call the parent class's dispose method to complete widget lifecycle, after this,
+    //the widget is dead and doesnt access any resources.
+    super.dispose();
+  }
+
+  // ================================================
+  // ========== Cross-Provider Coordination =========
+  // ================================================
+  //
+  // These methods coordinate operations across multiple providers.
+  // They live here because they need access to all providers via context.read<>()
+  //
+  // This is the "glue code" that makes providers work together.
+
+  // ========== Color Update Coordination ===========
+
+  // Handles OKLCH color changes from sliders
+  void _handleOklchChanged({
     required double lightness,
     required double chroma,
     required double hue,
     double alpha = 1.0,
   }) {
+    final colorEditor = context.read<ColorEditorProvider>();
+    final grid = context.read<ColorGridProvider>();
+    final extremes = context.read<ExtremeColorsProvider>();
+    final bgColor = context.read<BgColorProvider>();
+
     // Update ColorEditorProvider (source of truth)
-    context.read<ColorEditorProvider>().updateOklch(
+    colorEditor.updateOklch(
       lightness: lightness,
       chroma: chroma,
       hue: hue,
@@ -174,14 +200,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     // Coordinate with selected item
-    final gridProvider = context.read<ColorGridProvider>();
-    final selectedItem = gridProvider.selectedItem;
-    final extremesProvider = context.read<ExtremeColorsProvider>();
-    final bgColorProvider = context.read<BgColorProvider>();
+    final selectedItem = grid.selectedItem;
 
     if (selectedItem != null) {
-      // Update selected grid item
-      gridProvider.updateItemOklch(
+      grid.updateItemOklch(
         itemId: selectedItem.id,
         lightness: lightness,
         chroma: chroma,
@@ -189,20 +211,18 @@ class _HomeScreenState extends State<HomeScreen> {
         alpha: alpha,
       );
       _coordinator.saveState('Modified ${selectedItem.name ?? "color"}');
-    } else if (extremesProvider.selectedExtremeId != null) {
-      // Update selected extreme (behaves exactly like a box)
-      extremesProvider.updateExtremeOklch(
-        extremeId: extremesProvider.selectedExtremeId!,
+    } else if (extremes.selectedExtremeId != null) {
+      extremes.updateExtremeOklch(
+        extremeId: extremes.selectedExtremeId!,
         lightness: lightness,
         chroma: chroma,
         hue: hue,
         alpha: alpha,
       );
-      final extremeName = extremesProvider.selectedExtremeId == 'left' ? 'left' : 'right';
+      final extremeName = extremes.selectedExtremeId == 'left' ? 'left' : 'right';
       _coordinator.saveState('Modified $extremeName extreme');
-    } else if (bgColorProvider.isSelected) {
-      // Update background color (behaves exactly like a box)
-      bgColorProvider.updateOklch(
+    } else if (bgColor.isSelected) {
+      bgColor.updateOklch(
         lightness: lightness,
         chroma: chroma,
         hue: hue,
@@ -212,68 +232,39 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Legacy handler for Color-based changes (eyedropper, paste)
-  void _onColorChanged(Color? color) {
+  // Converts sRGB Color to OKLCH and delegates to _handleOklchChanged
+  void _handleColorChanged(Color? color) {
     if (color == null) return;
-
-    // Convert to OKLCH and use that as source of truth
     final oklch = srgbToOklch(color);
-    _onOklchChanged(
+    _handleOklchChanged(
       lightness: oklch.l,
       chroma: oklch.c,
       hue: oklch.h,
       alpha: oklch.alpha,
     );
   }
-  
+
+  // Handles color selection from eyedropper or paste
   void _handleColorSelection(Color color) {
-    _onColorChanged(color);
+    _handleColorChanged(color);
     _coordinator.saveState('Color selected from eyedropper/paste');
   }
 
-  /// Handle "Only Real Pigments" toggle
-  ///
-  /// This is a DISPLAY FILTER - doesn't modify stored OKLCH values.
-  /// When toggled ON, colors are filtered through ICC profile for display only.
-  /// Settings are not part of undo/redo history.
-  void _onRealPigmentsOnlyChanged(bool value) {
-    final settingsProvider = context.read<SettingsProvider>();
-    settingsProvider.setRealPigmentsOnly(value);
-  }
-
-  /// Handle pigment mixing toggle
-  ///
-  /// Controls the interpolation algorithm: Mixbox (pigment mixing) vs OKLCH (perceptual).
-  /// Settings are not part of undo/redo history.
-  void _onUsePigmentMixingChanged(bool value) {
-    final settingsProvider = context.read<SettingsProvider>();
-    settingsProvider.setUsePigmentMixing(value);
-  }
-
-  /// ========== ICC Display Filter Operations ==========
-
-  /// Apply ICC display filter to color
-  ///
-  /// This is where the REAL-TIME ICC FILTERING happens!
-  ///
-  /// Returns:
-  /// - Original color if toggle OFF or ICC not ready
-  /// - Gamut-mapped (filtered) color if toggle ON and ICC ready
-  ///
-  /// NOTE: This doesn't modify state, only display!
-  Color applyIccFilter(Color idealColor, {
+  // Applies ICC color profile filter if "Real Pigments Only" is enabled
+  //
+  // Transforms colors through printer gamut (sRGB → Lab → CMYK → Lab → sRGB)
+  // Returns original color if filter is disabled or ICC profile not loaded
+  Color _applyIccFilter(Color idealColor, {
     double? lightness,
     double? chroma,
     double? hue,
     double? alpha,
   }) {
-    // No filter if toggle OFF or ICC not initialized
-    final settingsProvider = context.read<SettingsProvider>();
-    if (!settingsProvider.useRealPigmentsOnly || !IccColorManager.instance.isReady) {
+    final settings = context.read<SettingsProvider>();
+    if (!settings.useRealPigmentsOnly || !IccColorManager.instance.isReady) {
       return idealColor;
     }
 
-    // Use provided OKLCH or extract from ColorEditorProvider
     final colorEditor = context.read<ColorEditorProvider>();
     final l = lightness ?? colorEditor.lightness ?? 0.5;
     final c = chroma ?? colorEditor.chroma ?? 0.0;
@@ -281,237 +272,183 @@ class _HomeScreenState extends State<HomeScreen> {
     final a = alpha ?? 1.0;
 
     try {
-      // Convert OKLCH → CIE Lab
       final cieLab = oklchToCieLab(l, c, h);
-
-      // Apply ICC transform (the actual filter!)
-      final mappedLab = IccColorManager.instance.transformLab(
-        cieLab.l,
-        cieLab.a,
-        cieLab.b,
-      );
-
-      // Convert back: CIE Lab → OKLCH → sRGB
+      final mappedLab = IccColorManager.instance.transformLab(cieLab.l, cieLab.a, cieLab.b);
       final mappedOklch = cieLabToOklch(mappedLab[0], mappedLab[1], mappedLab[2]);
-
       return colorFromOklch(mappedOklch.l, mappedOklch.c, mappedOklch.h, a);
     } catch (e) {
       debugPrint('⚠ ICC filter error: $e');
-      return idealColor; // Fallback on error
+      return idealColor;
     }
   }
 
-  // ========== Grid Item Operations ==========
-  
-  void _onGridReorder(int oldIndex, int newIndex) {
+  // ========== Selection Coordination ============
+
+  // When user selects something (grid item, extreme, background),
+  // we need to:
+  // 1. Deselect everything else across all providers
+  // 2. Select the new item
+  // 3. Update ColorEditorProvider with the selected color
+  // 4. Optionally auto-copy to clipboard
+
+  // Handles reordering grid items via drag-and-drop
+  void _handleGridReorder(int oldIndex, int newIndex) {
     context.read<ColorGridProvider>().reorderItems(oldIndex, newIndex);
     _coordinator.saveState('Reordered grid items');
   }
-  
-  void _onGridItemTap(ColorGridItem item) {
-    // If tapping an already-selected item, deselect it
+
+  // Handles tapping a grid item
+  //
+  // Coordinates selection across:
+  // - ColorGridProvider (select this item)
+  // - ExtremeColorsProvider (deselect extremes)
+  // - BgColorProvider (deselect background)
+  // - ColorEditorProvider (load item's color)
+  // - ClipboardService (auto-copy if enabled)
+  void _handleGridItemTap(ColorGridItem item) {
+    final grid = context.read<ColorGridProvider>();
+    final extremes = context.read<ExtremeColorsProvider>();
+    final bgColor = context.read<BgColorProvider>();
+    final colorEditor = context.read<ColorEditorProvider>();
+    final settings = context.read<SettingsProvider>();
+
     if (item.isSelected) {
-      context.read<ColorGridProvider>().deselectAll();
+      grid.deselectAll();
       return;
     }
 
-    // Otherwise, select the item
-    context.read<ColorGridProvider>().selectItem(item.id);
+    grid.selectItem(item.id);
+    extremes.deselectAll();
+    bgColor.setSelected(false);
+    colorEditor.setFromOklchValues(item.oklchValues);
 
-    // Deselect extremes when a box is selected
-    final extremesProvider = context.read<ExtremeColorsProvider>();
-    extremesProvider.deselectAll();
-
-    // Deselect bg color box
-    context.read<BgColorProvider>().setSelected(false);
-
-    // Update ColorEditorProvider with the selected item's OKLCH values
-    context.read<ColorEditorProvider>().setFromOklchValues(item.oklchValues);
-
-    // Copy to clipboard if auto-copy is enabled
-    final settings = context.read<SettingsProvider>();
     if (settings.autoCopyEnabled) {
       ClipboardService.copyColorToClipboard(item.color);
     }
   }
 
-  void _onBgColorBoxTap() {
-    final bgColorProvider = context.read<BgColorProvider>();
+  // Handles tapping the background color box
+  //
+  // Coordinates selection across all providers (deselects grid items and extremes)
+  void _handleBgColorBoxTap() {
+    final bgColor = context.read<BgColorProvider>();
+    final grid = context.read<ColorGridProvider>();
+    final extremes = context.read<ExtremeColorsProvider>();
+    final colorEditor = context.read<ColorEditorProvider>();
 
-    // If tapping an already-selected bg color box, deselect it
-    if (bgColorProvider.isSelected) {
-      bgColorProvider.setSelected(false);
+    if (bgColor.isSelected) {
+      bgColor.setSelected(false);
       return;
     }
 
-    // Otherwise, select the bg color box
-    // Deselect all grid boxes
-    context.read<ColorGridProvider>().deselectAll();
+    grid.deselectAll();
+    extremes.deselectAll();
+    bgColor.setSelected(true);
 
-    // Deselect extremes
-    context.read<ExtremeColorsProvider>().deselectAll();
-
-    // Select bg color box
-    bgColorProvider.setSelected(true);
-
-    // Update ColorEditorProvider with bg color's OKLCH values
-    context.read<ColorEditorProvider>().updateOklch(
-      lightness: bgColorProvider.lightness,
-      chroma: bgColorProvider.chroma,
-      hue: bgColorProvider.hue,
-      alpha: bgColorProvider.alpha,
+    colorEditor.updateOklch(
+      lightness: bgColor.lightness,
+      chroma: bgColor.chroma,
+      hue: bgColor.hue,
+      alpha: bgColor.alpha,
     );
   }
 
-  void _onExtremeTap(String extremeId) {
-    final extremesProvider = context.read<ExtremeColorsProvider>();
+  // Handles tapping a mixer extreme (left or right)
+  //
+  // Coordinates selection across all providers
+  void _handleExtremeTap(String extremeId) {
+    final extremes = context.read<ExtremeColorsProvider>();
+    final grid = context.read<ColorGridProvider>();
+    final bgColor = context.read<BgColorProvider>();
+    final colorEditor = context.read<ColorEditorProvider>();
+    final settings = context.read<SettingsProvider>();
 
-    // If tapping an already-selected extreme, deselect it
-    if (extremesProvider.selectedExtremeId == extremeId) {
-      extremesProvider.deselectAll();
+    if (extremes.selectedExtremeId == extremeId) {
+      extremes.deselectAll();
       return;
     }
 
-    // Otherwise, select the tapped extreme
-    // Deselect all grid boxes
-    context.read<ColorGridProvider>().deselectAll();
+    grid.deselectAll();
+    bgColor.setSelected(false);
+    extremes.selectExtreme(extremeId);
 
-    // Deselect bg color box
-    context.read<BgColorProvider>().setSelected(false);
+    final selectedExtreme = extremeId == 'left' ? extremes.leftExtreme : extremes.rightExtreme;
+    colorEditor.setFromOklchValues(selectedExtreme.oklchValues);
 
-    // Select tapped extreme
-    extremesProvider.selectExtreme(extremeId);
-
-    // Update ColorEditorProvider with the selected extreme's OKLCH values
-    final selectedExtreme = extremeId == 'left' ? extremesProvider.leftExtreme : extremesProvider.rightExtreme;
-    context.read<ColorEditorProvider>().setFromOklchValues(selectedExtreme.oklchValues);
-
-    // Copy to clipboard if auto-copy is enabled
-    final settings = context.read<SettingsProvider>();
     if (settings.autoCopyEnabled) {
       ClipboardService.copyColorToClipboard(selectedExtreme.color);
     }
   }
 
-  void _onMixerSliderTouched() {
-    final extremesProvider = context.read<ExtremeColorsProvider>();
-    final bgColorProvider = context.read<BgColorProvider>();
+  // Handles when user touches the mixer slider
+  //
+  // Deselects extremes and background color since the mixer slider
+  // operates independently and should clear any extreme/background selection
+  void _handleMixerSliderTouched() {
+    final extremes = context.read<ExtremeColorsProvider>();
+    final bgColor = context.read<BgColorProvider>();
 
-    // Deselect extremes and bg color box when mixer slider is dragged
-    if (extremesProvider.selectedExtremeId != null || bgColorProvider.isSelected) {
-      extremesProvider.deselectAll();
-      bgColorProvider.setSelected(false);
+    if (extremes.selectedExtremeId != null || bgColor.isSelected) {
+      extremes.deselectAll();
+      bgColor.setSelected(false);
     }
   }
 
-  void _onGridItemLongPress(ColorGridItem item) {
+  // Handles long press on a grid item
+  //
+  // Shows a bottom sheet menu with options (delete, etc.)
+  void _handleGridItemLongPress(ColorGridItem item) {
     _showColorItemMenu(item);
   }
-  
-  void _onGridItemDelete(ColorGridItem item) {
+
+  // Handles deletion of a grid item
+  //
+  // Removes the item from the grid and saves undo state
+  void _handleGridItemDelete(ColorGridItem item) {
     context.read<ColorGridProvider>().removeColor(item.id);
     _coordinator.saveState('Deleted ${item.name ?? "color"} from grid');
   }
-  
-  void _onAddColor() {
-    // Determine color to add:
-    // 1. If a box is selected, use its current color (which may have been edited via sliders)
-    // 2. Otherwise, use current color from ColorEditorProvider
-    final gridProvider = context.read<ColorGridProvider>();
-    final selectedItem = gridProvider.selectedItem;
+
+  // Handles adding a new color to the grid
+  //
+  // Adds the currently selected color (or current editor color if nothing selected)
+  // to the grid and selects it automatically
+  void _handleAddColor() {
+    final grid = context.read<ColorGridProvider>();
     final colorEditor = context.read<ColorEditorProvider>();
+    final selectedItem = grid.selectedItem;
     final colorToAdd = selectedItem?.color ?? colorEditor.currentColor;
 
     if (colorToAdd != null) {
-      gridProvider.addColor(colorToAdd, selectNew: true);
+      grid.addColor(colorToAdd, selectNew: true);
       _coordinator.saveState('Added new color to grid');
     }
   }
-  
-  // ========== Drag & Drop Handlers ==========
-  
-  void _onDragStarted(ColorGridItem item) {
-    // Only reset if this is a NEW drag (not already dragging)
-    if (_draggingItem == null) {
-      setState(() {
-        _draggingItem = item;
-        _dragPointerY = double.infinity; // Start with a safe value
-        _lastDragPointerY = double.infinity;
-      });
-      debugPrint('Drag started for item: ${item.id}');
-    }
-  }
-  
-  bool _onDragEnded() {
-    // Use the LAST known position since current might have been reset
-    final shouldDelete = _draggingItem != null && _lastDragPointerY < _deleteZoneThreshold;
-    final gridSizeBefore = context.read<ColorGridProvider>().items.length;
 
-    debugPrint('Drag ended - Last Y: $_lastDragPointerY, Current Y: $_dragPointerY, InZone: $_isInDeleteZone, Should delete: $shouldDelete, Grid size before: $gridSizeBefore');
+  // ========== Other Actions & Handlers ============
 
-    if (shouldDelete) {
-      _onDropToDelete();
-      final gridSizeAfter = context.read<ColorGridProvider>().items.length;
-      debugPrint('Grid size after delete: $gridSizeAfter');
-    }
-
-    setState(() {
-      _draggingItem = null;
-      _dragPointerY = double.infinity;
-      _lastDragPointerY = double.infinity;
-    });
-    
-    debugPrint('Returning shouldDelete=$shouldDelete to skip reorder');
-    // Return whether we deleted to signal reorder should be skipped
-    return shouldDelete;
-  }
-  
-  void _onDragUpdate(Offset globalPosition) {
-    if (_draggingItem != null) {
-      setState(() {
-        _dragPointerY = globalPosition.dy;
-        _lastDragPointerY = _dragPointerY; // Save it
-        // Debug: print position
-        debugPrint('Drag Y: $_dragPointerY, Threshold: $_deleteZoneThreshold, InZone: $_isInDeleteZone');
-      });
-    }
-  }
-  
-  void _onDropToDelete() {
-    if (_draggingItem != null) {
-      final itemToDelete = _draggingItem!;
-      debugPrint('Deleting item: ${itemToDelete.id}');
-
-      // Remove item from grid
-      context.read<ColorGridProvider>().removeColor(itemToDelete.id);
-      _coordinator.saveState('Deleted ${itemToDelete.name ?? "color"} via drag');
-    }
-  }
-  
-  bool get _isInDeleteZone => _dragPointerY < _deleteZoneThreshold;
-
-  // ========== Eyedropper Logic ==========
-  
-  // New method for eyedropper logic for background color
+  // Starts eyedropper tool for background color selection
+  //
+  // Launches the eyedropper overlay to pick a color from screen,
+  // then updates background color and ColorEditor with the picked color
   void _startEyedropperForBgColor(DragStartDetails details) {
     try {
       Future.delayed(
         const Duration(milliseconds: 50),
         () => EyeDrop.of(context).capture(context, (color) {
           final oklchColor = srgbToOklch(color);
+          final bgColor = context.read<BgColorProvider>();
+          final colorEditor = context.read<ColorEditorProvider>();
 
-          // Update via provider
-          final bgColorProvider = context.read<BgColorProvider>();
-          bgColorProvider.updateOklch(
+          bgColor.updateOklch(
             lightness: oklchColor.l,
             chroma: oklchColor.c,
             hue: oklchColor.h,
             alpha: oklchColor.alpha,
           );
-          bgColorProvider.setSelected(true); // Select bg color when picked
+          bgColor.setSelected(true);
 
-          // Update color editor
-          context.read<ColorEditorProvider>().updateOklch(
+          colorEditor.updateOklch(
             lightness: oklchColor.l,
             chroma: oklchColor.c,
             hue: oklchColor.h,
@@ -520,17 +457,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
           _coordinator.saveState('Eyedropper picked color for background');
 
-          // Show feedback
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Picked ${ClipboardService.colorToHex(color)} for background'),
-                duration: const Duration(milliseconds: 100),
-                behavior: SnackBarBehavior.floating,
-                backgroundColor: Colors.black87,
-              ),
-            );
-          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Picked ${ClipboardService.colorToHex(color)} for background'),
+              duration: const Duration(milliseconds: 100),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.black87,
+            ),
+          );
         }, null),
       );
     } catch (err) {
@@ -538,66 +472,44 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // New method for eyedropper logic for extremes
+  // Starts eyedropper tool for mixer extreme color selection
+  //
+  // Launches the eyedropper overlay to pick a color from screen,
+  // then updates the specified extreme (left or right) and ColorEditor
   void _startEyedropperForExtreme(String extremeId, DragStartDetails details) {
     try {
       Future.delayed(
         const Duration(milliseconds: 50),
         () => EyeDrop.of(context).capture(context, (color) {
           final oklchColor = srgbToOklch(color);
-          final extremesProvider = context.read<ExtremeColorsProvider>();
+          final extremes = context.read<ExtremeColorsProvider>();
+          final colorEditor = context.read<ColorEditorProvider>();
 
-          if (extremeId == 'left') {
-            // Update via provider
-            extremesProvider.updateExtremeOklch(
-              extremeId: 'left',
-              lightness: oklchColor.l,
-              chroma: oklchColor.c,
-              hue: oklchColor.h,
-              alpha: oklchColor.alpha,
-            );
+          extremes.updateExtremeOklch(
+            extremeId: extremeId,
+            lightness: oklchColor.l,
+            chroma: oklchColor.c,
+            hue: oklchColor.h,
+            alpha: oklchColor.alpha,
+          );
 
-            // Update color editor
-            context.read<ColorEditorProvider>().updateOklch(
-              lightness: oklchColor.l,
-              chroma: oklchColor.c,
-              hue: oklchColor.h,
-              alpha: oklchColor.alpha,
-            );
+          colorEditor.updateOklch(
+            lightness: oklchColor.l,
+            chroma: oklchColor.c,
+            hue: oklchColor.h,
+            alpha: oklchColor.alpha,
+          );
 
-            _coordinator.saveState('Eyedropper picked color for left extreme');
-          } else if (extremeId == 'right') {
-            // Update via provider
-            extremesProvider.updateExtremeOklch(
-              extremeId: 'right',
-              lightness: oklchColor.l,
-              chroma: oklchColor.c,
-              hue: oklchColor.h,
-              alpha: oklchColor.alpha,
-            );
+          _coordinator.saveState('Eyedropper picked color for $extremeId extreme');
 
-            // Update color editor
-            context.read<ColorEditorProvider>().updateOklch(
-              lightness: oklchColor.l,
-              chroma: oklchColor.c,
-              hue: oklchColor.h,
-              alpha: oklchColor.alpha,
-            );
-
-            _coordinator.saveState('Eyedropper picked color for right extreme');
-          }
-
-          // Show feedback
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Picked ${ClipboardService.colorToHex(color)} for extreme'),
-                duration: const Duration(milliseconds: 100),
-                behavior: SnackBarBehavior.floating,
-                backgroundColor: Colors.black87,
-              ),
-            );
-          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Picked ${ClipboardService.colorToHex(color)} for extreme'),
+              duration: const Duration(milliseconds: 100),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.black87,
+            ),
+          );
         }, null),
       );
     } catch (err) {
@@ -605,26 +517,34 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // ========== Undo/Redo Actions==========
-  
-  void _handleUndo() {
-    _coordinator.undo();
-  }
+  // Triggers undo operation via coordinator
+  void _handleUndo() => _coordinator.undo();
 
-  void _handleRedo() {
-    _coordinator.redo();
-  }
+  // Triggers redo operation via coordinator
+  void _handleRedo() => _coordinator.redo();
 
+  // Randomizes all colors in the grid
+  //
+  // Generates random OKLCH values for all existing grid items
+  // while preserving names and selection state
   void _handleGenerateColors() {
-    final colorGridProvider = context.read<ColorGridProvider>();
-    // Save state before randomizing
     _coordinator.saveState('Randomize colors');
-    // Randomize all colors in the grid
-    colorGridProvider.randomizeAllColors();
+    context.read<ColorGridProvider>().randomizeAllColors();
+  }
+
+  // Handles toggle of "Real Pigments Only" setting
+  //
+  // When enabled, colors are filtered through ICC profile to simulate
+  // printer gamut limitations (only colors achievable with real pigments)
+  void _handleRealPigmentsOnlyChanged(bool value) {
+    context.read<SettingsProvider>().setRealPigmentsOnly(value);
   }
 
   // ========== UI Helpers ==========
-  
+
+  // Shows a bottom sheet menu for a color item
+  //
+  // Displays item details (color swatch, name, hex code) and actions (delete)
   void _showColorItemMenu(ColorGridItem item) {
     showModalBottomSheet(
       context: context,
@@ -637,7 +557,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle
             Container(
               width: 40,
               height: 4,
@@ -647,7 +566,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            // Color info
             ListTile(
               leading: Container(
                 width: 24,
@@ -660,13 +578,12 @@ class _HomeScreenState extends State<HomeScreen> {
               title: Text(item.name ?? 'Unnamed Color'),
               subtitle: Text('#${item.color.toARGB32().toRadixString(16).substring(2).toUpperCase()}'),
             ),
-            // Delete action
             ListTile(
               leading: const Icon(Icons.delete_outline),
               title: const Text('Delete'),
               onTap: () {
                 Navigator.pop(context);
-                _onGridItemDelete(item);
+                _handleGridItemDelete(item);
               },
             ),
             const SizedBox(height: 16),
@@ -675,15 +592,34 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
-  // ========== Build ==========
-  
+
+  // ================================================
+  // ========== Build & UI Rendering ================
+  // ================================================
+  //
+  // Renders the complete home screen with a snapping bottom sheet UI.
+  //
+  // UI Hierarchy (bottom to top):
+  // 1. Background (bgColor fills entire screen)
+  // 2. SnappingSheet with grabbable handle containing:
+  //    - Color grid (reorderable, drag-to-delete)
+  //    - Real Pigments toggle
+  //    - Home app bar
+  //    - Delete zone overlay (appears during drag)
+  // 3. Bottom sheet content (color picker controls/sliders)
+  // 4. Bottom action bar (background color box, undo/redo, randomize, eyedropper)
+  //
+  // State Management:
+  // - Watches all providers for reactive updates
+  // - Uses ListenableBuilder for drag-drop controller updates
+  // - UndoRedoShortcuts wrapper handles keyboard shortcuts
+
   @override
   Widget build(BuildContext context) {
-    // Read provider values once for the entire build method
     final bgColorProvider = context.watch<BgColorProvider>();
     final extremesProvider = context.watch<ExtremeColorsProvider>();
     final settingsProvider = context.watch<SettingsProvider>();
+    final colorEditor = context.watch<ColorEditorProvider>();
 
     final bgColor = bgColorProvider.color;
     final bgLightness = bgColorProvider.lightness;
@@ -698,21 +634,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final useRealPigmentsOnly = settingsProvider.useRealPigmentsOnly;
 
-    return UndoRedoShortcuts(
-      onUndo: _handleUndo,
-      onRedo: _handleRedo,
-      child: Scaffold(
-        backgroundColor: bgColor ?? const Color(0xFF252525),
+    return ListenableBuilder(
+      listenable: _dragDropController,
+      builder: (context, _) => UndoRedoShortcuts(
+        onUndo: _handleUndo,
+        onRedo: _handleRedo,
+        child: Scaffold(
+          backgroundColor: bgColor,
         body: Stack(
           children: [
-            //---------------------------------------------------------------------------------------------------------------------
-            // Snapping Sheet Stack (includes grabbing handle, sheet content, and content below the sheet)
-            //---------------------------------------------------------------------------------------------------------------------
             SnappingSheet(
-              // Snapping Sheet Properties
               controller: snappingSheetController,
               lockOverflowDrag: true,
-              // Snapping Sheet Positions
+              // Bottom sheet snap positions (height in pixels from bottom)
               snappingPositions: const [
                 SnappingPosition.pixels(
                   positionPixels: 60,
@@ -742,82 +676,67 @@ class _HomeScreenState extends State<HomeScreen> {
                   snappingDuration: Duration(milliseconds: 900),
                 ),
               ],
-
               onSheetMoved: (positionData) {
                 setState(() {
                   _currentSheetHeight = positionData.pixels;
                 });
               },
 
-              //---------------------------------------------------------------------------------------------------------------------
-              // Grabbing handle Content
-              //---------------------------------------------------------------------------------------------------------------------
               grabbingHeight: 80,
               grabbing: SheetGrabbingHandle(
                 chipStates: _selectedChips,
                 onChipToggle: (index) => setState(() => _selectedChips[index] = !_selectedChips[index]),
-                bgColor: bgColor, // Pass bgColor
+                bgColor: bgColor,
               ),
-            
-              //---------------------------------------------------------------------------------------------------------------------
-              // Sheet Content
-              //---------------------------------------------------------------------------------------------------------------------
+
               sheetBelow: SnappingSheetContent(
                 draggable: (details) => !_isInteractingWithSlider,
                 child: Column(
                   children: [
-                    // Color picker controls
                     Expanded(
                       child: Container(
-                      color: bgColor ?? Colors.white, // Use bgColor for the sheet content
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                      child: ColorPickerControls(
-                        onOklchChanged: _onOklchChanged,
-                        // Pass extreme data without modification
-                        leftExtreme: leftExtreme,
-                        rightExtreme: rightExtreme,
-                        // Pass ICC filter for extreme colors
-                        extremeColorFilter: (extreme) => applyIccFilter(
-                          extreme.color,
-                          lightness: extreme.oklchValues.lightness,
-                          chroma: extreme.oklchValues.chroma,
-                          hue: extreme.oklchValues.hue,
-                          alpha: extreme.oklchValues.alpha,
+                        color: bgColor,
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                        child: ColorPickerControls(
+                          onOklchChanged: _handleOklchChanged,
+                          leftExtreme: leftExtreme,
+                          rightExtreme: rightExtreme,
+                          extremeColorFilter: (extreme) => _applyIccFilter(
+                            extreme.color,
+                            lightness: extreme.oklchValues.lightness,
+                            chroma: extreme.oklchValues.chroma,
+                            hue: extreme.oklchValues.hue,
+                            alpha: extreme.oklchValues.alpha,
+                          ),
+                          gradientColorFilter: (color, l, c, h, a) => _applyIccFilter(
+                            color,
+                            lightness: l,
+                            chroma: c,
+                            hue: h,
+                            alpha: a,
+                          ),
+                          onExtremeTap: _handleExtremeTap,
+                          onMixerSliderTouched: _handleMixerSliderTouched,
+                          onSliderInteractionChanged: (interacting) =>
+                              setState(() => _isInteractingWithSlider = interacting),
+                          useRealPigmentsOnly: useRealPigmentsOnly,
+                          bgColor: bgColor,
+                          onPanStartExtreme: _startEyedropperForExtreme,
                         ),
-                        // Pass ICC filter for gradient colors
-                        gradientColorFilter: (color, l, c, h, a) => applyIccFilter(
-                          color,
-                          lightness: l,
-                          chroma: c,
-                          hue: h,
-                          alpha: a,
-                        ),
-                        onExtremeTap: _onExtremeTap,
-                        onMixerSliderTouched: _onMixerSliderTouched,
-                        onSliderInteractionChanged: (interacting) =>
-                            setState(() => _isInteractingWithSlider = interacting),
-                        useRealPigmentsOnly: useRealPigmentsOnly,
-                        bgColor: bgColor, // Pass bgColor
-                        onPanStartExtreme: _startEyedropperForExtreme, // Pass eyedropper function
-                      ),
                       ),
                     ),
                   ],
                 ),
               ),
 
-              //---------------------------------------------------------------------------------------------------------------------
-              // Main content area (behind the grabbing sheet)
-              //---------------------------------------------------------------------------------------------------------------------
               child: Listener(
                 onPointerMove: (event) {
-                  if (_draggingItem != null) {
-                    _onDragUpdate(event.position);
+                  if (_dragDropController.isDragging) {
+                    _dragDropController.onDragUpdate(event.position);
                   }
                 },
                 child: Stack(
                   children: [
-                    // Main content (behind the delete zone)
                     Column(
                       children: [
                         Expanded(
@@ -825,59 +744,25 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Column(
                               children: [
                                 const SizedBox(height: 0),
-                                // Only Real Pigments toggle (ICC profile filter)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 0.0),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      _onRealPigmentsOnlyChanged(!useRealPigmentsOnly);
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                      decoration: BoxDecoration(
-                                        color: useRealPigmentsOnly
-                                            ? Colors.blue.shade700.withOpacity(0.9) // Selected color
-                                            : Colors.grey.shade200, // Unselected color
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            useRealPigmentsOnly ? Icons.check_circle : Icons.circle_outlined,
-                                            size: 20,
-                                            color: useRealPigmentsOnly ? Colors.white : Colors.grey.shade700,
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Text(
-                                            'Only Real Pigments',
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
-                                              color: useRealPigmentsOnly ? Colors.white : Colors.grey.shade800,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
+                                RealPigmentsToggle(
+                                  isEnabled: useRealPigmentsOnly,
+                                  onChanged: _handleRealPigmentsOnlyChanged,
                                 ),
                                 const SizedBox(height: 70),
-                                // Color grid grid
                                 ReorderableColorGridView(
-                                  onReorder: _onGridReorder,
-                                  onItemTap: _onGridItemTap,
-                                  onItemLongPress: _onGridItemLongPress,
-                                  onItemDelete: _onGridItemDelete,
-                                  onAddColor: _onAddColor,
-                                  onDragStarted: _onDragStarted,
-                                  onDragEnded: _onDragEnded,
+                                  onReorder: _handleGridReorder,
+                                  onItemTap: _handleGridItemTap,
+                                  onItemLongPress: _handleGridItemLongPress,
+                                  onItemDelete: _handleGridItemDelete,
+                                  onAddColor: _handleAddColor,
+                                  onDragStarted: _dragDropController.onDragStarted,
+                                  onDragEnded: _dragDropController.onDragEnded,
                                   crossAxisCount: 4,
                                   spacing: 12.0,
                                   itemSize: 80.0,
                                   showAddButton: true,
                                   emptyStateMessage: 'No colors in grid\nCreate a color above and tap + to add it',
-                                  colorFilter: (item) => applyIccFilter(
+                                  colorFilter: (item) => _applyIccFilter(
                                     item.color,
                                     lightness: item.oklchValues.lightness,
                                     chroma: item.oklchValues.chroma,
@@ -894,187 +779,56 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
 
-                    //---------------------------------------------------------------------------------------------------------------------
-                    // App Bar (overlays on top)
-                    //---------------------------------------------------------------------------------------------------------------------
                     Positioned(
                       top: 0,
                       left: 0,
                       right: 0,
-                      child: Container(
-                        color: bgColor, // Use current background color
-                        padding: const EdgeInsets.fromLTRB(40, 20, 40, 8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                Icons.star_border,
-                                color: getTextColor(bgColor ?? const Color(0xFF252525)),
-                              ),
-                              onPressed: () {
-                                // TODO: Implement star functionality
-                              },
-                            ),
-                            Text('Palletator',
-                              style: TextStyle(
-                                color: getTextColor(bgColor ?? const Color(0xFF252525)),
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Hero(
-                              tag: 'menuButton',
-                              child: IconButton(
-                                icon: Icon(
-                                  Icons.menu,
-                                  color: getTextColor(bgColor ?? const Color(0xFF252525)), // Apply color logic
-                                ),
-                                onPressed: () {
-                                  Navigator.push(context, PageRouteBuilder(
-                                    pageBuilder: (context, animation, secondaryAnimation) => const MenuScreen(),
-                                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                      const begin = Offset(1.0, 0.0); // Start from right
-                                      const end = Offset.zero;
-                                      const curve = Curves.ease;
-
-                                      var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-
-                                      return SlideTransition(
-                                        position: animation.drive(tween),
-                                        child: child,
-                                      );
-                                    },
-                                  ));
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      child: HomeAppBar(bgColor: bgColor),
                     ),
 
-                    //---------------------------------------------------------------------------------------------------------------------
-                    // Drag-to-delete zone (overlays on top)
-                    //---------------------------------------------------------------------------------------------------------------------
                     Positioned(
                       top: 20,
                       left: 0,
                       right: 0,
-                      child: IgnorePointer(
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 200),
-                          opacity: _draggingItem != null ? 1.0 : 0.0,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                            decoration: BoxDecoration(
-                              color: _isInDeleteZone
-                                  ? Colors.red.shade700.withOpacity(0.95)
-                                  : Colors.red.shade600.withOpacity(0.85),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.4),
-                                width: 2,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.delete,
-                                  color: Colors.white,
-                                  size: 32,
-                                ),
-                                const SizedBox(width: 12),
-                                const Text(
-                                  '',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                      child: DeleteZoneOverlay(
+                        isDragging: _dragDropController.isDragging,
+                        isInDeleteZone: _dragDropController.isInDeleteZone,
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-            
-            //---------------------------------------------------------------------------------------------------------------------
-            // Floating Action Button Stack)
-            //---------------------------------------------------------------------------------------------------------------------
+
             Positioned(
               bottom: 0,
               left: 20,
               right: 20,
-              child: 
-                          Container(
-                            color: bgColor ?? Colors.white, // Use bgColor for the action bar
-                            padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-                            child: Row(
-                              children: [
-                                // Background color button (acts like a grid box)
-                                GestureDetector(
-                                  onTap: _onBgColorBoxTap,
-                                  onPanStart: _startEyedropperForBgColor, // Add this line
-                                  child: Container(
-                                    width: 48,
-                                    height: 48,
-                                    decoration: BoxDecoration(
-                                      color: applyIccFilter(
-                                        bgColor ?? const Color(0xFF252525),
-                                        lightness: bgLightness,
-                                        chroma: bgChroma,
-                                        hue: bgHue,
-                                        alpha: bgAlpha,
-                                      ),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: isBgColorSelected
-                                            ? getTextColor(bgColor ?? Colors.white).withOpacity(0.9)
-                                            : getTextColor(bgColor ?? Colors.white).withOpacity(0.3),
-                                        width: isBgColorSelected ? 3 : 2,
-                                      ),
-                                    ),
-                                    child: Icon(
-                                      Icons.format_paint,
-                                      color: getTextColor(bgColor ?? Colors.white).withOpacity(isBgColorSelected ? 0.9 : 0.7),
-                                      size: 24,
-                                    ),
-                                  ),
-                                ),
-                                
-                                // Other action buttons
-                                Expanded(
-                                  child: ActionButtonsRow(
-                                    currentColor: context.watch<ColorEditorProvider>().currentColor,
-                                    selectedExtremeId: selectedExtremeId,
-                                    leftExtreme: leftExtreme,
-                                    rightExtreme: rightExtreme,
-                                    onColorSelected: _handleColorSelection,
-                                    undoRedoManager: _undoRedoManager,
-                                    onUndo: _handleUndo,
-                                    onRedo: _handleRedo,
-                                    onGenerateColors: _handleGenerateColors,
-                                    colorFilter: (color) => applyIccFilter(color),
-                                    bgColor: bgColor, // Pass bgColor to ActionButtonsRow
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+              child: BottomActionBar(
+                bgColor: bgColor,
+                isBgColorSelected: isBgColorSelected,
+                currentColor: colorEditor.currentColor,
+                selectedExtremeId: selectedExtremeId,
+                leftExtreme: leftExtreme,
+                rightExtreme: rightExtreme,
+                onBgColorBoxTap: _handleBgColorBoxTap,
+                onBgColorPanStart: _startEyedropperForBgColor,
+                onColorSelected: _handleColorSelection,
+                undoRedoManager: _undoRedoService,
+                onUndo: _handleUndo,
+                onRedo: _handleRedo,
+                onGenerateColors: _handleGenerateColors,
+                colorFilter: _applyIccFilter,
+                bgLightness: bgLightness,
+                bgChroma: bgChroma,
+                bgHue: bgHue,
+                bgAlpha: bgAlpha,
+              ),
             ),
           ],
         ),
       ),
+    ),
     );
   }
 }

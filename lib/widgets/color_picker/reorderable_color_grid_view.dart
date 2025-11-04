@@ -5,57 +5,57 @@ import '../../models/color_grid_item.dart';
 import '../../state/color_grid_provider.dart';
 import 'color_item_widget.dart';
 
-/// A reorderable grid view for displaying and managing color grids
-///
-/// Features:
-/// - Drag and drop reordering
-/// - Add/remove colors
-/// - Selection management
-/// - Responsive grid layout
-/// - Empty state handling
-///
-/// Uses GridProvider for accessing the color grid items.
+// A reorderable grid view for displaying and managing color grids
+//
+// Features:
+// - Drag and drop reordering
+// - Add/remove colors
+// - Selection management
+// - Responsive grid layout
+// - Empty state handling
+//
+// Uses GridProvider for accessing the color grid items.
 class ReorderableColorGridView extends StatefulWidget {
   
-  /// Callback when items are reordered
+  // Callback when items are reordered
   final Function(int oldIndex, int newIndex) onReorder;
   
-  /// Callback when an item is tapped
+  // Callback when an item is tapped
   final Function(ColorGridItem) onItemTap;
   
-  /// Callback when an item is long pressed
+  // Callback when an item is long pressed
   final Function(ColorGridItem) onItemLongPress;
   
-  /// Callback when an item should be deleted
+  // Callback when an item should be deleted
   final Function(ColorGridItem) onItemDelete;
   
-  /// Callback when add button is pressed
+  // Callback when add button is pressed
   final VoidCallback onAddColor;
   
-  /// Callback when drag starts (for showing delete zone)
+  // Callback when drag starts (for showing delete zone)
   final Function(ColorGridItem)? onDragStarted;
   
-  /// Callback when drag ends (for hiding delete zone)
-  /// Returns true if item was deleted, false otherwise
+  // Callback when drag ends (for hiding delete zone)
+  // Returns true if item was deleted, false otherwise
   final bool Function()? onDragEnded;
   
-  /// Number of columns in the grid
+  // Number of columns in the grid
   final int crossAxisCount;
   
-  /// Spacing between grid items
+  // Spacing between grid items
   final double spacing;
   
-  /// Size of each color item
+  // Size of each color item
   final double itemSize;
   
-  /// Whether to show the add button
+  // Whether to show the add button
   final bool showAddButton;
   
-  /// Empty state message
+  // Empty state message
   final String emptyStateMessage;
 
-  /// Optional color filter for display (e.g., ICC profile filtering)
-  /// Takes the grid item and returns the display color
+  // Optional color filter for display (e.g., ICC profile filtering)
+  // Takes the grid item and returns the display color
   final Color Function(ColorGridItem)? colorFilter;
 
   const ReorderableColorGridView({
@@ -92,7 +92,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
     return _buildGridView(items);
   }
   
-  /// Build the main grid view with drag-and-drop support
+  // Build the main grid view with drag-and-drop support
   Widget _buildGridView(List<ColorGridItem> items) {
     return Padding(
       padding: const EdgeInsets.all(8),
@@ -154,7 +154,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
     );
   }
   
-  /// Build a single color item
+  // Build a single color item
   Widget _buildColorItem(ColorGridItem item) {
     return ColorItemWidget(
       key: ValueKey(item.id),
@@ -171,7 +171,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
     );
   }
   
-  /// Build the add button
+  // Build the add button
   Widget _buildAddButton() {
     return GestureDetector(
       key: const ValueKey('add_button'),
@@ -195,7 +195,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
     );
   }
   
-  /// Build empty state when no colors are present
+  // Build empty state when no colors are present
   Widget _buildEmptyState() {
     return Container(
       padding: const EdgeInsets.all(32),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Test to verify color selection logic
+// Test to verify color selection logic
 void main() {
   group('Color Selection Logic Tests', () {
     late List<MockColorItem> items;
@@ -171,7 +171,7 @@ void main() {
   });
 }
 
-/// Mock color item for testing
+// Mock color item for testing
 class MockColorItem {
   final String id;
   final Color color;

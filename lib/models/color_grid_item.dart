@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
 import '../utils/color_operations.dart';
 
-/// Represents a single color item in a grid
+// Represents a single color item in a grid
 class ColorGridItem {
-  /// Unique identifier for this color item
+  // Unique identifier for this color item
   final String id;
   
-  /// The actual color value
+  // The actual color value
   final Color color;
   
-  /// Optional name/label for the color
+  // Optional name/label for the color
   final String? name;
   
-  /// When this color was created
+  // When this color was created
   final DateTime createdAt;
   
-  /// When this color was last modified
+  // When this color was last modified
   final DateTime lastModified;
   
-  /// Whether this color is currently selected
+  // Whether this color is currently selected
   final bool isSelected;
 
-  /// OKLCH values for this color (source of truth)
+  // OKLCH values for this color (source of truth)
   final OklchValues oklchValues;
 
   const ColorGridItem({
@@ -34,7 +34,7 @@ class ColorGridItem {
     required this.oklchValues,
   });
   
-  /// Create a copy of this item with updated values
+  // Create a copy of this item with updated values
   ColorGridItem copyWith({
     String? id,
     Color? color,
@@ -55,7 +55,7 @@ class ColorGridItem {
     );
   }
   
-  /// Create a new color item from a Color
+  // Create a new color item from a Color
   factory ColorGridItem.fromColor(Color color, {String? name}) {
     final now = DateTime.now();
     // Convert color to OKLCH immediately - OKLCH is the source of truth
@@ -70,7 +70,7 @@ class ColorGridItem {
     );
   }
 
-  /// Create a new color item from OKLCH values (preferred method)
+  // Create a new color item from OKLCH values (preferred method)
   factory ColorGridItem.fromOklch({
     required double lightness,
     required double chroma,
@@ -97,7 +97,7 @@ class ColorGridItem {
     );
   }
 
-  /// Helper: Convert Color to OklchValues
+  // Helper: Convert Color to OklchValues
   static OklchValues _colorToOklchValues(Color color) {
     final oklch = srgbToOklch(color);
     return OklchValues(
@@ -108,7 +108,7 @@ class ColorGridItem {
     );
   }
 
-  /// Helper: Convert OklchValues to Color
+  // Helper: Convert OklchValues to Color
   static Color _oklchValuesToColor(OklchValues oklch) {
     return colorFromOklch(
       oklch.lightness,
@@ -118,10 +118,10 @@ class ColorGridItem {
     );
   }
   
-  /// Counter for generating unique IDs
+  // Counter for generating unique IDs
   static int _idCounter = 0;
   
-  /// Generate a unique ID for the color item
+  // Generate a unique ID for the color item
   static String _generateId() {
     _idCounter++;
     final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -144,7 +144,7 @@ class ColorGridItem {
   }
 }
 
-/// OKLCH values for a color
+// OKLCH values for a color
 class OklchValues {
   final double lightness;
   final double chroma;

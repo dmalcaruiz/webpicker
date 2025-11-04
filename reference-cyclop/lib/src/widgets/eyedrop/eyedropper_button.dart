@@ -8,19 +8,19 @@ import 'eye_dropper_layer.dart';
 const _decoration =
     BoxDecoration(color: Colors.white24, shape: BoxShape.circle);
 
-/// an eyeDropper standalone button
-/// should be used with a context [EyeDrop] available
+// an eyeDropper standalone button
+// should be used with a context [EyeDrop] available
 class EyedropperButton extends StatelessWidget {
-  /// customisable icon ( default : [Icons.colorize] )
+  // customisable icon ( default : [Icons.colorize] )
   final IconData icon;
 
-  /// icon color, default : [Colors.blueGrey]
+  // icon color, default : [Colors.blueGrey]
   final Color iconColor;
 
-  /// color selection callback
+  // color selection callback
   final ValueChanged<Color> onColor;
 
-  /// hover, and the color changed callback
+  // hover, and the color changed callback
   final ValueChanged<Color>? onColorChanged;
 
   const EyedropperButton({

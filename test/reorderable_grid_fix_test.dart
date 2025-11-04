@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Test to verify the fixed reordering logic for ReorderableGridView
+// Test to verify the fixed reordering logic for ReorderableGridView
 void main() {
   group('Fixed ReorderableGridView Behavior', () {
     test('Forward drag without adjustment - CORRECT behavior', () {

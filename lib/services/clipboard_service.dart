@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Service for handling color clipboard operations
+// Service for handling color clipboard operations
 class ClipboardService {
-  /// Copy a color to the clipboard as hex string
+  // Copy a color to the clipboard as hex string
   static Future<void> copyColorToClipboard(Color color) async {
     final hexString = '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
     debugPrint('ClipboardService: Copying "$hexString" to clipboard');
@@ -11,7 +11,7 @@ class ClipboardService {
     debugPrint('ClipboardService: Copy complete');
   }
   
-  /// Get color from clipboard if valid hex string exists
+  // Get color from clipboard if valid hex string exists
   static Future<Color?> getColorFromClipboard() async {
     try {
       final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
@@ -24,13 +24,13 @@ class ClipboardService {
     return null;
   }
   
-  /// Check if clipboard contains a valid color
+  // Check if clipboard contains a valid color
   static Future<bool> hasColorInClipboard() async {
     final color = await getColorFromClipboard();
     return color != null;
   }
   
-  /// Parse hex color string to Color object
+  // Parse hex color string to Color object
   static Color? parseHexColor(String hexString) {
     try {
       // Remove any whitespace
@@ -75,7 +75,7 @@ class ClipboardService {
     }
   }
   
-  /// Convert Color to hex string
+  // Convert Color to hex string
   static String colorToHex(Color color, {bool includeAlpha = false}) {
     if (includeAlpha) {
       return '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';

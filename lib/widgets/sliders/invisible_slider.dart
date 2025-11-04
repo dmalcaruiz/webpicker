@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../utils/global_pointer_tracker.dart';
 
-/// Invisible slider that handles touch interactions but doesn't render a visible thumb
+// Invisible slider that handles touch interactions but doesn't render a visible thumb
 class InvisibleSlider extends StatefulWidget {
   final double value;
   final double min;
@@ -114,7 +114,7 @@ class _InvisibleSliderState extends State<InvisibleSlider> {
   }
 }
 
-/// External thumb that positions itself based on slider value
+// External thumb that positions itself based on slider value
 class ExternalThumb extends StatelessWidget {
   final double value;
   final double min;
@@ -160,7 +160,7 @@ class ExternalThumb extends StatelessWidget {
   }
 }
 
-/// Custom painter for the diamond thumb
+// Custom painter for the diamond thumb
 class DiamondThumbPainter extends CustomPainter {
   final Color color;
   final bool showCheckerboard;
@@ -245,7 +245,7 @@ class DiamondThumbPainter extends CustomPainter {
   }
 }
 
-/// Combined widget that uses invisible slider + external thumb
+// Combined widget that uses invisible slider + external thumb
 class InvisibleSliderWithExternalThumb extends StatefulWidget {
   final double value;
   final double min;

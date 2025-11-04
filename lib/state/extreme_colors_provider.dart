@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import '../models/extreme_color_item.dart';
 
-/// Provider for mixer extreme colors (left and right)
-///
-/// Manages the two extreme colors used for color mixing/interpolation.
-/// These colors behave like grid boxes (can be selected and edited),
-/// but with fixed IDs ('left' and 'right').
+// Provider for mixer extreme colors (left and right)
+//
+// Manages the two extreme colors used for color mixing/interpolation.
+// These colors behave like grid boxes (can be selected and edited),
+// but with fixed IDs ('left' and 'right').
 class ExtremeColorsProvider extends ChangeNotifier {
   late ExtremeColorItem _leftExtreme;
   late ExtremeColorItem _rightExtreme;
   String? _selectedExtremeId;
 
-  /// Initialize with default extreme colors
+  // Initialize with default extreme colors
   ExtremeColorsProvider() {
     // Default left extreme: Warm color
     _leftExtreme = ExtremeColorItem.fromOklch(
@@ -38,13 +38,13 @@ class ExtremeColorsProvider extends ChangeNotifier {
   String? get selectedExtremeId => _selectedExtremeId;
   bool get hasSelection => _selectedExtremeId != null;
 
-  /// Get currently selected extreme (if any)
+  // Get currently selected extreme (if any)
   ExtremeColorItem? get selectedExtreme {
     if (_selectedExtremeId == null) return null;
     return _selectedExtremeId == 'left' ? _leftExtreme : _rightExtreme;
   }
 
-  /// Select a specific extreme ('left' or 'right')
+  // Select a specific extreme ('left' or 'right')
   void selectExtreme(String extremeId) {
     if (extremeId != 'left' && extremeId != 'right') {
       throw ArgumentError('extremeId must be "left" or "right"');
@@ -56,7 +56,7 @@ class ExtremeColorsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Deselect both extremes
+  // Deselect both extremes
   void deselectAll() {
     if (_selectedExtremeId != null) {
       _selectedExtremeId = null;
@@ -66,7 +66,7 @@ class ExtremeColorsProvider extends ChangeNotifier {
     }
   }
 
-  /// Update OKLCH values of the left extreme
+  // Update OKLCH values of the left extreme
   void updateLeftOklch({
     required double lightness,
     required double chroma,
@@ -84,7 +84,7 @@ class ExtremeColorsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Update OKLCH values of the right extreme
+  // Update OKLCH values of the right extreme
   void updateRightOklch({
     required double lightness,
     required double chroma,
@@ -102,7 +102,7 @@ class ExtremeColorsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Update the extreme that matches the given ID
+  // Update the extreme that matches the given ID
   void updateExtremeOklch({
     required String extremeId,
     required double lightness,
@@ -127,7 +127,7 @@ class ExtremeColorsProvider extends ChangeNotifier {
     }
   }
 
-  /// Sync from snapshot (for undo/redo)
+  // Sync from snapshot (for undo/redo)
   void syncFromSnapshot({
     required ExtremeColorItem leftExtreme,
     required ExtremeColorItem rightExtreme,
@@ -153,7 +153,7 @@ class ExtremeColorsProvider extends ChangeNotifier {
     }
   }
 
-  /// Set both extremes at once (useful for bulk updates)
+  // Set both extremes at once (useful for bulk updates)
   void setExtremes({
     required ExtremeColorItem leftExtreme,
     required ExtremeColorItem rightExtreme,

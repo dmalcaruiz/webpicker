@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import '../../models/extreme_color_item.dart';
 
-/// A circular widget displaying a mixer extreme color
-///
-/// Behaves like a grid box but circular:
-/// - Tap to select (shows in sliders)
-/// - Visual feedback for selection state
-/// - Integrates with global copy/paste
+// A circular widget displaying a mixer extreme color
+//
+// Behaves like a grid box but circular:
+// - Tap to select (shows in sliders)
+// - Visual feedback for selection state
+// - Integrates with global copy/paste
 class ExtremeColorCircle extends StatelessWidget {
-  /// The extreme color item to display
+  // The extreme color item to display
   final ExtremeColorItem extreme;
 
-  /// Callback when this circle is tapped
+  // Callback when this circle is tapped
   final VoidCallback? onTap;
 
-  /// Size of the circle
+  // Size of the circle
   final double size;
 
-  /// Optional color filter for ICC profile display
+  // Optional color filter for ICC profile display
   final Color Function(ExtremeColorItem)? colorFilter;
 
   final Color? bgColor;

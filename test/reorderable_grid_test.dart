@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-/// Test to verify reordering logic
+// Test to verify reordering logic
 void main() {
   group('ReorderableGridView Index Tests', () {
     test('Forward drag - item should move to correct position', () {

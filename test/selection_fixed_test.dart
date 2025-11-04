@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Test to verify that selection logic is now fixed
+// Test to verify that selection logic is now fixed
 void main() {
   group('Fixed Selection Logic', () {
     test('✓ Selection preserved when updating color', () {

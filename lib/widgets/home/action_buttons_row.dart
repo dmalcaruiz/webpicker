@@ -1,39 +1,39 @@
 import 'package:flutter/material.dart';
 import '../common/global_action_buttons.dart';
 import '../common/undo_redo_buttons.dart';
-import '../../services/undo_redo_manager.dart';
+import '../../services/undo_redo_service.dart';
 import '../../models/extreme_color_item.dart';
 
-/// Row containing global copy, paste and undo/redo controls
+// Row containing global copy, paste and undo/redo controls
 class ActionButtonsRow extends StatelessWidget {
-  /// Current color for copy/paste operations
+  // Current color for copy/paste operations
   final Color? currentColor;
 
-  /// Selected extreme ID ('left', 'right', or null)
+  // Selected extreme ID ('left', 'right', or null)
   final String? selectedExtremeId;
 
-  /// Left extreme
+  // Left extreme
   final ExtremeColorItem leftExtreme;
 
-  /// Right extreme
+  // Right extreme
   final ExtremeColorItem rightExtreme;
 
-  /// Callback when a color is selected via eyedropper or paste
+  // Callback when a color is selected via eyedropper or paste
   final Function(Color) onColorSelected;
 
-  /// Undo/redo manager instance
-  final UndoRedoManager undoRedoManager;
+  // Undo/redo manager instance
+  final UndoRedoService undoRedoManager;
 
-  /// Callback for undo action
+  // Callback for undo action
   final VoidCallback onUndo;
 
-  /// Callback for redo action
+  // Callback for redo action
   final VoidCallback onRedo;
 
-  /// Callback for generate colors action
+  // Callback for generate colors action
   final VoidCallback? onGenerateColors;
 
-  /// Optional color filter to apply before copying (e.g., ICC profile filter)
+  // Optional color filter to apply before copying (e.g., ICC profile filter)
   final Color Function(Color)? colorFilter;
 
   final Color? bgColor;

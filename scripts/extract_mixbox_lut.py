@@ -121,12 +121,12 @@ def convert_to_dart():
 //  License: Creative Commons Attribution-NonCommercial 4.0
 // ==========================================================
 
-/// Mixbox Lookup Table (LUT) Data
-///
-/// This is a 64×64×64 lookup table that maps RGB colors to a
-/// 7-dimensional latent space representing pigment mixing behavior.
-///
-/// Size: 786,432 bytes (64 * 64 * 64 * 3)
+// Mixbox Lookup Table (LUT) Data
+//
+// This is a 64×64×64 lookup table that maps RGB colors to a
+// 7-dimensional latent space representing pigment mixing behavior.
+//
+// Size: 786,432 bytes (64 * 64 * 64 * 3)
 const List<int> mixboxLutData = [
 """
 

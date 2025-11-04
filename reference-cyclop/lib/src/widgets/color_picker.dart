@@ -16,34 +16,34 @@ const pickerHeight = 520.0;
 
 const pickerSize = Size(pickerWidth, pickerHeight);
 
-/// ColorPicker Widget
-/// 2 or 3 tabs :
-/// - material swatches
-/// - HSL and RGB sliders
-/// - custom swatches
-///
-/// Customisable with a [ColorPickerConfig]
+// ColorPicker Widget
+// 2 or 3 tabs :
+// - material swatches
+// - HSL and RGB sliders
+// - custom swatches
+//
+// Customisable with a [ColorPickerConfig]
 class ColorPicker extends StatefulWidget {
   final Color selectedColor;
 
-  /// custom swatches library
+  // custom swatches library
   final Set<Color> swatches;
 
   final bool darkMode;
 
-  /// colorPicker configuration
+  // colorPicker configuration
   final ColorPickerConfig config;
 
-  /// color selection callback
+  // color selection callback
   final ValueChanged<Color> onColorSelected;
 
-  /// open [EyeDrop] callback
+  // open [EyeDrop] callback
   final VoidCallback? onEyeDropper;
 
-  /// custom swatches update callabck
+  // custom swatches update callabck
   final ValueChanged<Set<Color>>? onSwatchesUpdate;
 
-  /// close colorPicker callback
+  // close colorPicker callback
   final VoidCallback onClose;
 
   final VoidCallback? onKeyboard;

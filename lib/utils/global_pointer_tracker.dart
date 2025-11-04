@@ -5,10 +5,10 @@ typedef PointerMoveCallback = void Function(PointerMoveEvent event);
 typedef PointerUpCallback = void Function(PointerUpEvent event);
 typedef PointerCancelCallback = void Function(PointerCancelEvent event);
 
-/// Global pointer tracker that captures pointer events once a slider is activated.
-/// This allows tracking finger movement even when it leaves the slider bounds.
-///
-/// Only one pointer can be tracked at a time (single-registration model).
+// Global pointer tracker that captures pointer events once a slider is activated.
+// This allows tracking finger movement even when it leaves the slider bounds.
+//
+// Only one pointer can be tracked at a time (single-registration model).
 class GlobalPointerTracker extends InheritedWidget {
   final GlobalPointerTrackerState state;
 
@@ -34,13 +34,13 @@ class GlobalPointerTrackerState {
   PointerCancelCallback? _onPointerCancel;
   int? _activePointerId;
 
-  /// Register a slider to receive global pointer events.
-  ///
-  /// Only ONE slider can be tracked at a time. New registrations
-  /// will replace any previous registration.
-  ///
-  /// Asserts in debug mode if attempting to register a different pointer
-  /// while another is already being tracked.
+  // Register a slider to receive global pointer events.
+  //
+  // Only ONE slider can be tracked at a time. New registrations
+  // will replace any previous registration.
+  //
+  // Asserts in debug mode if attempting to register a different pointer
+  // while another is already being tracked.
   void registerSlider({
     required int pointerId,
     required PointerMoveCallback onMove,
@@ -63,7 +63,7 @@ class GlobalPointerTrackerState {
     }
   }
 
-  /// Unregister the active slider
+  // Unregister the active slider
   void unregisterSlider() {
     if (kDebugMode && _activePointerId != null) {
       debugPrint('🌍 Global tracker DEACTIVATED');
@@ -74,14 +74,14 @@ class GlobalPointerTrackerState {
     _onPointerCancel = null;
   }
 
-  /// Handle global pointer move events
+  // Handle global pointer move events
   void handlePointerMove(PointerMoveEvent event) {
     if (_activePointerId == event.pointer) {
       _onPointerMove?.call(event);
     }
   }
 
-  /// Handle global pointer up events
+  // Handle global pointer up events
   void handlePointerUp(PointerUpEvent event) {
     if (_activePointerId == event.pointer) {
       _onPointerUp?.call(event);
@@ -89,7 +89,7 @@ class GlobalPointerTrackerState {
     }
   }
 
-  /// Handle global pointer cancel events
+  // Handle global pointer cancel events
   void handlePointerCancel(PointerCancelEvent event) {
     if (_activePointerId == event.pointer) {
       _onPointerCancel?.call(event);
@@ -97,29 +97,29 @@ class GlobalPointerTrackerState {
     }
   }
 
-  /// Whether a pointer is currently being tracked
+  // Whether a pointer is currently being tracked
   bool get isTracking => _activePointerId != null;
 
-  /// The currently tracked pointer ID (null if not tracking)
+  // The currently tracked pointer ID (null if not tracking)
   int? get activePointerId => _activePointerId;
 }
 
-/// Provides global pointer tracking for the widget subtree.
-///
-/// This widget enables tracking pointer movement across the entire app,
-/// which is particularly useful for sliders that need to continue tracking
-/// finger movement even when the pointer moves outside the slider's bounds.
-///
-/// Example usage:
-/// ```dart
-/// final tracker = GlobalPointerTracker.of(context);
-/// tracker?.registerSlider(
-///   pointerId: event.pointer,
-///   onMove: (e) => handleMove(e),
-///   onUp: (e) => handleUp(e),
-///   onCancel: (e) => handleCancel(e),
-/// );
-/// ```
+// Provides global pointer tracking for the widget subtree.
+//
+// This widget enables tracking pointer movement across the entire app,
+// which is particularly useful for sliders that need to continue tracking
+// finger movement even when the pointer moves outside the slider's bounds.
+//
+// Example usage:
+// ```dart
+// final tracker = GlobalPointerTracker.of(context);
+// tracker?.registerSlider(
+//   pointerId: event.pointer,
+//   onMove: (e) => handleMove(e),
+//   onUp: (e) => handleUp(e),
+//   onCancel: (e) => handleCancel(e),
+// );
+// ```
 class GlobalPointerTrackerProvider extends StatefulWidget {
   final Widget child;
 

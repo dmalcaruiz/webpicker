@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// A simple widget that displays a color preview box with hex code
+// A simple widget that displays a color preview box with hex code
 class ColorPreviewBox extends StatelessWidget {
   final Color? color;
   final double height;

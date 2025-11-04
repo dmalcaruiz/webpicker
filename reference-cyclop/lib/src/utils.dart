@@ -11,16 +11,16 @@ extension Screen on MediaQueryData {
 }
 
 extension Chroma on String {
-  /// converts string to [Color]
-  /// fill incomplete values with 0
-  /// ex: 'ff00'.toColor() => Color(0xffff0000)
+  // converts string to [Color]
+  // fill incomplete values with 0
+  // ex: 'ff00'.toColor() => Color(0xffff0000)
   Color toColor({bool argb = false}) {
     final colorString = '0x${argb ? '' : 'ff'}$this'.padRight(10, '0');
     return Color(int.tryParse(colorString) ?? 0);
   }
 }
 
-/// shortcuts to manipulate [Color]
+// shortcuts to manipulate [Color]
 extension Utils on Color {
   HSLColor get hsl => HSLColor.fromColor(this);
 
@@ -32,10 +32,10 @@ extension Utils on Color {
 
   Color withHue(double value) => hsl.withHue(value).toColor();
 
-  /// ff001232
+  // ff001232
   String get hexARGB => value.toRadixString(16).padLeft(8, '0');
 
-  /// 001232ac
+  // 001232ac
   String get hexRGB =>
       value.toRadixString(16).padLeft(8, '0').replaceRange(0, 2, '');
 
@@ -44,8 +44,8 @@ extension Utils on Color {
 
   Color withLightness(double value) => hsl.withLightness(value).toColor();
 
-  /// generate the gradient of a color with
-  /// lightness from 0 to 1 in [stepCount] steps
+  // generate the gradient of a color with
+  // lightness from 0 to 1 in [stepCount] steps
   List<Color> getShades(int stepCount, {bool skipFirst = true}) =>
       List.generate(
         stepCount,
@@ -60,7 +60,7 @@ extension Utils on Color {
 }
 
 extension Helper on List<Color> {
-  /// return the central item of a color list or black if the list is empty
+  // return the central item of a color list or black if the list is empty
   Color get center => isEmpty ? Colors.black : this[length ~/ 2];
 }
 

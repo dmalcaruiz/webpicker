@@ -1,45 +1,45 @@
 import 'package:flutter/material.dart';
 import '../../models/color_grid_item.dart';
 
-/// Individual color item widget for the reorderable grid
-/// 
-/// Features:
-/// - Color preview with hex code
-/// - Drag handle for reordering
-/// - Selection state indication
-/// - Tap to select/edit
-/// - Long press for context menu
+// Individual color item widget for the reorderable grid
+// 
+// Features:
+// - Color preview with hex code
+// - Drag handle for reordering
+// - Selection state indication
+// - Tap to select/edit
+// - Long press for context menu
 class ColorItemWidget extends StatelessWidget {
-  /// The color grid item to display
+  // The color grid item to display
   final ColorGridItem item;
 
-  /// Optional display color (e.g., ICC filtered)
-  /// If provided, this is used instead of item.color for display only
+  // Optional display color (e.g., ICC filtered)
+  // If provided, this is used instead of item.color for display only
   final Color? displayColor;
 
-  /// Callback when this item is tapped
+  // Callback when this item is tapped
   final VoidCallback? onTap;
 
-  /// Callback when this item is long pressed
+  // Callback when this item is long pressed
   final VoidCallback? onLongPress;
 
-  /// Callback when this item should be deleted
+  // Callback when this item should be deleted
   final VoidCallback? onDelete;
 
-  /// Callback when drag to delete starts
+  // Callback when drag to delete starts
   final VoidCallback? onDragToDeleteStart;
 
-  /// Callback when drag to delete ends
-  /// Returns true if deleted, false otherwise
+  // Callback when drag to delete ends
+  // Returns true if deleted, false otherwise
   final bool Function()? onDragToDeleteEnd;
 
-  /// Whether this item is currently being dragged
+  // Whether this item is currently being dragged
   final bool isDragging;
 
-  /// Size of the color item
+  // Size of the color item
   final double size;
 
-  /// Whether to show the drag handle
+  // Whether to show the drag handle
   final bool showDragHandle;
 
   const ColorItemWidget({
@@ -136,19 +136,19 @@ class ColorItemWidget extends StatelessWidget {
     return colorWidget;
   }
   
-  /// Build the main color content area
+  // Build the main color content area
   Widget _buildColorContent() {
     // Just pure color - no text or labels
     return const SizedBox.expand();
   }
   
-  /// Build the drag handle
+  // Build the drag handle
   Widget _buildDragHandle() {
     // No visible drag handle - drag anywhere on the box
     return const SizedBox.shrink();
   }
   
-  /// Build the selection indicator
+  // Build the selection indicator
   Widget _buildSelectionIndicator() {
     // No visible selection indicator - selection shown via border in main container
     return const SizedBox.shrink();

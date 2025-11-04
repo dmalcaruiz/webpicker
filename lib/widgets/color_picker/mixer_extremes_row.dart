@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import '../../models/extreme_color_item.dart';
 import 'extreme_color_circle.dart';
 
-/// Container for the two mixer extreme circles
-///
-/// Displays left and right extreme circles below the mixer slider
-/// in a horizontal layout aligned with the slider endpoints.
+// Container for the two mixer extreme circles
+//
+// Displays left and right extreme circles below the mixer slider
+// in a horizontal layout aligned with the slider endpoints.
 class MixerExtremesRow extends StatelessWidget {
-  /// Left extreme color
+  // Left extreme color
   final ExtremeColorItem leftExtreme;
 
-  /// Right extreme color
+  // Right extreme color
   final ExtremeColorItem rightExtreme;
 
-  /// Callback when an extreme is tapped (receives extreme id: 'left' or 'right')
+  // Callback when an extreme is tapped (receives extreme id: 'left' or 'right')
   final Function(String extremeId) onExtremeTap;
 
-  /// Optional color filter for ICC profile display
+  // Optional color filter for ICC profile display
   final Color Function(ExtremeColorItem)? colorFilter;
 
   final Color? bgColor;

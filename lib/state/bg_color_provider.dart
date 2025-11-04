@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import '../models/color_grid_item.dart';
 import '../utils/color_operations.dart';
 
-/// Provider for background color state
-///
-/// Manages the background color and its OKLCH values, as well as
-/// its selection state. The background color serves as the canvas
-/// on which grid colors are displayed.
+// Provider for background color state
+//
+// Manages the background color and its OKLCH values, as well as
+// its selection state. The background color serves as the canvas
+// on which grid colors are displayed.
 class BgColorProvider extends ChangeNotifier {
-  Color _bgColor = const Color(0xFF252525);
-  double _lightness = 0.15;
-  double _chroma = 0.0;
+  Color _bgColor = const Color(0xFFFFFFFF);
+  double _lightness = 1.0;
+  double _chroma = 0.05;
   double _hue = 0.0;
   double _alpha = 1.0;
   bool _isSelected = false;
@@ -23,7 +23,7 @@ class BgColorProvider extends ChangeNotifier {
   double get alpha => _alpha;
   bool get isSelected => _isSelected;
 
-  /// Get current OKLCH as OklchValues object
+  // Get current OKLCH as OklchValues object
   OklchValues get oklchValues => OklchValues(
         lightness: _lightness,
         chroma: _chroma,
@@ -31,7 +31,7 @@ class BgColorProvider extends ChangeNotifier {
         alpha: _alpha,
       );
 
-  /// Update OKLCH values and derive the color
+  // Update OKLCH values and derive the color
   void updateOklch({
     required double lightness,
     required double chroma,
@@ -46,7 +46,7 @@ class BgColorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Set background color and derive OKLCH values
+  // Set background color and derive OKLCH values
   void setColor(Color color) {
     _bgColor = color;
     final oklch = srgbToOklch(color);
@@ -57,7 +57,7 @@ class BgColorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Set selection state
+  // Set selection state
   void setSelected(bool selected) {
     if (_isSelected != selected) {
       _isSelected = selected;
@@ -65,7 +65,7 @@ class BgColorProvider extends ChangeNotifier {
     }
   }
 
-  /// Set from OklchValues object
+  // Set from OklchValues object
   void setFromOklchValues(OklchValues values) {
     _lightness = values.lightness;
     _chroma = values.chroma;
@@ -75,7 +75,7 @@ class BgColorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sync from snapshot (for undo/redo) - optimized to avoid unnecessary rebuilds
+  // Sync from snapshot (for undo/redo) - optimized to avoid unnecessary rebuilds
   void syncFromSnapshot({
     Color? color,
     double? lightness,

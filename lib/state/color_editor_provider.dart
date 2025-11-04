@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import '../models/color_grid_item.dart';
 import '../utils/color_operations.dart';
 
-/// Provider for current OKLCH editing values
-///
-/// This provider holds the OKLCH values (Lightness, Chroma, Hue, Alpha)
-/// that are currently being edited in the color picker controls.
-/// It serves as the single source of truth for the current editing state.
+// Provider for current OKLCH editing values
+//
+// This provider holds the OKLCH values (Lightness, Chroma, Hue, Alpha)
+// that are currently being edited in the color picker controls.
+// It serves as the single source of truth for the current editing state.
 class ColorEditorProvider extends ChangeNotifier {
   double? _lightness;
   double? _chroma;
@@ -19,12 +19,12 @@ class ColorEditorProvider extends ChangeNotifier {
   double? get hue => _hue;
   double? get alpha => _alpha;
 
-  /// Returns true if OKLCH values are set
+  // Returns true if OKLCH values are set
   bool get hasValues => _lightness != null &&
                         _chroma != null &&
                         _hue != null;
 
-  /// Get the current color derived from OKLCH values
+  // Get the current color derived from OKLCH values
   Color? get currentColor {
     if (!hasValues) return null;
     return colorFromOklch(
@@ -35,7 +35,7 @@ class ColorEditorProvider extends ChangeNotifier {
     );
   }
 
-  /// Get current OKLCH as OklchValues object
+  // Get current OKLCH as OklchValues object
   OklchValues? get oklchValues {
     if (!hasValues) return null;
     return OklchValues(
@@ -46,7 +46,7 @@ class ColorEditorProvider extends ChangeNotifier {
     );
   }
 
-  /// Update OKLCH values
+  // Update OKLCH values
   void updateOklch({
     required double lightness,
     required double chroma,
@@ -60,7 +60,7 @@ class ColorEditorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Set values from OklchValues object
+  // Set values from OklchValues object
   void setFromOklchValues(OklchValues values) {
     _lightness = values.lightness;
     _chroma = values.chroma;
@@ -69,7 +69,7 @@ class ColorEditorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Clear all OKLCH values
+  // Clear all OKLCH values
   void clear() {
     _lightness = null;
     _chroma = null;
@@ -78,7 +78,7 @@ class ColorEditorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sync from snapshot (for undo/redo) - optimized to avoid unnecessary rebuilds
+  // Sync from snapshot (for undo/redo) - optimized to avoid unnecessary rebuilds
   void syncFromSnapshot({
     double? lightness,
     double? chroma,

@@ -7,22 +7,22 @@ import 'package:flutter/material.dart';
 
 import 'eye_dropper_layer.dart';
 
-/// an eyeDropper standalone button
-/// in browser the eyedrop feature is enabled only with canvasKit renderer
+// an eyeDropper standalone button
+// in browser the eyedrop feature is enabled only with canvasKit renderer
 class EyedropperButton extends StatelessWidget {
-  /// customisable icon ( default : [Icons.colorize] )
+  // customisable icon ( default : [Icons.colorize] )
   final IconData icon;
 
-  /// icon color, default : [Colors.blueGrey]
+  // icon color, default : [Colors.blueGrey]
   final Color iconColor;
 
-  /// color selection callback
+  // color selection callback
   final ValueChanged<Color> onColor;
 
-  /// hover, and the color changed callback
+  // hover, and the color changed callback
   final ValueChanged<Color>? onColorChanged;
 
-  /// verify if the button is in a CanvasKit context
+  // verify if the button is in a CanvasKit context
   bool get eyedropEnabled => js.context['flutterCanvasKit'] != null;
 
   const EyedropperButton({

@@ -4,23 +4,23 @@ import '../state/color_grid_provider.dart';
 import '../state/extreme_colors_provider.dart';
 import '../state/bg_color_provider.dart';
 import '../state/settings_provider.dart';
-import '../services/undo_redo_manager.dart';
+import '../services/undo_redo_service.dart';
 
-/// Coordinates state across all providers for undo/redo operations
-///
-/// This class acts as the single point of coordination for capturing and
-/// restoring state snapshots across all application providers. It ensures
-/// that undo/redo operations are atomic and consistent across the entire
-/// application state.
-class AppStateCoordinator {
+// Coordinates state across all providers for undo/redo operations
+//
+// This class acts as the single point of coordination for capturing and
+// restoring state snapshots across all application providers. It ensures
+// that undo/redo operations are atomic and consistent across the entire
+// application state.
+class StateHistoryCoordinator {
   final ColorEditorProvider colorEditor;
   final ColorGridProvider grid;
   final ExtremeColorsProvider extremes;
   final BgColorProvider bgColor;
   final SettingsProvider settings;
-  final UndoRedoManager undoRedo;
+  final UndoRedoService undoRedo;
 
-  AppStateCoordinator({
+  StateHistoryCoordinator({
     required this.colorEditor,
     required this.grid,
     required this.extremes,
@@ -29,7 +29,7 @@ class AppStateCoordinator {
     required this.undoRedo,
   });
 
-  /// Capture current state across all providers
+  // Capture current state across all providers
   AppStateSnapshot captureSnapshot(String description) {
     return AppStateSnapshot(
       // Grid state
@@ -58,10 +58,10 @@ class AppStateCoordinator {
     );
   }
 
-  /// Restore state to all providers from a snapshot
-  ///
-  /// This method updates all providers in a coordinated manner to ensure
-  /// the entire application state is consistent with the snapshot.
+  // Restore state to all providers from a snapshot
+  //
+  // This method updates all providers in a coordinated manner to ensure
+  // the entire application state is consistent with the snapshot.
   void restoreSnapshot(AppStateSnapshot snapshot) {
     // 1. Restore grid provider
     grid.syncFromSnapshot(snapshot.gridItems);
@@ -103,18 +103,18 @@ class AppStateCoordinator {
     );
   }
 
-  /// Save current state to undo history
-  ///
-  /// Captures a snapshot of the current state across all providers
-  /// and pushes it to the undo stack.
+  // Save current state to undo history
+  //
+  // Captures a snapshot of the current state across all providers
+  // and pushes it to the undo stack.
   void saveState(String description) {
     final snapshot = captureSnapshot(description);
     undoRedo.pushState(snapshot);
   }
 
-  /// Undo the last action
-  ///
-  /// Returns true if undo was successful, false if no undo is available.
+  // Undo the last action
+  //
+  // Returns true if undo was successful, false if no undo is available.
   bool undo() {
     if (!undoRedo.canUndo) return false;
 
@@ -126,9 +126,9 @@ class AppStateCoordinator {
     return false;
   }
 
-  /// Redo the last undone action
-  ///
-  /// Returns true if redo was successful, false if no redo is available.
+  // Redo the last undone action
+  //
+  // Returns true if redo was successful, false if no redo is available.
   bool redo() {
     if (!undoRedo.canRedo) return false;
 
@@ -140,22 +140,22 @@ class AppStateCoordinator {
     return false;
   }
 
-  /// Check if undo is available
+  // Check if undo is available
   bool get canUndo => undoRedo.canUndo;
 
-  /// Check if redo is available
+  // Check if redo is available
   bool get canRedo => undoRedo.canRedo;
 
-  /// Get preview of what would be undone
+  // Get preview of what would be undone
   String? get undoPreview => undoRedo.getUndoPreview();
 
-  /// Get preview of what would be redone
+  // Get preview of what would be redone
   String? get redoPreview => undoRedo.getRedoPreview();
 
-  /// Get current state description
+  // Get current state description
   String? get currentActionDescription => undoRedo.lastActionDescription;
 
-  /// Clear all undo/redo history
+  // Clear all undo/redo history
   void clearHistory() {
     undoRedo.clear();
   }

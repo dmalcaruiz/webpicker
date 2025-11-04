@@ -1,15 +1,15 @@
 import 'dart:typed_data';
 import 'package:icc_parser/icc_parser.dart';
 
-/// Singleton manager for ICC profile color transformations
-///
-/// Provides real-time display filtering to show how colors appear
-/// when printed on Canon ImagePROGRAPH PRO-1000.
-///
-/// Architecture: Surface-level filter
-/// - State stores IDEAL colors (full sRGB space)
-/// - Transform happens only at display time
-/// - Graceful fallback if profile fails to load
+// Singleton manager for ICC profile color transformations
+//
+// Provides real-time display filtering to show how colors appear
+// when printed on Canon ImagePROGRAPH PRO-1000.
+//
+// Architecture: Surface-level filter
+// - State stores IDEAL colors (full sRGB space)
+// - Transform happens only at display time
+// - Graceful fallback if profile fails to load
 class IccColorManager {
   // ==================== Singleton Pattern ====================
 
@@ -33,10 +33,10 @@ class IccColorManager {
 
   // ==================== Initialization ====================
 
-  /// Initialize ICC profile from bytes
-  ///
-  /// Returns true if successful, false otherwise.
-  /// App continues normally even if this fails.
+  // Initialize ICC profile from bytes
+  //
+  // Returns true if successful, false otherwise.
+  // App continues normally even if this fails.
   Future<bool> initialize(Uint8List profileBytes) async {
     try {
       // Parse ICC profile using icc_parser package
@@ -89,16 +89,16 @@ class IccColorManager {
 
   // ==================== Core Transformation API ====================
 
-  /// Transform single Lab color to ICC gamut-mapped Lab
-  ///
-  /// This is the DISPLAY FILTER - it doesn't modify state!
-  ///
-  /// Performs a round-trip transform:
-  /// Lab → CMYK (via printer profile) → Lab (back to display)
-  ///
-  /// Returns:
-  /// - Gamut-mapped Lab values if initialized
-  /// - Original values if not initialized (graceful fallback)
+  // Transform single Lab color to ICC gamut-mapped Lab
+  //
+  // This is the DISPLAY FILTER - it doesn't modify state!
+  //
+  // Performs a round-trip transform:
+  // Lab → CMYK (via printer profile) → Lab (back to display)
+  //
+  // Returns:
+  // - Gamut-mapped Lab values if initialized
+  // - Original values if not initialized (graceful fallback)
   List<double> transformLab(double L, double a, double b) {
     if (!_isInitialized ||
         _forwardCmm == null ||
@@ -141,10 +141,10 @@ class IccColorManager {
     }
   }
 
-  /// Batch transform multiple Lab colors (optimized for gradients)
-  ///
-  /// Used for rendering slider gradients efficiently.
-  /// Transforms 300 colors for each gradient in real-time.
+  // Batch transform multiple Lab colors (optimized for gradients)
+  //
+  // Used for rendering slider gradients efficiently.
+  // Transforms 300 colors for each gradient in real-time.
   List<List<double>> transformLabBatch(List<List<double>> colors) {
     if (!_isInitialized ||
         _forwardCmm == null ||
@@ -185,10 +185,10 @@ class IccColorManager {
 
   // ==================== Status & Info ====================
 
-  /// Check if manager is ready for transformations
+  // Check if manager is ready for transformations
   bool get isReady => _isInitialized;
 
-  /// Get profile info for debugging
+  // Get profile info for debugging
   Map<String, dynamic> getProfileInfo() {
     if (!_isInitialized || _profile == null) {
       return {
@@ -204,7 +204,7 @@ class IccColorManager {
     };
   }
 
-  /// Clean up resources
+  // Clean up resources
   void dispose() {
     _profile = null;
     _forwardCmm = null;

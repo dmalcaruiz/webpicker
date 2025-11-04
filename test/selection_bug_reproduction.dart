@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Test to reproduce the actual selection bugs in the app
+// Test to reproduce the actual selection bugs in the app
 void main() {
   group('Selection Bug Reproduction', () {
     test('BUG: Selection lost when color is updated', () {

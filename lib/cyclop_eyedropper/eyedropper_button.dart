@@ -4,28 +4,28 @@ import 'package:flutter/material.dart';
 
 import 'eye_dropper_layer.dart';
 
-/// an eyeDropper standalone button
-/// should be used with a context [EyeDrop] available
+// an eyeDropper standalone button
+// should be used with a context [EyeDrop] available
 class EyedropperButton extends StatelessWidget {
-  /// customisable icon ( default : [Icons.colorize] )
+  // customisable icon ( default : [Icons.colorize] )
   final IconData icon;
 
-  /// icon color, default : [Colors.blueGrey]
+  // icon color, default : [Colors.blueGrey]
   final Color iconColor;
 
-  /// color selection callback
+  // color selection callback
   final ValueChanged<Color> onColor;
 
-  /// hover, and the color changed callback
+  // hover, and the color changed callback
   final ValueChanged<Color>? onColorChanged;
 
-  /// Background color of the button
+  // Background color of the button
   final Color? backgroundColor;
 
-  /// Border color of the button
+  // Border color of the button
   final Color? borderColor;
 
-  /// Foreground color (for icon and text if any) of the button
+  // Foreground color (for icon and text if any) of the button
   final Color? foregroundColor;
 
   const EyedropperButton({
