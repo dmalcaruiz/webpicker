@@ -1,6 +1,6 @@
+// ignore_for_file: unused_field
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/rendering.dart';
 // import 'package:provider/provider.dart';
 import '../../services/clipboard_service.dart';
 import '../../cyclop_eyedropper/eye_dropper_layer.dart';

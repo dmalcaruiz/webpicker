@@ -1,3 +1,5 @@
+// ignore_for_file: unused_field, unused_local_variable
+
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';

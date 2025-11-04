@@ -1,10 +1,12 @@
 import 'dart:io';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:icc_parser/icc_parser.dart';
 
 // Test ICC profile transformations
 void main() async {
-  print('=== Testing Canon PRO-1000 ICC Profile ===\n');
+  if (kDebugMode) {
+    print('=== Testing Canon PRO-1000 ICC Profile ===\n');
+  }
 
   try {
     // Load the ICC profile
@@ -17,8 +19,12 @@ void main() async {
     );
 
     final profile = ColorProfile.fromBytes(stream);
-    print('✓ Profile loaded successfully');
-    print('  Size: ${bytes.lengthInBytes} bytes\n');
+    if (kDebugMode) {
+      print('✓ Profile loaded successfully');
+    }
+    if (kDebugMode) {
+      print('  Size: ${bytes.lengthInBytes} bytes\n');
+    }
 
     // Create forward transform (Lab → CMYK)
     final forwardTransform = ColorProfileTransform.create(
@@ -40,7 +46,9 @@ void main() async {
       useD2BTags: true,
     );
 
-    print('✓ Transforms created\n');
+    if (kDebugMode) {
+      print('✓ Transforms created\n');
+    }
 
     // Create CMMs
     final forwardCmm = ColorProfileCmm();
@@ -49,10 +57,14 @@ void main() async {
     final forward = forwardCmm.buildTransformations([forwardTransform]);
     final reverse = reverseCmm.buildTransformations([reverseTransform]);
 
-    print('✓ CMMs built\n');
+    if (kDebugMode) {
+      print('✓ CMMs built\n');
+    }
 
     // Test with some CIE Lab values
-    print('Testing Lab → CMYK → Lab round-trip:\n');
+    if (kDebugMode) {
+      print('Testing Lab → CMYK → Lab round-trip:\n');
+    }
 
     final testColors = [
       {'name': 'Vivid Blue', 'L': 50.0, 'a': 20.0, 'b': -80.0},
@@ -82,14 +94,24 @@ void main() async {
       // Lab → CMYK
       final cmykOutput = forwardCmm.apply(forward, labInput);
 
-      print('$name:');
-      print('  Input Lab:  L=${L.toStringAsFixed(2)}, a=${a.toStringAsFixed(2)}, b=${b.toStringAsFixed(2)}');
-      print('  Normalized: L=${normalizedL.toStringAsFixed(3)}, a=${normalizedA.toStringAsFixed(3)}, b=${normalizedB.toStringAsFixed(3)}');
+      if (kDebugMode) {
+        print('$name:');
+      }
+      if (kDebugMode) {
+        print('  Input Lab:  L=${L.toStringAsFixed(2)}, a=${a.toStringAsFixed(2)}, b=${b.toStringAsFixed(2)}');
+      }
+      if (kDebugMode) {
+        print('  Normalized: L=${normalizedL.toStringAsFixed(3)}, a=${normalizedA.toStringAsFixed(3)}, b=${normalizedB.toStringAsFixed(3)}');
+      }
 
       // Check if we got the expected number of channels
       if (cmykOutput.length < 3) {
-        print('  ❌ ERROR: Forward transform returned ${cmykOutput.length} values, expected at least 3');
-        print('');
+        if (kDebugMode) {
+          print('  ❌ ERROR: Forward transform returned ${cmykOutput.length} values, expected at least 3');
+        }
+        if (kDebugMode) {
+          print('');
+        }
         continue;
       }
 
@@ -101,26 +123,44 @@ void main() async {
       final outputA = labOutputNormalized[1] * 255.0 - 128.0;
       final outputB = labOutputNormalized[2] * 255.0 - 128.0;
 
-      print('  Output Lab: L=${outputL.toStringAsFixed(2)}, a=${outputA.toStringAsFixed(2)}, b=${outputB.toStringAsFixed(2)}');
+      if (kDebugMode) {
+        print('  Output Lab: L=${outputL.toStringAsFixed(2)}, a=${outputA.toStringAsFixed(2)}, b=${outputB.toStringAsFixed(2)}');
+      }
 
       // Check if output is pure black (L=0)
       if (outputL < 1.0 && L > 10.0) {
-        print('  ❌ ERROR: Output is pure black! This is wrong!');
+        if (kDebugMode) {
+          print('  ❌ ERROR: Output is pure black! This is wrong!');
+        }
       } else if ((outputL - L).abs() > 20.0) {
-        print('  ⚠️  WARNING: Large lightness shift: ${(outputL - L).toStringAsFixed(2)}');
+        if (kDebugMode) {
+          print('  ⚠️  WARNING: Large lightness shift: ${(outputL - L).toStringAsFixed(2)}');
+        }
       } else {
-        print('  ✓ Reasonable output');
+        if (kDebugMode) {
+          print('  ✓ Reasonable output');
+        }
         final deltaL = (outputL - L).abs();
         final deltaA = (outputA - a).abs();
         final deltaB = (outputB - b).abs();
-        print('  Delta: ΔL=${deltaL.toStringAsFixed(2)}, Δa=${deltaA.toStringAsFixed(2)}, Δb=${deltaB.toStringAsFixed(2)}');
+        if (kDebugMode) {
+          print('  Delta: ΔL=${deltaL.toStringAsFixed(2)}, Δa=${deltaA.toStringAsFixed(2)}, Δb=${deltaB.toStringAsFixed(2)}');
+        }
       }
-      print('');
+      if (kDebugMode) {
+        print('');
+      }
     }
 
   } catch (e, stack) {
-    print('❌ Error: $e');
-    print('Stack trace:');
-    print(stack);
+    if (kDebugMode) {
+      print('❌ Error: $e');
+    }
+    if (kDebugMode) {
+      print('Stack trace:');
+    }
+    if (kDebugMode) {
+      print(stack);
+    }
   }
 }
