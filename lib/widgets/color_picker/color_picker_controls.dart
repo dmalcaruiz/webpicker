@@ -7,7 +7,7 @@ import '../../state/color_editor_provider.dart';
 import '../../state/settings_provider.dart';
 import '../../services/clipboard_service.dart';
 import 'oklch_gradient_slider.dart';
-import '../sliders/mixer_slider.dart' show MixedChannelSlider;
+import 'mixer_slider.dart' show MixedChannelSlider;
 
 // A widget containing all the color picker slider controls
 //

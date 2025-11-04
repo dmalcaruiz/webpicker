@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../../utils/color_operations.dart';
 import '../../utils/ui_color_utils.dart'; // Import the new utility file
-import '../common/gradient_painter.dart';
-import '../common/plus_minus_adjuster_buttons.dart';
-import '../sliders/invisible_slider.dart';
+import 'gradient_painter.dart';
+import 'plus_minus_adjuster_buttons.dart';
+import 'invisible_slider.dart';
 
 // OKLCH gradient slider widget with live color gradient background
 // 

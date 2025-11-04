@@ -4,7 +4,7 @@ import '../../models/extreme_color_item.dart';
 import '../../utils/color_operations.dart';
 import '../../utils/mixbox.dart';
 import '../../utils/ui_color_utils.dart'; // Import the new utility file
-import '../color_picker/mixer_extremes_row.dart';
+import 'mixer_extremes_row.dart';
 import 'invisible_slider.dart';
 
 // Mixed channel slider widget with extreme circle controls
