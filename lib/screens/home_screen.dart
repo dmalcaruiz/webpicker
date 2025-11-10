@@ -831,7 +831,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                         alpha: item.oklchValues.alpha,
                                       ),
                                     ),
-                                    SizedBox(height: _currentSheetHeight),
                                   ],
                                 );
                               },

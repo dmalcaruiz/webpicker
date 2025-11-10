@@ -209,7 +209,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
         final boxWidth = (availableWidth - (widget.crossAxisCount - 1) * widget.spacing) / widget.crossAxisCount;
 
         // Use provided availableHeight if given, otherwise use constraints
-        final heightForCalculation = widget.availableHeight ?? constraints.maxHeight - 16;
+        final heightForCalculation = (widget.availableHeight ?? constraints.maxHeight) - 16;
 
         final aspectRatio = _calculateAspectRatio(
           boxWidth: boxWidth,
