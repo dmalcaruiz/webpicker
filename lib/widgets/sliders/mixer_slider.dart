@@ -106,6 +106,7 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
           // Left extreme circle
           ExtremeColorCircle(
             extreme: widget.leftExtreme,
+            size: 50.0,
             onTap: () => widget.onExtremeTap(widget.leftExtreme.id),
             colorFilter: widget.extremeColorFilter,
             bgColor: widget.bgColor,
@@ -166,6 +167,7 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
           // Right extreme circle
           ExtremeColorCircle(
             extreme: widget.rightExtreme,
+            size: 50.0,
             onTap: () => widget.onExtremeTap(widget.rightExtreme.id),
             colorFilter: widget.extremeColorFilter,
             bgColor: widget.bgColor,
