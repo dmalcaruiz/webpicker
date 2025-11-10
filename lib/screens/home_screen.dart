@@ -813,32 +813,44 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Expanded(
                           child: SingleChildScrollView(
-                            child: Column(
-                              children: [
-                                const SizedBox(height: HomeAppBar.height),
-                                ReorderableColorGridView(
-                                  onReorder: _handleGridReorder,
-                                  onItemTap: _handleGridItemTap,
-                                  onItemLongPress: _handleGridItemLongPress,
-                                  onItemDelete: _handleGridItemDelete,
-                                  onAddColor: _handleAddColor,
-                                  onDragStarted: _dragDropController.onDragStarted,
-                                  onDragEnded: _dragDropController.onDragEnded,
-                                  crossAxisCount: 4,
-                                  spacing: 12.0,
-                                  itemSize: 80.0,
-                                  showAddButton: true,
-                                  emptyStateMessage: 'No colors in grid\nCreate a color above and tap + to add it',
-                                  colorFilter: (item) => _applyIccFilter(
-                                    item.color,
-                                    lightness: item.oklchValues.lightness,
-                                    chroma: item.oklchValues.chroma,
-                                    hue: item.oklchValues.hue,
-                                    alpha: item.oklchValues.alpha,
-                                  ),
-                                ),
-                                SizedBox(height: _currentSheetHeight),
-                              ],
+                            child: Builder(
+                              builder: (context) {
+                                // Calculate available height for fillContainer mode
+                                // = screen height - header - bottom sheet - bottom bar
+                                final screenHeight = MediaQuery.of(context).size.height;
+                                final availableHeight = screenHeight - HomeAppBar.height - _currentSheetHeight - 80;
+
+                                return Column(
+                                  children: [
+                                    const SizedBox(height: HomeAppBar.height),
+                                    ReorderableColorGridView(
+                                      onReorder: _handleGridReorder,
+                                      onItemTap: _handleGridItemTap,
+                                      onItemLongPress: _handleGridItemLongPress,
+                                      onItemDelete: _handleGridItemDelete,
+                                      onAddColor: _handleAddColor,
+                                      onDragStarted: _dragDropController.onDragStarted,
+                                      onDragEnded: _dragDropController.onDragEnded,
+                                      crossAxisCount: 4,
+                                      spacing: 12.0,
+                                      itemSize: 80.0,
+                                      showAddButton: true,
+                                      emptyStateMessage: 'No colors in grid\nCreate a color above and tap + to add it',
+                                      layoutMode: settingsProvider.gridLayoutMode,
+                                      heightMode: settingsProvider.boxHeightMode,
+                                      availableHeight: availableHeight,
+                                      colorFilter: (item) => _applyIccFilter(
+                                        item.color,
+                                        lightness: item.oklchValues.lightness,
+                                        chroma: item.oklchValues.chroma,
+                                        hue: item.oklchValues.hue,
+                                        alpha: item.oklchValues.alpha,
+                                      ),
+                                    ),
+                                    SizedBox(height: _currentSheetHeight),
+                                  ],
+                                );
+                              },
                             ),
                           ),
                         ),

@@ -1,5 +1,19 @@
 import 'package:flutter/material.dart';
 
+// Grid layout modes
+enum GridLayoutMode {
+  responsive,  // Fixed 4 columns, boxes resize to fill width
+  fixedSize,   // Dynamic columns based on 80px target size
+  horizontal,  // 1 column, boxes fill full width
+}
+
+// Box height modes
+enum BoxHeightMode {
+  proportional,  // Height matches width (1:1 aspect ratio - square boxes)
+  fillContainer, // Height fills available container space based on number of rows
+  fixed,         // Fixed height, doesn't change with width
+}
+
 // Provider for application settings
 //
 // Manages application-wide settings such as ICC profile filtering
@@ -8,11 +22,18 @@ class SettingsProvider extends ChangeNotifier {
   bool _useRealPigmentsOnly = false;
   bool _autoCopyEnabled = true;
   bool _usePigmentMixing = false;
+  GridLayoutMode _gridLayoutMode = GridLayoutMode.responsive;
+  BoxHeightMode _boxHeightMode = BoxHeightMode.proportional;
 
   // Getters
   bool get useRealPigmentsOnly => _useRealPigmentsOnly;
   bool get autoCopyEnabled => _autoCopyEnabled;
   bool get usePigmentMixing => _usePigmentMixing;
+  GridLayoutMode get gridLayoutMode => _gridLayoutMode;
+  BoxHeightMode get boxHeightMode => _boxHeightMode;
+
+  // Backward compatibility getter
+  bool get useFixedBoxSizes => _gridLayoutMode == GridLayoutMode.fixedSize;
 
   // Enable or disable real pigments only filter (ICC profile filtering)
   void setRealPigmentsOnly(bool value) {
@@ -56,5 +77,42 @@ class SettingsProvider extends ChangeNotifier {
   void toggleUsePigmentMixing() {
     _usePigmentMixing = !_usePigmentMixing;
     notifyListeners();
+  }
+
+  // Set grid layout mode
+  void setGridLayoutMode(GridLayoutMode mode) {
+    if (_gridLayoutMode != mode) {
+      _gridLayoutMode = mode;
+      notifyListeners();
+    }
+  }
+
+  // Backward compatibility - convert bool to enum
+  void setUseFixedBoxSizes(bool value) {
+    setGridLayoutMode(value ? GridLayoutMode.fixedSize : GridLayoutMode.responsive);
+  }
+
+  // Cycle through grid layout modes
+  void cycleGridLayoutMode() {
+    switch (_gridLayoutMode) {
+      case GridLayoutMode.responsive:
+        _gridLayoutMode = GridLayoutMode.fixedSize;
+        break;
+      case GridLayoutMode.fixedSize:
+        _gridLayoutMode = GridLayoutMode.horizontal;
+        break;
+      case GridLayoutMode.horizontal:
+        _gridLayoutMode = GridLayoutMode.responsive;
+        break;
+    }
+    notifyListeners();
+  }
+
+  // Set box height mode
+  void setBoxHeightMode(BoxHeightMode mode) {
+    if (_boxHeightMode != mode) {
+      _boxHeightMode = mode;
+      notifyListeners();
+    }
   }
 }
