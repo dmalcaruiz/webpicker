@@ -749,13 +749,13 @@ class _HomeScreenState extends State<HomeScreen> {
               // Bottom sheet snap positions (height in pixels from bottom)
               snappingPositions: const [
                 SnappingPosition.pixels(
-                  positionPixels: 17,
+                  positionPixels: 26,
                   snappingCurve: Curves.easeOutExpo,
                   snappingDuration: Duration(milliseconds: 900),
                   grabbingContentOffset: GrabbingContentOffset.top,
                 ),
                 SnappingPosition.pixels(
-                  positionPixels: 405,
+                  positionPixels: 412,
                   snappingCurve: Curves.easeOutExpo,
                   snappingDuration: Duration(milliseconds: 900),
                 ),

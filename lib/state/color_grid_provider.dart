@@ -81,6 +81,17 @@ class ColorGridProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Toggle lock state of an item
+  void toggleLock(String itemId) {
+    _items = _items.map((item) {
+      if (item.id == itemId) {
+        return item.copyWith(isLocked: !item.isLocked);
+      }
+      return item;
+    }).toList();
+    notifyListeners();
+  }
+
   // Update the OKLCH values of a specific item
   void updateItemOklch({
     required String itemId,
@@ -148,6 +159,11 @@ class ColorGridProvider extends ChangeNotifier {
   void randomizeAllColors() {
     final random = Random();
     _items = _items.map((item) {
+      // Skip locked items
+      if (item.isLocked) {
+        return item;
+      }
+
       // Generate random OKLCH values
       // Lightness: 0.3 to 0.9 (avoid very dark and very light colors)
       final lightness = 0.3 + random.nextDouble() * 0.6;
@@ -165,10 +181,11 @@ class ColorGridProvider extends ChangeNotifier {
         name: item.name, // Preserve name
       );
 
-      // Preserve selection state and ID
+      // Preserve selection state, lock state, and ID
       return newItem.copyWith(
         id: item.id, // Keep the same ID
         isSelected: item.isSelected, // Keep selection state
+        isLocked: item.isLocked, // Keep lock state
       );
     }).toList();
 

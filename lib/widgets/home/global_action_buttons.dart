@@ -50,9 +50,12 @@ class GlobalActionButtons extends StatefulWidget {
 class _GlobalActionButtonsState extends State<GlobalActionButtons> {
   // Color currently in clipboard
   Color? _clipboardColor;
-  
+
   // Whether we're checking clipboard
   bool _isCheckingClipboard = false;
+
+  // Whether eyedropper is active
+  bool _isPickerActive = false;
   
   @override
   void initState() {
@@ -120,6 +123,10 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
 
   // New method for eyedropper logic
   Future<void> _handleEyedropper(Color color) async {
+    setState(() {
+      _isPickerActive = false;
+    });
+
     widget.onColorSelected(color);
 
     if (mounted) {
@@ -135,12 +142,23 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
   }
 
   void _startEyedropper() {
+    setState(() {
+      _isPickerActive = true;
+    });
+
     try {
       Future.delayed(
         const Duration(milliseconds: 50),
-        () => EyeDrop.of(context).capture(context, _handleEyedropper, null),
+        () {
+          if (mounted) {
+            EyeDrop.of(context).capture(context, _handleEyedropper, null);
+          }
+        },
       );
     } catch (err) {
+      setState(() {
+        _isPickerActive = false;
+      });
       debugPrint('EyeDrop capture error: $err');
       // Optionally show a SnackBar or other feedback if eyedropper fails to start
     }
@@ -157,7 +175,7 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
     // final pastePreviewColor = context.watch<ColorEditorProvider>().currentColor;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(0, 12, 0, 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -211,13 +229,13 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
                 color: widget.bgColor ?? Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: getTextColor(widget.bgColor ?? Colors.white).withOpacity(0.3),
-                  width: 2,
+                  color: getTextColor(widget.bgColor ?? Colors.white).withOpacity(_isPickerActive ? 0.9 : 0.3),
+                  width: _isPickerActive ? 3 : 2,
                 ),
               ),
               child: Icon(
                 Icons.colorize,
-                color: getTextColor(widget.bgColor ?? Colors.white).withOpacity(0.7),
+                color: getTextColor(widget.bgColor ?? Colors.white).withOpacity(_isPickerActive ? 0.9 : 0.7),
                 size: 24,
               ),
             ),

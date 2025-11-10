@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/color_grid_item.dart';
+import '../../utils/ui_color_utils.dart';
 
 // Individual color item widget for the reorderable grid
 // 
@@ -26,6 +28,9 @@ class ColorItemWidget extends StatelessWidget {
   // Callback when this item should be deleted
   final VoidCallback? onDelete;
 
+  // Callback when lock icon is tapped
+  final VoidCallback? onToggleLock;
+
   // Callback when drag to delete starts
   final VoidCallback? onDragToDeleteStart;
 
@@ -42,13 +47,14 @@ class ColorItemWidget extends StatelessWidget {
   // Whether to show the drag handle
   final bool showDragHandle;
 
-  const ColorItemWidget({
+  ColorItemWidget({
     super.key,
     required this.item,
     this.displayColor,
     this.onTap,
     this.onLongPress,
     this.onDelete,
+    this.onToggleLock,
     this.onDragToDeleteStart,
     this.onDragToDeleteEnd,
     this.isDragging = false,
@@ -91,12 +97,15 @@ class ColorItemWidget extends StatelessWidget {
             children: [
               // Main color content
               _buildColorContent(),
-              
+
               // Drag handle
               if (showDragHandle) _buildDragHandle(),
-              
+
               // Selection indicator
               if (item.isSelected) _buildSelectionIndicator(),
+
+              // Lock icon (always visible)
+              _buildLockIcon(),
             ],
           ),
         ),
@@ -152,5 +161,32 @@ class ColorItemWidget extends StatelessWidget {
   Widget _buildSelectionIndicator() {
     // No visible selection indicator - selection shown via border in main container
     return const SizedBox.shrink();
+  }
+
+  // Build the lock icon overlay
+  Widget _buildLockIcon() {
+    // Use the same color determination method as action buttons
+    final bgColor = displayColor ?? item.color;
+    final iconColor = getTextColor(bgColor);
+
+    return Positioned(
+      bottom: 18,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: GestureDetector(
+          onTap: onToggleLock,
+          child: SvgPicture.asset(
+            item.isLocked ? 'assets/icons/locked.svg' : 'assets/icons/unlocked.svg',
+            width: 26,
+            height: 18,
+            colorFilter: ColorFilter.mode(
+              iconColor.withValues(alpha: item.isLocked ? 0.5 : 0.2),
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

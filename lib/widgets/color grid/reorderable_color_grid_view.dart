@@ -317,6 +317,8 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
 
   // Build a single color item
   Widget _buildColorItem(ColorGridItem item) {
+    final gridProvider = context.read<ColorGridProvider>();
+
     return ColorItemWidget(
       key: ValueKey(item.id),
       item: item,
@@ -325,6 +327,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
       onTap: () => widget.onItemTap(item),
       onLongPress: () => widget.onItemLongPress(item),
       onDelete: () => widget.onItemDelete(item),
+      onToggleLock: () => gridProvider.toggleLock(item.id),
       onDragToDeleteStart: widget.onDragStarted != null
           ? () => widget.onDragStarted!(item)
           : null,

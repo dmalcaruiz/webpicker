@@ -21,6 +21,9 @@ class ColorGridItem {
   // Whether this color is currently selected
   final bool isSelected;
 
+  // Whether this color is locked (prevents randomization)
+  final bool isLocked;
+
   // OKLCH values for this color (source of truth)
   final OklchValues oklchValues;
 
@@ -31,6 +34,7 @@ class ColorGridItem {
     required this.createdAt,
     required this.lastModified,
     this.isSelected = false,
+    this.isLocked = false,
     required this.oklchValues,
   });
   
@@ -42,6 +46,7 @@ class ColorGridItem {
     DateTime? createdAt,
     DateTime? lastModified,
     bool? isSelected,
+    bool? isLocked,
     OklchValues? oklchValues,
   }) {
     return ColorGridItem(
@@ -51,6 +56,7 @@ class ColorGridItem {
       createdAt: createdAt ?? this.createdAt,
       lastModified: lastModified ?? this.lastModified,
       isSelected: isSelected ?? this.isSelected,
+      isLocked: isLocked ?? this.isLocked,
       oklchValues: oklchValues ?? this.oklchValues,
     );
   }
