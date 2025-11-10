@@ -34,17 +34,17 @@ migrate_working_dir/
 /coverage/
 
 # Flutter web build files (to prevent PATH conflicts)
-flutter.js
-flutter_bootstrap.js
-flutter_service_worker.js
-main.dart.js
-canvaskit/
-assets/
-icons/
-favicon.png
-manifest.json
-version.json
-.last_build_id
+/build/web/flutter.js
+/build/web/flutter_bootstrap.js
+/build/web/flutter_service_worker.js
+/build/web/main.dart.js
+/build/web/canvaskit/
+/build/web/assets/
+/build/web/icons/
+/build/web/favicon.png
+/build/web/manifest.json
+/build/web/version.json
+/build/web/.last_build_id
 
 # Symbolication related
 app.*.symbols
