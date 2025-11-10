@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'cyclop_eyedropper/eye_dropper_layer.dart';
 import 'screens/home_screen.dart';
@@ -11,6 +12,24 @@ import 'state/sheet_state_provider.dart';
 import 'utils/global_pointer_tracker.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Make navigation bar and status bar completely transparent
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
+
+  // Enable edge-to-edge mode
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.edgeToEdge,
+  );
+
   runApp(const MyApp());
 }
 
@@ -30,6 +49,9 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          fontFamily: 'Livvic',
+        ),
         home: GlobalPointerTrackerProvider(
           child: EyeDrop(child: const HomeScreen()),
         ),

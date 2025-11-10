@@ -192,7 +192,6 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
 
           // Generate button
           _buildActionButton(
-            icon: Icons.shuffle,
             label: 'Generate',
             onPressed: widget.onGenerateColors,
             tooltip: 'Randomize all colors',
@@ -202,13 +201,26 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
           const SizedBox(width: 12),
 
           // Eyedropper button
-          _buildActionButton(
-            icon: Icons.colorize,
-            label: 'Pick',
-            onPressed: _startEyedropper,
-            tooltip: 'Pick color from screen',
+          GestureDetector(
+            onTap: _startEyedropper,
             onPanStart: (details) => _startEyedropper(),
-            parentBgColor: widget.bgColor, // Pass bgColor
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: widget.bgColor ?? Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: getTextColor(widget.bgColor ?? Colors.white).withOpacity(0.3),
+                  width: 2,
+                ),
+              ),
+              child: Icon(
+                Icons.colorize,
+                color: getTextColor(widget.bgColor ?? Colors.white).withOpacity(0.7),
+                size: 24,
+              ),
+            ),
           ),
         ],
       ),
@@ -217,7 +229,7 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
   
   // Build a single action button with color preview
   Widget _buildActionButton({
-    required IconData icon,
+    IconData? icon,
     required String label,
     required VoidCallback? onPressed,
     Color? previewColor,
@@ -262,15 +274,16 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Icon
-              Icon(
-                icon,
-                color: textColor,
-                size: 18,
-              ),
-              
-              const SizedBox(width: 6),
-              
+              // Icon (only if provided)
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  color: textColor,
+                  size: 18,
+                ),
+                const SizedBox(width: 6),
+              ],
+
               // Label
               Text(
                 label,

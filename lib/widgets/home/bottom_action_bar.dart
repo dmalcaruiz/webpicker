@@ -54,6 +54,23 @@ class BottomActionBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
       child: Row(
         children: [
+          // Other action buttons
+          Expanded(
+            child: ActionButtonsRow(
+              currentColor: currentColor,
+              selectedExtremeId: selectedExtremeId,
+              leftExtreme: leftExtreme,
+              rightExtreme: rightExtreme,
+              onColorSelected: onColorSelected,
+              undoRedoManager: undoRedoManager,
+              onUndo: onUndo,
+              onRedo: onRedo,
+              onGenerateColors: onGenerateColors,
+              colorFilter: colorFilter,
+              bgColor: bgColor,
+            ),
+          ),
+
           // Background color button (acts like a grid box)
           GestureDetector(
             onTap: onBgColorBoxTap,
@@ -76,23 +93,6 @@ class BottomActionBar extends StatelessWidget {
                 color: getTextColor(bgColor).withOpacity(isBgColorSelected ? 0.9 : 0.7),
                 size: 24,
               ),
-            ),
-          ),
-
-          // Other action buttons
-          Expanded(
-            child: ActionButtonsRow(
-              currentColor: currentColor,
-              selectedExtremeId: selectedExtremeId,
-              leftExtreme: leftExtreme,
-              rightExtreme: rightExtreme,
-              onColorSelected: onColorSelected,
-              undoRedoManager: undoRedoManager,
-              onUndo: onUndo,
-              onRedo: onRedo,
-              onGenerateColors: onGenerateColors,
-              colorFilter: colorFilter,
-              bgColor: bgColor,
             ),
           ),
         ],
