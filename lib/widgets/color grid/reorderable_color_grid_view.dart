@@ -155,7 +155,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Calculate how many columns can fit based on itemSize
-        final availableWidth = constraints.maxWidth - 16;
+        final availableWidth = constraints.maxWidth;
         final columnWidth = widget.itemSize + widget.spacing;
         final calculatedColumns = (availableWidth / columnWidth).floor().clamp(1, 10);
         final boxWidth = (availableWidth - (calculatedColumns - 1) * widget.spacing) / calculatedColumns;
@@ -163,8 +163,8 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
         // Use provided availableHeight if given, otherwise use constraints
         // Note: Subtract 16 (8px top + 8px bottom padding) from provided height
         final heightForCalculation = widget.availableHeight != null
-            ? widget.availableHeight! - 16
-            : constraints.maxHeight - 16;
+            ? widget.availableHeight!
+            : constraints.maxHeight;
 
         final aspectRatio = _calculateAspectRatio(
           boxWidth: boxWidth,
@@ -205,11 +205,11 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
   Widget _buildResponsiveGrid(List<ColorGridItem> items) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final availableWidth = constraints.maxWidth - 16;
+        final availableWidth = constraints.maxWidth;
         final boxWidth = (availableWidth - (widget.crossAxisCount - 1) * widget.spacing) / widget.crossAxisCount;
 
-        // Use provided availableHeight if given, otherwise use constraints
-        final heightForCalculation = (widget.availableHeight ?? constraints.maxHeight) - 16;
+        // Use provided availableHeight directly when given, otherwise use constraints minus padding
+        final heightForCalculation = widget.availableHeight ?? (constraints.maxHeight);
 
         final aspectRatio = _calculateAspectRatio(
           boxWidth: boxWidth,
@@ -250,10 +250,10 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
   Widget _buildHorizontalGrid(List<ColorGridItem> items) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final boxWidth = constraints.maxWidth - 16;
+        final boxWidth = constraints.maxWidth;
 
         // Use provided availableHeight if given, otherwise use constraints
-        final heightForCalculation = widget.availableHeight ?? constraints.maxHeight - 16;
+        final heightForCalculation = widget.availableHeight ?? constraints.maxHeight;
 
         final aspectRatio = _calculateAspectRatio(
           boxWidth: boxWidth,

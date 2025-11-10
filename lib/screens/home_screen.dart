@@ -803,6 +803,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 // = screen height - header - bottom sheet - bottom bar
                                 final screenHeight = MediaQuery.of(context).size.height;
                                 final availableHeight = screenHeight - HomeAppBar.height - _currentSheetHeight - 80;
+                                debugPrint('DEBUG: screenHeight=$screenHeight, _currentSheetHeight=$_currentSheetHeight, availableHeight=$availableHeight');
 
                                 return Column(
                                   children: [
