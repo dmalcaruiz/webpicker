@@ -311,7 +311,7 @@ class _InvisibleSliderWithExternalThumbState extends State<InvisibleSliderWithEx
                 trackHeight: widget.trackHeight,
                 hitAreaExtension: widget.hitAreaExtension,
               ),
-              
+
               // Thumb positioned on top
               ExternalThumb(
                 value: widget.value,

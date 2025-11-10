@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:snapping_sheet_2/snapping_sheet.dart';
-import '../widgets/sliders/color_picker_controls.dart';
+import '../widgets/sliders/perceptual_slider_controls.dart';
+import '../widgets/sliders/digital_color_controls.dart';
 import '../widgets/color grid/reorderable_color_grid_view.dart';
 import '../widgets/home/sheet_grabbing_handle.dart';
 import '../widgets/home/home_app_bar.dart';
 import '../widgets/home/delete_zone_overlay.dart';
-import '../widgets/home/real_pigments_toggle.dart';
 import '../widgets/home/bottom_action_bar.dart';
 import '../widgets/home/undo_redo_buttons.dart';
 import '../models/color_grid_item.dart';
+import '../models/extreme_color_item.dart';
 import '../services/undo_redo_service.dart';
 import '../services/clipboard_service.dart';
 import '../coordinators/state_history_coordinator.dart';
@@ -20,6 +21,7 @@ import '../state/color_grid_provider.dart';
 import '../state/extreme_colors_provider.dart';
 import '../state/bg_color_provider.dart';
 import '../state/settings_provider.dart';
+import '../state/sheet_state_provider.dart';
 import '../services/icc_color_service.dart';
 import '../utils/color_operations.dart';
 import '../cyclop_eyedropper/eye_dropper_layer.dart';
@@ -79,7 +81,6 @@ class _HomeScreenState extends State<HomeScreen> {
   double _currentSheetHeight = 0.0;
   final ScrollController scrollController = ScrollController();
   bool _isInteractingWithSlider = false;
-  final List<bool> _selectedChips = [false, true, false, false];
 
   // ================================================
   // ========== Lifecycle & Initialization ==========
@@ -614,12 +615,105 @@ class _HomeScreenState extends State<HomeScreen> {
   // - Uses ListenableBuilder for drag-drop controller updates
   // - UndoRedoShortcuts wrapper handles keyboard shortcuts
 
+  // Builds sheet content based on selected chip
+  Widget _buildSheetContent(
+    int chipIndex,
+    Color bgColor,
+    ExtremeColorItem leftExtreme,
+    ExtremeColorItem rightExtreme,
+    bool useRealPigmentsOnly,
+  ) {
+    switch (chipIndex) {
+      case 0: // My Picks
+        return Center(
+          child: Text(
+            'My Picks Content',
+            style: TextStyle(
+              color: bgColor.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+              fontSize: 24,
+            ),
+          ),
+        );
+
+      case 1: // Perceptual (OKLCH sliders)
+        return PerceptualSliderControls(
+          onOklchChanged: _handleOklchChanged,
+          leftExtreme: leftExtreme,
+          rightExtreme: rightExtreme,
+          extremeColorFilter: (extreme) => _applyIccFilter(
+            extreme.color,
+            lightness: extreme.oklchValues.lightness,
+            chroma: extreme.oklchValues.chroma,
+            hue: extreme.oklchValues.hue,
+            alpha: extreme.oklchValues.alpha,
+          ),
+          gradientColorFilter: (color, l, c, h, a) => _applyIccFilter(
+            color,
+            lightness: l,
+            chroma: c,
+            hue: h,
+            alpha: a,
+          ),
+          onExtremeTap: _handleExtremeTap,
+          onMixerSliderTouched: _handleMixerSliderTouched,
+          onSliderInteractionChanged: (interacting) =>
+              setState(() => _isInteractingWithSlider = interacting),
+          useRealPigmentsOnly: useRealPigmentsOnly,
+          bgColor: bgColor,
+          onPanStartExtreme: _startEyedropperForExtreme,
+        );
+
+      case 2: // Digital (HSB)
+        return DigitalColorControls(
+          onOklchChanged: _handleOklchChanged,
+          leftExtreme: leftExtreme,
+          rightExtreme: rightExtreme,
+          extremeColorFilter: (extreme) => _applyIccFilter(
+            extreme.color,
+            lightness: extreme.oklchValues.lightness,
+            chroma: extreme.oklchValues.chroma,
+            hue: extreme.oklchValues.hue,
+            alpha: extreme.oklchValues.alpha,
+          ),
+          gradientColorFilter: (color, l, c, h, a) => _applyIccFilter(
+            color,
+            lightness: l,
+            chroma: c,
+            hue: h,
+            alpha: a,
+          ),
+          onExtremeTap: _handleExtremeTap,
+          onMixerSliderTouched: _handleMixerSliderTouched,
+          onSliderInteractionChanged: (interacting) =>
+              setState(() => _isInteractingWithSlider = interacting),
+          useRealPigmentsOnly: useRealPigmentsOnly,
+          bgColor: bgColor,
+          onPanStartExtreme: _startEyedropperForExtreme,
+        );
+
+      case 3: // Add (CMYK/Additional)
+        return Center(
+          child: Text(
+            'Add Content',
+            style: TextStyle(
+              color: bgColor.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+              fontSize: 24,
+            ),
+          ),
+        );
+
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bgColorProvider = context.watch<BgColorProvider>();
     final extremesProvider = context.watch<ExtremeColorsProvider>();
     final settingsProvider = context.watch<SettingsProvider>();
     final colorEditor = context.watch<ColorEditorProvider>();
+    final sheetState = context.watch<SheetStateProvider>();
 
     final bgColor = bgColorProvider.color;
     final bgLightness = bgColorProvider.lightness;
@@ -684,8 +778,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
               grabbingHeight: 80,
               grabbing: SheetGrabbingHandle(
-                chipStates: _selectedChips,
-                onChipToggle: (index) => setState(() => _selectedChips[index] = !_selectedChips[index]),
                 bgColor: bgColor,
               ),
 
@@ -696,32 +788,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       child: Container(
                         color: bgColor,
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                        child: ColorPickerControls(
-                          onOklchChanged: _handleOklchChanged,
-                          leftExtreme: leftExtreme,
-                          rightExtreme: rightExtreme,
-                          extremeColorFilter: (extreme) => _applyIccFilter(
-                            extreme.color,
-                            lightness: extreme.oklchValues.lightness,
-                            chroma: extreme.oklchValues.chroma,
-                            hue: extreme.oklchValues.hue,
-                            alpha: extreme.oklchValues.alpha,
-                          ),
-                          gradientColorFilter: (color, l, c, h, a) => _applyIccFilter(
-                            color,
-                            lightness: l,
-                            chroma: c,
-                            hue: h,
-                            alpha: a,
-                          ),
-                          onExtremeTap: _handleExtremeTap,
-                          onMixerSliderTouched: _handleMixerSliderTouched,
-                          onSliderInteractionChanged: (interacting) =>
-                              setState(() => _isInteractingWithSlider = interacting),
-                          useRealPigmentsOnly: useRealPigmentsOnly,
-                          bgColor: bgColor,
-                          onPanStartExtreme: _startEyedropperForExtreme,
+                        child: _buildSheetContent(
+                          sheetState.selectedChipIndex,
+                          bgColor,
+                          leftExtreme,
+                          rightExtreme,
+                          useRealPigmentsOnly,
                         ),
                       ),
                     ),
@@ -743,12 +815,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: SingleChildScrollView(
                             child: Column(
                               children: [
-                                const SizedBox(height: 0),
-                                RealPigmentsToggle(
-                                  isEnabled: useRealPigmentsOnly,
-                                  onChanged: _handleRealPigmentsOnlyChanged,
-                                ),
-                                const SizedBox(height: 70),
+                                const SizedBox(height: HomeAppBar.height),
                                 ReorderableColorGridView(
                                   onReorder: _handleGridReorder,
                                   onItemTap: _handleGridItemTap,

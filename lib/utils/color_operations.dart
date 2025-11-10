@@ -932,3 +932,156 @@ Color lerpOklch(Color colorA, Color colorB, double t) {
   final interpolated = OklchColor(l, c, h, alpha);
   return oklchToSrgbWithGamut(interpolated);
 }
+
+// ============================================================
+// HSB/HSV COLOR OPERATIONS
+// ============================================================
+
+// Represents a color in HSB (Hue, Saturation, Brightness) space
+// Also known as HSV (Hue, Saturation, Value)
+class HsbColor {
+  final double h; // Hue: 0-360
+  final double s; // Saturation: 0-100
+  final double b; // Brightness: 0-100
+  final double alpha; // Alpha: 0-1
+
+  const HsbColor(this.h, this.s, this.b, [this.alpha = 1.0]);
+
+  @override
+  String toString() => 'hsb($h, $s, $b, $alpha)';
+}
+
+// Convert HSB to Flutter Color
+//
+// Parameters:
+// - h: Hue (0-360)
+// - s: Saturation (0-100)
+// - b: Brightness (0-100)
+// - alpha: Alpha (0-1)
+//
+// Returns Flutter Color in sRGB space
+Color colorFromHsb(double h, double s, double b, [double alpha = 1.0]) {
+  // Convert to Flutter's HSVColor (which uses 0-1 range for S and V)
+  final hsvColor = HSVColor.fromAHSV(
+    alpha,
+    h % 360, // Hue: 0-360
+    (s / 100).clamp(0.0, 1.0), // Saturation: 0-1
+    (b / 100).clamp(0.0, 1.0), // Value (Brightness): 0-1
+  );
+
+  return hsvColor.toColor();
+}
+
+// Convert Flutter Color to HSB
+//
+// Parameters:
+// - color: Flutter Color in sRGB space
+//
+// Returns HsbColor with values in standard ranges
+HsbColor srgbToHsb(Color color) {
+  final hsvColor = HSVColor.fromColor(color);
+
+  return HsbColor(
+    hsvColor.hue, // 0-360
+    hsvColor.saturation * 100, // 0-100
+    hsvColor.value * 100, // 0-100
+    color.alpha / 255, // 0-1
+  );
+}
+
+// Generate hue gradient for HSB slider
+//
+// Creates a rainbow gradient from red through all hues back to red
+// keeping saturation and brightness constant.
+//
+// Parameters:
+// - saturation: Current saturation value (0-100)
+// - brightness: Current brightness value (0-100)
+// - samples: Number of color samples (default 300)
+//
+// Returns list of gradient stops
+List<GradientStop> generateHueGradientHsb(
+  double saturation,
+  double brightness,
+  int samples,
+) {
+  final List<GradientStop> stops = [];
+
+  for (int i = 0; i < samples; i++) {
+    final double hue = (i / (samples - 1)) * 360; // 0 to 360
+    final color = colorFromHsb(hue, saturation, brightness);
+
+    // HSB is always in sRGB gamut, so no gamut mapping needed
+    stops.add(GradientStop(
+      requestedColor: color,
+      fallbackColor: color,
+      isInGamut: true,
+    ));
+  }
+
+  return stops;
+}
+
+// Generate saturation gradient for HSB slider
+//
+// Creates a gradient from gray (0% saturation) to full color (100% saturation)
+// keeping hue and brightness constant.
+//
+// Parameters:
+// - hue: Current hue value (0-360)
+// - brightness: Current brightness value (0-100)
+// - samples: Number of color samples (default 300)
+//
+// Returns list of gradient stops
+List<GradientStop> generateSaturationGradientHsb(
+  double hue,
+  double brightness,
+  int samples,
+) {
+  final List<GradientStop> stops = [];
+
+  for (int i = 0; i < samples; i++) {
+    final double saturation = (i / (samples - 1)) * 100; // 0 to 100
+    final color = colorFromHsb(hue, saturation, brightness);
+
+    stops.add(GradientStop(
+      requestedColor: color,
+      fallbackColor: color,
+      isInGamut: true,
+    ));
+  }
+
+  return stops;
+}
+
+// Generate brightness gradient for HSB slider
+//
+// Creates a gradient from black (0% brightness) to full brightness (100%)
+// keeping hue and saturation constant.
+//
+// Parameters:
+// - hue: Current hue value (0-360)
+// - saturation: Current saturation value (0-100)
+// - samples: Number of color samples (default 300)
+//
+// Returns list of gradient stops
+List<GradientStop> generateBrightnessGradientHsb(
+  double hue,
+  double saturation,
+  int samples,
+) {
+  final List<GradientStop> stops = [];
+
+  for (int i = 0; i < samples; i++) {
+    final double brightness = (i / (samples - 1)) * 100; // 0 to 100
+    final color = colorFromHsb(hue, saturation, brightness);
+
+    stops.add(GradientStop(
+      requestedColor: color,
+      fallbackColor: color,
+      isInGamut: true,
+    ));
+  }
+
+  return stops;
+}

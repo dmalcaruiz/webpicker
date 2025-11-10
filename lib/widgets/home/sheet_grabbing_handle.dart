@@ -1,25 +1,22 @@
 import 'package:flutter/material.dart';
-import '../../utils/ui_color_utils.dart'; // Import the new utility file
+import 'package:provider/provider.dart';
+import '../../utils/ui_color_utils.dart';
+import '../../state/sheet_state_provider.dart';
 
 // Sheet grabbing handle widget with pin functionality and chips
 class SheetGrabbingHandle extends StatelessWidget {
-  // States of the toggleable chips
-  final List<bool> chipStates;
-  
-  // Callback when a chip is toggled
-  final Function(int index) onChipToggle;
-
   final Color? bgColor;
-  
+
   const SheetGrabbingHandle({
     super.key,
-    required this.chipStates,
-    required this.onChipToggle,
     this.bgColor,
   });
   
   @override
   Widget build(BuildContext context) {
+    final sheetState = context.watch<SheetStateProvider>();
+    final chipStates = sheetState.chipStates;
+
     return Container(
       decoration: BoxDecoration(
         color: bgColor ?? Colors.white,
@@ -35,7 +32,7 @@ class SheetGrabbingHandle extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 12),
-          
+
           // Drag handle indicator
           Container(
             width: 40,
@@ -49,13 +46,13 @@ class SheetGrabbingHandle extends StatelessWidget {
           // Toggleable chips
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(chipStates.length, (index) {
+            children: List.generate(SheetStateProvider.chipLabels.length, (index) {
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: GestureDetector(
-                  onTap: () => onChipToggle(index),
+                  onTap: () => sheetState.selectChip(index),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), // Added padding
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: chipStates[index]
                           ? getTextColor(bgColor ?? Colors.white)
@@ -70,7 +67,7 @@ class SheetGrabbingHandle extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        chipStates[index] ? ['My Picks', 'CHL', 'HSB', 'CMYK'][index] : ['My Picks', 'CHL', 'HSB', 'CMYK'][index],
+                        SheetStateProvider.chipLabels[index],
                         style: TextStyle(
                           color: chipStates[index]
                               ? (getTextColor(bgColor ?? Colors.white) == Colors.black ? Colors.white : Colors.black)
@@ -85,7 +82,7 @@ class SheetGrabbingHandle extends StatelessWidget {
               );
             }),
           ),
-          
+
           const SizedBox(height: 12),
         ],
       ),

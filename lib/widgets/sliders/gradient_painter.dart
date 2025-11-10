@@ -103,23 +103,23 @@ class GradientPainter extends CustomPainter {
     }
     
     // Step 9: Draw edge indicators only on out-of-gamut regions
-    final edgeIndicatorPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.4)
-      ..style = PaintingStyle.fill;
-    
-    for (final region in outOfGamutRegions) {
-      // Top edge indicator (4px)
-      canvas.drawRect(
-        Rect.fromLTWH(region.left, 0, region.width, 4),
-        edgeIndicatorPaint,
-      );
-      
-      // Bottom edge indicator (4px)
-      canvas.drawRect(
-        Rect.fromLTWH(region.left, height - 4, region.width, 4),
-        edgeIndicatorPaint,
-      );
-    }
+    // final edgeIndicatorPaint = Paint()
+    //   ..color = Colors.black.withValues(alpha: 0.4)
+    //   ..style = PaintingStyle.fill;
+    //
+    // for (final region in outOfGamutRegions) {
+    //   // Top edge indicator (4px)
+    //   canvas.drawRect(
+    //     Rect.fromLTWH(region.left, 0, region.width, 4),
+    //     edgeIndicatorPaint,
+    //   );
+    //
+    //   // Bottom edge indicator (4px)
+    //   canvas.drawRect(
+    //     Rect.fromLTWH(region.left, height - 4, region.width, 4),
+    //     edgeIndicatorPaint,
+    //   );
+    // }
     
     // Step 10: Draw border around the gradient
     final borderPaint = Paint()

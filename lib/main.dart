@@ -7,6 +7,7 @@ import 'state/color_grid_provider.dart';
 import 'state/extreme_colors_provider.dart';
 import 'state/bg_color_provider.dart';
 import 'state/settings_provider.dart';
+import 'state/sheet_state_provider.dart';
 import 'utils/global_pointer_tracker.dart';
 
 void main() {
@@ -25,6 +26,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ExtremeColorsProvider()),
         ChangeNotifierProvider(create: (_) => BgColorProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => SheetStateProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

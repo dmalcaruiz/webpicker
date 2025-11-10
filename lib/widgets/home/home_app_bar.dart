@@ -4,6 +4,8 @@ import '../../utils/ui_color_utils.dart';
 
 // App bar for the home screen
 class HomeAppBar extends StatelessWidget {
+  static const double height = 76.0; // padding top (20) + IconButton (48) + padding bottom (8)
+
   final Color bgColor;
 
   const HomeAppBar({

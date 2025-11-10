@@ -3,8 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../models/extreme_color_item.dart';
 import '../../utils/color_operations.dart';
 import '../../utils/mixbox.dart';
-import '../../utils/ui_color_utils.dart'; // Import the new utility file
-import 'mixer_extremes_row.dart';
+import '../color grid/extreme_color_circle.dart';
 import 'invisible_slider.dart';
 
 // Mixed channel slider widget with extreme circle controls
@@ -101,81 +100,78 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 13.5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      child: Row(
         children: [
-          // Label and value
-          Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Left extreme circle
+          ExtremeColorCircle(
+            extreme: widget.leftExtreme,
+            onTap: () => widget.onExtremeTap(widget.leftExtreme.id),
+            colorFilter: widget.extremeColorFilter,
+            bgColor: widget.bgColor,
+            onPanStart: widget.onPanStartExtreme != null
+                ? (details) => widget.onPanStartExtreme!(widget.leftExtreme.id, details)
+                : null,
+          ),
+
+          const SizedBox(width: 4),
+
+          // Main content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Mixed Channel',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: getTextColor(widget.bgColor ?? Colors.black),
-                  ),
-                ),
-                Text(
-                  widget.value.toStringAsFixed(2),
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: getTextColor(widget.bgColor ?? Colors.black).withOpacity(0.7),
+                // Slider with gradient and external thumb
+                GestureDetector(
+                  // Add mobile web gesture detection
+                  onPanStart: kIsWeb ? (_) => widget.onInteractionChanged?.call(true) : null,
+                  onPanEnd: kIsWeb ? (_) => widget.onInteractionChanged?.call(false) : null,
+                  onPanCancel: kIsWeb ? () => widget.onInteractionChanged?.call(false) : null,
+                  child: InvisibleSliderWithExternalThumb(
+                    value: widget.value,
+                    min: 0.0,
+                    max: 1.0,
+                    onChanged: (value) {
+                      widget.onChanged(value.clamp(0.0, 1.0));
+                    },
+                    onChangeStart: () {
+                      widget.onSliderTouchStart();
+                      widget.onInteractionChanged?.call(true);
+                    },
+                    onChangeEnd: () {
+                      widget.onSliderTouchEnd();
+                      widget.onInteractionChanged?.call(false);
+                    },
+                    background: CustomPaint(
+                      painter: MixedChannelGradientPainter(
+                        gradientColors: _generateMixGradient(),
+                        borderRadius: 8.0,
+                        useRealPigmentsOnly: widget.useRealPigmentsOnly,
+                      ),
+                    ),
+                    thumbColor: _getCurrentThumbColor(),
+                    showCheckerboard: true,
+                    trackHeight: 50.0,
+                    hitAreaExtension: 13.5,
+                    thumbSize: 27.0,
+                    thumbOffset: 8.0,
                   ),
                 ),
               ],
-          ),
-          
-          
-          const SizedBox(height: 8),
-          
-          // Slider with gradient and external thumb
-          GestureDetector(
-            // Add mobile web gesture detection
-            onPanStart: kIsWeb ? (_) => widget.onInteractionChanged?.call(true) : null,
-            onPanEnd: kIsWeb ? (_) => widget.onInteractionChanged?.call(false) : null,
-            onPanCancel: kIsWeb ? () => widget.onInteractionChanged?.call(false) : null,
-            child: InvisibleSliderWithExternalThumb(
-              value: widget.value,
-              min: 0.0,
-              max: 1.0,
-              onChanged: (value) {
-                widget.onChanged(value.clamp(0.0, 1.0));
-              },
-              onChangeStart: () {
-                widget.onSliderTouchStart();
-                widget.onInteractionChanged?.call(true);
-              },
-              onChangeEnd: () {
-                widget.onSliderTouchEnd();
-                widget.onInteractionChanged?.call(false);
-              },
-              background: CustomPaint(
-                painter: MixedChannelGradientPainter(
-                  gradientColors: _generateMixGradient(),
-                  borderRadius: 8.0,
-                  useRealPigmentsOnly: widget.useRealPigmentsOnly,
-                ),
-              ),
-              thumbColor: _getCurrentThumbColor(),
-              showCheckerboard: true,
-              trackHeight: 50.0,
-              hitAreaExtension: 13.5,
-              thumbSize: 27.0,
-              thumbOffset: 8.0,
             ),
           ),
 
-          // Extreme circles below slider
-          MixerExtremesRow(
-            leftExtreme: widget.leftExtreme,
-            rightExtreme: widget.rightExtreme,
-            onExtremeTap: widget.onExtremeTap,
+          const SizedBox(width: 4),
+
+          // Right extreme circle
+          ExtremeColorCircle(
+            extreme: widget.rightExtreme,
+            onTap: () => widget.onExtremeTap(widget.rightExtreme.id),
             colorFilter: widget.extremeColorFilter,
-            bgColor: widget.bgColor, // Pass bgColor
-            onPanStart: widget.onPanStartExtreme, // Pass to MixerExtremesRow
+            bgColor: widget.bgColor,
+            onPanStart: widget.onPanStartExtreme != null
+                ? (details) => widget.onPanStartExtreme!(widget.rightExtreme.id, details)
+                : null,
           ),
         ],
       ),

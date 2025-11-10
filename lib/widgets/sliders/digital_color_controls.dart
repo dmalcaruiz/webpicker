@@ -5,16 +5,17 @@ import '../../utils/mixbox.dart';
 import '../../models/extreme_color_item.dart';
 import '../../state/color_editor_provider.dart';
 import '../../state/settings_provider.dart';
+import '../../state/sheet_state_provider.dart';
 import '../../services/clipboard_service.dart';
-import 'oklch_gradient_slider.dart';
+import 'hsb_gradient_slider.dart';
 import 'mixer_slider.dart' show MixedChannelSlider;
 
-// A widget containing all the color picker slider controls
+// A widget containing all the HSB (Hue, Saturation, Brightness) slider controls
 //
-// Reads OKLCH from ColorEditorProvider but uses callback for coordination.
-// HomeScreen handles updating Provider + selected items.
-class ColorPickerControls extends StatefulWidget {
-  // Callback when OKLCH values change (HomeScreen coordinates Provider updates)
+// Reads OKLCH from ColorEditorProvider, converts to HSB for display,
+// then converts back to OKLCH when values change.
+class DigitalColorControls extends StatefulWidget {
+  // Callback when HSB values change (converted to OKLCH for coordination)
   final Function({
     required double lightness,
     required double chroma,
@@ -47,7 +48,7 @@ class ColorPickerControls extends StatefulWidget {
 
   final Function(String extremeId, DragStartDetails details)? onPanStartExtreme;
 
-  const ColorPickerControls({
+  const DigitalColorControls({
     super.key,
     required this.onOklchChanged,
     this.onSliderInteractionChanged,
@@ -63,28 +64,27 @@ class ColorPickerControls extends StatefulWidget {
   });
 
   @override
-  State<ColorPickerControls> createState() => _ColorPickerControlsState();
+  State<DigitalColorControls> createState() => _DigitalColorControlsState();
 }
 
-class _ColorPickerControlsState extends State<ColorPickerControls> {
-  // OKLCH values
-  double lightness = 0.7;  // 0.0 to 1.0
-  double chroma = 0.15;    // 0.0 to 0.4 (0.37 is max for sRGB)
-  double hue = 240.0;      // 0 to 360 degrees
-  double mixValue = 0.0;   // 0.0 to 1.0 for mixed channel slider
+class _DigitalColorControlsState extends State<DigitalColorControls> {
+  // HSB values
+  double hue = 0.0;        // 0 to 360 degrees
+  double saturation = 50.0; // 0 to 100
+  double brightness = 70.0; // 0 to 100
 
-  // Slider interaction state
-  bool sliderIsActive = false;
-
-  // Flag to prevent feedback loop when we update the color internally
-  bool _isInternalUpdate = false;
+  // Mixer state is now managed by SheetStateProvider (shared between chips)
+  // Access via: context.read<SheetStateProvider>().mixValue
+  // Access via: context.read<SheetStateProvider>().sliderIsActive
 
   // Slider order (for reorderable list)
-  List<String> _sliderOrder = ['lightness', 'chroma', 'hue', 'mixer'];
+  List<String> _sliderOrder = ['hue', 'saturation', 'brightness', 'mixer'];
 
   // Converted color
   Color? currentColor;
-  String errorMessage = '';
+
+  // Flag to prevent feedback loop when we update the color internally
+  bool _isInternalUpdate = false;
 
   @override
   void initState() {
@@ -101,15 +101,20 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
 
     // Update local state if Provider has values and we're not the source of the change
     if (colorEditor.hasValues && !_isInternalUpdate) {
-      lightness = colorEditor.lightness!;
-      chroma = colorEditor.chroma!;
-      hue = colorEditor.hue!;
+      // Convert OKLCH to HSB
+      final oklchColor = colorFromOklch(
+        colorEditor.lightness!,
+        colorEditor.chroma!,
+        colorEditor.hue!,
+        1.0,
+      );
 
-      // Update display color
+      final hsbColor = srgbToHsb(oklchColor);
+      hue = hsbColor.h;
+      saturation = hsbColor.s;
+      brightness = hsbColor.b;
+
       currentColor = colorEditor.currentColor;
-
-      // Reset slider state when values change from Provider
-      sliderIsActive = false;
     }
 
     // Reset the flag
@@ -153,17 +158,18 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
         // Set flag to prevent feedback loop
         _isInternalUpdate = true;
 
-        // Get current global OKLCH color
-        final globalColor = colorFromOklch(lightness, chroma, hue);
-
         // Get pigment mixing setting from provider
         final settings = context.read<SettingsProvider>();
         final usePigmentMixing = settings.usePigmentMixing;
 
+        // Get mixer state from SheetStateProvider
+        final sheetState = context.read<SheetStateProvider>();
+        final mixValue = sheetState.mixValue;
+        final sliderIsActive = sheetState.sliderIsActive;
+
         // Calculate final values
         if (sliderIsActive) {
-          // Slider is controlling: interpolate between extremes
-
+          // Mixer slider is controlling: interpolate between extremes
           if (usePigmentMixing) {
             // Use Kubelka-Munk (Mixbox) for realistic pigment mixing
             final mixedColor = lerpMixbox(
@@ -172,47 +178,43 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
               mixValue,
             );
 
-            // Extract OKLCH values from the mixed color
-            final mixedOklch = srgbToOklch(mixedColor);
-            lightness = mixedOklch.l;
-            chroma = mixedOklch.c;
-            hue = mixedOklch.h;
+            // Extract HSB values from the mixed color
+            final mixedHsb = srgbToHsb(mixedColor);
+            hue = mixedHsb.h;
+            saturation = mixedHsb.s;
+            brightness = mixedHsb.b;
             currentColor = mixedColor;
           } else {
-            // Use OKLCH interpolation (perceptually uniform)
+            // Use HSB interpolation
+            final leftHsb = srgbToHsb(widget.leftExtreme.color);
+            final rightHsb = srgbToHsb(widget.rightExtreme.color);
 
-            // Step 1: Convert extremes to OKLCH
-            final leftOklch = srgbToOklch(widget.leftExtreme.color);
-            final rightOklch = srgbToOklch(widget.rightExtreme.color);
+            // Interpolate each HSB component separately
+            hue = _lerpHue(leftHsb.h, rightHsb.h, mixValue);
+            saturation = _lerpDouble(leftHsb.s, rightHsb.s, mixValue);
+            brightness = _lerpDouble(leftHsb.b, rightHsb.b, mixValue);
 
-            // Step 2: Interpolate each OKLCH component separately
-            lightness = _lerpDouble(leftOklch.l, rightOklch.l, mixValue);
-            chroma = _lerpDouble(leftOklch.c, rightOklch.c, mixValue);
-
-            // Step 3: Interpolate hue with wraparound (shortest path around color wheel)
-            hue = _lerpHue(leftOklch.h, rightOklch.h, mixValue);
-
-            // Step 4: Convert back to sRGB for display
-            currentColor = colorFromOklch(lightness, chroma, hue);
+            // Convert back to Color for display
+            currentColor = colorFromHsb(hue, saturation, brightness);
           }
         } else {
-          // Slider is not controlling: just display global color
-          currentColor = globalColor;
+          // Mixer slider is not controlling: use HSB sliders
+          currentColor = colorFromHsb(hue, saturation, brightness);
         }
+
+        // Convert to OKLCH for coordination with other parts of the app
+        final oklchColor = srgbToOklch(currentColor!);
 
         // Call callback to let HomeScreen coordinate Provider updates
         widget.onOklchChanged(
-          lightness: lightness,
-          chroma: chroma,
-          hue: hue,
+          lightness: oklchColor.l,
+          chroma: oklchColor.c,
+          hue: oklchColor.h,
           alpha: 1.0,
         );
-        errorMessage = '';
       });
     } catch (e) {
-      setState(() {
-        errorMessage = 'Error: $e';
-      });
+      debugPrint('Error updating color: $e');
     }
   }
 
@@ -220,16 +222,21 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
     // Notify parent to deselect extremes when mixer slider is touched
     widget.onMixerSliderTouched?.call();
 
+    // Update shared state
+    final sheetState = context.read<SheetStateProvider>();
+    sheetState.setSliderIsActive(true);
+
     setState(() {
-      sliderIsActive = true;
       _updateColor();
     });
   }
 
   void _handleSliderTouchEnd() {
-    debugPrint('_handleSliderTouchEnd - Mixer slider released');
+    // Update shared state
+    final sheetState = context.read<SheetStateProvider>();
+    sheetState.setSliderIsActive(false);
+
     setState(() {
-      sliderIsActive = false;
       // Slider position stays fixed, global disconnects
       _updateColor();
     });
@@ -241,86 +248,24 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
   // Copy current color to clipboard if auto-copy setting is enabled
   void _copyToClipboardIfEnabled() {
     final settings = context.read<SettingsProvider>();
-    debugPrint('_copyToClipboardIfEnabled - autoCopyEnabled: ${settings.autoCopyEnabled}, currentColor: $currentColor');
     if (settings.autoCopyEnabled && currentColor != null) {
       ClipboardService.copyColorToClipboard(currentColor!);
-      final hexString = '#${currentColor!.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
-      debugPrint('Copied to clipboard: $hexString');
     }
   }
 
   // Wrapper for slider interaction that adds clipboard copying
   void _handleSliderInteraction(bool isInteracting) {
-    debugPrint('_handleSliderInteraction - isInteracting: $isInteracting');
-
     // Call parent callback
     widget.onSliderInteractionChanged?.call(isInteracting);
 
     // Copy to clipboard when interaction ends
     if (!isInteracting) {
-      debugPrint('Slider interaction ended, triggering clipboard copy');
       _copyToClipboardIfEnabled();
     }
   }
 
-  Widget _buildLightnessSlider() {
-    return OklchGradientSlider(
-      value: lightness,
-      min: 0.0,
-      max: 1.0,
-      label: 'Lightness (L)',
-      description: '',
-      step: 0.01,
-      decimalPlaces: 2,
-      onChanged: (value) {
-        setState(() {
-          lightness = value;
-          sliderIsActive = false;
-          _updateColor();
-        });
-      },
-      generateGradient: () => generateLightnessGradient(
-        chroma,
-        hue,
-        300,
-        useRealPigmentsOnly: widget.useRealPigmentsOnly,
-      ),
-      showSplitView: true,
-      onInteractionChanged: _handleSliderInteraction,
-      bgColor: widget.bgColor, // Pass bgColor
-    );
-  }
-
-  Widget _buildChromaSlider() {
-    return OklchGradientSlider(
-      value: chroma,
-      min: 0.0,
-      max: 0.4,
-      label: 'Chroma (C)',
-      description: '',
-      step: 0.01,
-      decimalPlaces: 2,
-      onChanged: (value) {
-        setState(() {
-          chroma = value;
-          sliderIsActive = false;
-          _updateColor();
-        });
-      },
-      generateGradient: () => generateChromaGradient(
-        lightness,
-        hue,
-        300,
-        useRealPigmentsOnly: widget.useRealPigmentsOnly,
-      ),
-      showSplitView: true,
-      onInteractionChanged: _handleSliderInteraction,
-      bgColor: widget.bgColor, // Pass bgColor
-    );
-  }
-
   Widget _buildHueSlider() {
-    return OklchGradientSlider(
+    return HsbGradientSlider(
       value: hue,
       min: 0.0,
       max: 360.0,
@@ -329,21 +274,74 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
       step: 1.0,
       decimalPlaces: 0,
       onChanged: (value) {
+        final sheetState = context.read<SheetStateProvider>();
+        sheetState.setSliderIsActive(false);
         setState(() {
           hue = value;
-          sliderIsActive = false;
           _updateColor();
         });
       },
-      generateGradient: () => generateHueGradient(
-        lightness,
-        chroma,
+      generateGradient: () => generateHueGradientHsb(
+        saturation,
+        brightness,
         300,
-        useRealPigmentsOnly: widget.useRealPigmentsOnly,
       ),
-      showSplitView: true,
       onInteractionChanged: _handleSliderInteraction,
-      bgColor: widget.bgColor, // Pass bgColor
+      bgColor: widget.bgColor,
+    );
+  }
+
+  Widget _buildSaturationSlider() {
+    return HsbGradientSlider(
+      value: saturation,
+      min: 0.0,
+      max: 100.0,
+      label: 'Saturation (S)',
+      description: '',
+      step: 1.0,
+      decimalPlaces: 0,
+      onChanged: (value) {
+        final sheetState = context.read<SheetStateProvider>();
+        sheetState.setSliderIsActive(false);
+        setState(() {
+          saturation = value;
+          _updateColor();
+        });
+      },
+      generateGradient: () => generateSaturationGradientHsb(
+        hue,
+        brightness,
+        300,
+      ),
+      onInteractionChanged: _handleSliderInteraction,
+      bgColor: widget.bgColor,
+    );
+  }
+
+  Widget _buildBrightnessSlider() {
+    return HsbGradientSlider(
+      value: brightness,
+      min: 0.0,
+      max: 100.0,
+      label: 'Brightness (B)',
+      description: '',
+      step: 1.0,
+      decimalPlaces: 0,
+      onChanged: (value) {
+        final sheetState = context.read<SheetStateProvider>();
+        sheetState.setSliderIsActive(false);
+        setState(() {
+          brightness = value;
+          _updateColor();
+        });
+      },
+      generateGradient: () => generateBrightnessGradientHsb(
+        hue,
+        saturation,
+        300,
+      ),
+      onInteractionChanged: _handleSliderInteraction,
+      bgColor: widget.bgColor,
     );
   }
 
@@ -351,20 +349,23 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
     // Read pigment mixing setting from provider
     final settings = context.watch<SettingsProvider>();
 
+    // Read mixer state from SheetStateProvider
+    final sheetState = context.watch<SheetStateProvider>();
+
     return MixedChannelSlider(
-      value: mixValue,
-      currentColor: colorFromOklch(lightness, chroma, hue),
+      value: sheetState.mixValue,
+      currentColor: colorFromHsb(hue, saturation, brightness),
       leftExtreme: widget.leftExtreme,
       rightExtreme: widget.rightExtreme,
-      sliderIsActive: sliderIsActive,
+      sliderIsActive: sheetState.sliderIsActive,
       usePigmentMixing: settings.usePigmentMixing,
       useRealPigmentsOnly: widget.useRealPigmentsOnly,
       extremeColorFilter: widget.extremeColorFilter,
       gradientColorFilter: widget.gradientColorFilter,
       onChanged: (value) {
+        sheetState.setMixValue(value.clamp(0.0, 1.0));
         setState(() {
-          mixValue = value.clamp(0.0, 1.0);
-          if (sliderIsActive) {
+          if (sheetState.sliderIsActive) {
             _updateColor();
           }
         });
@@ -373,19 +374,19 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
       onSliderTouchStart: _handleSliderTouchStart,
       onSliderTouchEnd: _handleSliderTouchEnd,
       onInteractionChanged: _handleSliderInteraction,
-      bgColor: widget.bgColor, // Pass bgColor
-      onPanStartExtreme: widget.onPanStartExtreme, // Pass to MixedChannelSlider
+      bgColor: widget.bgColor,
+      onPanStartExtreme: widget.onPanStartExtreme,
     );
   }
 
   Widget _buildSliderByType(String type) {
     switch (type) {
-      case 'lightness':
-        return _buildLightnessSlider();
-      case 'chroma':
-        return _buildChromaSlider();
       case 'hue':
         return _buildHueSlider();
+      case 'saturation':
+        return _buildSaturationSlider();
+      case 'brightness':
+        return _buildBrightnessSlider();
       case 'mixer':
         return _buildMixerSlider();
       default:
@@ -393,24 +394,90 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
     }
   }
 
-  Widget _wrapWithDragHandle(Widget slider, int index) {
-    return Stack(
+  void _decrementSlider(String sliderType) {
+    final sheetState = context.read<SheetStateProvider>();
+
+    setState(() {
+      switch (sliderType) {
+        case 'hue':
+          hue = (hue - 1.0).clamp(0.0, 360.0);
+          sheetState.setSliderIsActive(false);
+          _updateColor();
+          break;
+        case 'saturation':
+          saturation = (saturation - 1.0).clamp(0.0, 100.0);
+          sheetState.setSliderIsActive(false);
+          _updateColor();
+          break;
+        case 'brightness':
+          brightness = (brightness - 1.0).clamp(0.0, 100.0);
+          sheetState.setSliderIsActive(false);
+          _updateColor();
+          break;
+        case 'mixer':
+          sheetState.setMixValue((sheetState.mixValue - 0.01).clamp(0.0, 1.0));
+          if (sheetState.sliderIsActive) {
+            _updateColor();
+          }
+          break;
+      }
+    });
+  }
+
+  void _incrementSlider(String sliderType) {
+    final sheetState = context.read<SheetStateProvider>();
+
+    setState(() {
+      switch (sliderType) {
+        case 'hue':
+          hue = (hue + 1.0).clamp(0.0, 360.0);
+          sheetState.setSliderIsActive(false);
+          _updateColor();
+          break;
+        case 'saturation':
+          saturation = (saturation + 1.0).clamp(0.0, 100.0);
+          sheetState.setSliderIsActive(false);
+          _updateColor();
+          break;
+        case 'brightness':
+          brightness = (brightness + 1.0).clamp(0.0, 100.0);
+          sheetState.setSliderIsActive(false);
+          _updateColor();
+          break;
+        case 'mixer':
+          sheetState.setMixValue((sheetState.mixValue + 0.01).clamp(0.0, 1.0));
+          if (sheetState.sliderIsActive) {
+            _updateColor();
+          }
+          break;
+      }
+    });
+  }
+
+  Widget _wrapWithDragHandle(Widget slider, int index, String sliderType) {
+    return Row(
       children: [
-        slider,
-        // Long-press drag handle positioned ONLY over the title text (left side)
-        Positioned(
-          top: 12,
-          left: 13.5,
-          width: 90, // Only covers the title text area, not the buttons
-          height: 35,
-          child: ReorderableDragStartListener(
-            index: index,
-            child: Container(
-              color: Colors.transparent,
-              // This transparent container only covers the title text
-              // Long-pressing on "Lightness (L)" etc will trigger reordering
-              // Plus/minus buttons remain clickable
-            ),
+        // Left side - Minus button
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _decrementSlider(sliderType),
+          child: Container(
+            width: 20,
+            height: 50.0,
+            color: Colors.transparent,
+          ),
+        ),
+        Expanded(
+          child: slider,
+        ),
+        // Right side - Plus button
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _incrementSlider(sliderType),
+          child: Container(
+            width: 20,
+            height: 50.0,
+            color: Colors.transparent,
           ),
         ),
       ],
@@ -434,7 +501,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
       },
       proxyDecorator: (Widget child, int index, Animation<double> animation) {
         return Material(
-          color: widget.bgColor ?? Colors.transparent, // Use the provided background color
+          color: widget.bgColor ?? Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           child: child,
         );
@@ -446,6 +513,7 @@ class _ColorPickerControlsState extends State<ColorPickerControls> {
             child: _wrapWithDragHandle(
               _buildSliderByType(_sliderOrder[index]),
               index,
+              _sliderOrder[index],
             ),
           ),
       ],
