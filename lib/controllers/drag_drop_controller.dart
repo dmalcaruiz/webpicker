@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/color_grid_item.dart';
 import '../state/color_grid_provider.dart';
-import '../coordinator/state_history_coordinator.dart';
+import '../coordinators/state_history_coordinator.dart';
 
 // Controller for drag and drop operations
 //

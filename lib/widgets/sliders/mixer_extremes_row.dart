@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/extreme_color_item.dart';
-import 'extreme_color_circle.dart';
+import '../color grid/extreme_color_circle.dart';
 
 // Container for the two mixer extreme circles
 //

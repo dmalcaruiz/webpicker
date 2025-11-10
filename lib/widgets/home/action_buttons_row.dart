@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../common/global_action_buttons.dart';
-import '../common/undo_redo_buttons.dart';
+import 'global_action_buttons.dart';
+import 'undo_redo_buttons.dart';
 import '../../services/undo_redo_service.dart';
 import '../../models/extreme_color_item.dart';
 
