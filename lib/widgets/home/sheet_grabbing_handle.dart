@@ -21,13 +21,20 @@ class SheetGrabbingHandle extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor ?? Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 12,
-            offset: Offset(0, -2),
+        border: Border(
+          top: BorderSide(
+            color: getTextColor(bgColor ?? Colors.white).withOpacity(0.15),
+            width: 1.5,
           ),
-        ],
+          left: BorderSide(
+            color: getTextColor(bgColor ?? Colors.white).withOpacity(0.15),
+            width: 1.5,
+          ),
+          right: BorderSide(
+            color: getTextColor(bgColor ?? Colors.white).withOpacity(0.15),
+            width: 1.5,
+          ),
+        ),
       ),
       child: Column(
         children: [

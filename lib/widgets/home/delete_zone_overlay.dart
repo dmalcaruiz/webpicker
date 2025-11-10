@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'home_app_bar.dart';
 
 // Drag-to-delete zone overlay
 class DeleteZoneOverlay extends StatelessWidget {
@@ -19,13 +20,14 @@ class DeleteZoneOverlay extends StatelessWidget {
         opacity: isDragging ? 1.0 : 0.0,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          height: HomeAppBar.height - 16,
+          margin: const EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
           decoration: BoxDecoration(
             color: isInDeleteZone
                 ? Colors.red.shade700.withOpacity(0.95)
                 : Colors.red.shade600.withOpacity(0.85),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: Colors.white.withOpacity(0.4),
               width: 2,
@@ -38,7 +40,7 @@ class DeleteZoneOverlay extends StatelessWidget {
               Icon(
                 Icons.delete,
                 color: Colors.white,
-                size: 32,
+                size: 28,
               ),
               SizedBox(width: 12),
               Text(

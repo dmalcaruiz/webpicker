@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/color_grid_item.dart';
 import '../state/color_grid_provider.dart';
 import '../coordinators/state_history_coordinator.dart';
+import '../widgets/home/home_app_bar.dart';
 
 // Controller for drag and drop operations
 //
@@ -29,8 +30,8 @@ class DragDropController extends ChangeNotifier {
   // Last known pointer Y before drag ended
   double _lastDragPointerY = double.infinity;
 
-  // Threshold for delete zone (pixels from top)
-  static const double _deleteZoneThreshold = 120.0;
+  // Threshold for delete zone (pixels from top) - matches app bar height
+  static const double _deleteZoneThreshold = HomeAppBar.height;
 
   // ========== Getters ==========
 

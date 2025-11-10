@@ -24,6 +24,7 @@ import '../state/settings_provider.dart';
 import '../state/sheet_state_provider.dart';
 import '../services/icc_color_service.dart';
 import '../utils/color_operations.dart';
+import '../utils/ui_color_utils.dart';
 import '../cyclop_eyedropper/eye_dropper_layer.dart';
 
 // Color Picker Home Screen
@@ -131,6 +132,11 @@ class _HomeScreenState extends State<HomeScreen> {
       ColorGridItem.fromColor(const Color.fromARGB(255, 255, 190, 86), name: 'Orange'),
     ];
     context.read<ColorGridProvider>().syncFromSnapshot(sampleColors);
+
+    // Initialize ColorEditorProvider with the first sample color
+    // This ensures the add button works immediately on app launch
+    final colorEditor = context.read<ColorEditorProvider>();
+    colorEditor.setFromOklchValues(sampleColors.first.oklchValues);
   }
 
   // Loads ICC color profile for "Real Pigments Only" feature
@@ -771,7 +777,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Expanded(
                       child: Container(
-                        color: bgColor,
+                        decoration: BoxDecoration(
+                          color: bgColor,
+                          border: Border(
+                            left: BorderSide(
+                              color: getTextColor(bgColor).withOpacity(0.15),
+                              width: 1.5,
+                            ),
+                            right: BorderSide(
+                              color: getTextColor(bgColor).withOpacity(0.15),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
                         child: _buildSheetContent(
                           sheetState.selectedChipIndex,
                           bgColor,
@@ -786,6 +804,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
 
               child: Listener(
+                behavior: HitTestBehavior.translucent,
                 onPointerMove: (event) {
                   if (_dragDropController.isDragging) {
                     _dragDropController.onDragUpdate(event.position);
@@ -795,50 +814,50 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Column(
                       children: [
-                        Expanded(
-                          child: SingleChildScrollView(
-                            child: Builder(
-                              builder: (context) {
-                                // Calculate available height for fillContainer mode
-                                // = screen height - header - bottom sheet - bottom bar
-                                final screenHeight = MediaQuery.of(context).size.height;
-                                final availableHeight = screenHeight - HomeAppBar.height - _currentSheetHeight - 80;
-                                debugPrint('DEBUG: screenHeight=$screenHeight, _currentSheetHeight=$_currentSheetHeight, availableHeight=$availableHeight');
+                        const SizedBox(height: HomeAppBar.height),
+                        Builder(
+                          builder: (context) {
+                            // Calculate available height for the scrollable area
+                            // = screen height - header - bottom sheet - bottom bar (+34px overlap)
+                            final screenHeight = MediaQuery.of(context).size.height;
+                            final scrollableHeight = screenHeight - HomeAppBar.height - _currentSheetHeight - 40;
+                            // Account for grid's vertical padding (8px top + 8px bottom = 16px)
+                            final gridContentHeight = scrollableHeight - (ReorderableColorGridView.verticalPadding * 2);
+                            debugPrint('DEBUG: screenHeight=$screenHeight, _currentSheetHeight=$_currentSheetHeight, scrollableHeight=$scrollableHeight, gridContentHeight=$gridContentHeight');
 
-                                return Column(
-                                  children: [
-                                    const SizedBox(height: HomeAppBar.height),
-                                    ReorderableColorGridView(
-                                      onReorder: _handleGridReorder,
-                                      onItemTap: _handleGridItemTap,
-                                      onItemLongPress: _handleGridItemLongPress,
-                                      onItemDelete: _handleGridItemDelete,
-                                      onAddColor: _handleAddColor,
-                                      onDragStarted: _dragDropController.onDragStarted,
-                                      onDragEnded: _dragDropController.onDragEnded,
-                                      crossAxisCount: 4,
-                                      spacing: 12.0,
-                                      itemSize: 80.0,
-                                      showAddButton: true,
-                                      emptyStateMessage: 'No colors in grid\nCreate a color above and tap + to add it',
-                                      layoutMode: settingsProvider.gridLayoutMode,
-                                      heightMode: settingsProvider.boxHeightMode,
-                                      availableHeight: availableHeight,
-                                      colorFilter: (item) => _applyIccFilter(
-                                        item.color,
-                                        lightness: item.oklchValues.lightness,
-                                        chroma: item.oklchValues.chroma,
-                                        hue: item.oklchValues.hue,
-                                        alpha: item.oklchValues.alpha,
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          ),
+                            return SizedBox(
+                              height: scrollableHeight,
+                              child: SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                child: ReorderableColorGridView(
+                                  onReorder: _handleGridReorder,
+                                  onItemTap: _handleGridItemTap,
+                                  onItemLongPress: _handleGridItemLongPress,
+                                  onItemDelete: _handleGridItemDelete,
+                                  onAddColor: _handleAddColor,
+                                  onDragStarted: _dragDropController.onDragStarted,
+                                  onDragEnded: _dragDropController.onDragEnded,
+                                  crossAxisCount: 4,
+                                  spacing: ReorderableColorGridView.defaultSpacing,
+                                  itemSize: 80.0,
+                                  showAddButton: true,
+                                  emptyStateMessage: 'No colors in grid\nCreate a color above and tap + to add it',
+                                  layoutMode: settingsProvider.gridLayoutMode,
+                                  heightMode: settingsProvider.boxHeightMode,
+                                  availableHeight: gridContentHeight,
+                                  bgColor: bgColor,
+                                  colorFilter: (item) => _applyIccFilter(
+                                    item.color,
+                                    lightness: item.oklchValues.lightness,
+                                    chroma: item.oklchValues.chroma,
+                                    hue: item.oklchValues.hue,
+                                    alpha: item.oklchValues.alpha,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                        const SizedBox(height: 80),
                       ],
                     ),
 
@@ -850,7 +869,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
 
                     Positioned(
-                      top: 20,
+                      top: 10,
                       left: 0,
                       right: 0,
                       child: DeleteZoneOverlay(

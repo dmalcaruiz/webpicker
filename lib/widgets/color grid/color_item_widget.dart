@@ -73,12 +73,12 @@ class ColorItemWidget extends StatelessWidget {
           decoration: BoxDecoration(
             color: displayColor ?? item.color,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: item.isSelected 
-                  ? Colors.white 
-                  : Colors.white.withValues(alpha: 0.3),
-              width: item.isSelected ? 2 : 0,
-            ),
+            border: item.isSelected
+                ? Border.all(
+                    color: Colors.white,
+                    width: 2,
+                  )
+                : null,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.2),

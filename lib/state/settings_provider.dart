@@ -22,8 +22,8 @@ class SettingsProvider extends ChangeNotifier {
   bool _useRealPigmentsOnly = false;
   bool _autoCopyEnabled = true;
   bool _usePigmentMixing = false;
-  GridLayoutMode _gridLayoutMode = GridLayoutMode.responsive;
-  BoxHeightMode _boxHeightMode = BoxHeightMode.proportional;
+  GridLayoutMode _gridLayoutMode = GridLayoutMode.fixedSize;
+  BoxHeightMode _boxHeightMode = BoxHeightMode.fillContainer;
 
   // Getters
   bool get useRealPigmentsOnly => _useRealPigmentsOnly;

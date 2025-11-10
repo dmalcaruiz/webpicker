@@ -123,7 +123,7 @@ class GradientPainter extends CustomPainter {
     
     // Step 10: Draw border around the gradient
     final borderPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.2)
+      ..color = Colors.black.withValues(alpha: 0.07)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     
@@ -198,10 +198,10 @@ class AlphaGradientPainter extends CustomPainter {
     canvas.save();
     
     final borderPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.2)
+      ..color = Colors.black.withValues(alpha: 0.07)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
-    
+
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTWH(0, 0, width, height),
@@ -210,7 +210,7 @@ class AlphaGradientPainter extends CustomPainter {
       borderPaint,
     );
   }
-  
+
   // Step 7: Helper function to paint checkered background
   void _paintCheckeredBackground(Canvas canvas, Size size) {
     // Step 7a: Calculate lighter and darker shades

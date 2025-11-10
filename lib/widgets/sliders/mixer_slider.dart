@@ -374,7 +374,7 @@ class MixedChannelGradientPainter extends CustomPainter {
     
     // Border
     final borderPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.2)
+      ..color = Colors.black.withValues(alpha: 0.07)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     

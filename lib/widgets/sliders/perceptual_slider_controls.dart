@@ -81,7 +81,7 @@ class _PerceptualSliderControlsState extends State<PerceptualSliderControls> {
   bool _isInternalUpdate = false;
 
   // Slider order (for reorderable list)
-  List<String> _sliderOrder = ['lightness', 'chroma', 'hue', 'mixer'];
+  List<String> _sliderOrder = ['hue', 'chroma', 'lightness', 'mixer'];
 
   // Converted color
   Color? currentColor;

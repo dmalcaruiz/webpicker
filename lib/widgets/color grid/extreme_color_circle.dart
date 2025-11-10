@@ -48,12 +48,14 @@ class ExtremeColorCircle extends StatelessWidget {
         decoration: BoxDecoration(
           color: displayColor,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: extreme.isSelected
-                ? (bgColor ?? Colors.white).computeLuminance() > 0.5 ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9)
-                : (bgColor ?? Colors.white).computeLuminance() > 0.5 ? Colors.black.withOpacity(0.3) : Colors.white.withOpacity(0.3),
-            width: extreme.isSelected ? 3 : 2,
-          ),
+          border: extreme.isSelected
+              ? Border.all(
+                  color: (bgColor ?? Colors.white).computeLuminance() > 0.5
+                      ? Colors.black.withOpacity(0.9)
+                      : Colors.white.withOpacity(0.9),
+                  width: 3,
+                )
+              : null,
           boxShadow: extreme.isSelected
               ? [
                   BoxShadow(

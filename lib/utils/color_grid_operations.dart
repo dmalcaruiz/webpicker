@@ -45,9 +45,18 @@ class ColorGridManager {
     required int oldIndex,
     required int newIndex,
   }) {
+    debugPrint('REORDER: ColorGridManager.reorderItems - oldIndex=$oldIndex, newIndex=$newIndex, gridLength=${currentGrid.length}');
+
     final grid = List<ColorGridItem>.from(currentGrid);
+    debugPrint('REORDER: Order before: ${grid.map((e) => e.name).join(", ")}');
+
     final item = grid.removeAt(oldIndex);
+    debugPrint('REORDER: Removed item "${item.name}" (id: ${item.id}) from index $oldIndex');
+
     grid.insert(newIndex, item);
+    debugPrint('REORDER: Inserted item "${item.name}" at index $newIndex');
+    debugPrint('REORDER: Order after: ${grid.map((e) => e.name).join(", ")}');
+
     return grid;
   }
   

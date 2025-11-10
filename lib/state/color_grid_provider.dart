@@ -47,11 +47,20 @@ class ColorGridProvider extends ChangeNotifier {
 
   // Reorder items in the grid
   void reorderItems(int oldIndex, int newIndex) {
+    debugPrint('REORDER: ColorGridProvider.reorderItems called - oldIndex=$oldIndex, newIndex=$newIndex');
+    debugPrint('REORDER: Grid size before: ${_items.length}');
+    if (oldIndex < _items.length && newIndex <= _items.length) {
+      debugPrint('REORDER: Moving item "${_items[oldIndex].name}" (id: ${_items[oldIndex].id}) from $oldIndex to $newIndex');
+    }
+
     _items = ColorGridManager.reorderItems(
       currentGrid: _items,
       oldIndex: oldIndex,
       newIndex: newIndex,
     );
+
+    debugPrint('REORDER: Grid size after: ${_items.length}');
+    debugPrint('REORDER: New order: ${_items.map((e) => e.name).join(", ")}');
     notifyListeners();
   }
 

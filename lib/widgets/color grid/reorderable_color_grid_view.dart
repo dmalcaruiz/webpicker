@@ -4,6 +4,7 @@ import '../custom_reorderable_grid/reorderable_grid_view.dart';
 import '../../models/color_grid_item.dart';
 import '../../state/color_grid_provider.dart';
 import '../../state/settings_provider.dart';
+import '../../utils/ui_color_utils.dart';
 import 'color_item_widget.dart';
 
 // A reorderable grid view for displaying and managing color grids
@@ -17,7 +18,11 @@ import 'color_item_widget.dart';
 //
 // Uses GridProvider for accessing the color grid items.
 class ReorderableColorGridView extends StatefulWidget {
-  
+  // Grid layout constants - single source of truth
+  static const double defaultSpacing = 8.0;
+  static const double horizontalPadding = 8.0;
+  static const double verticalPadding = 8.0;
+
   // Callback when items are reordered
   final Function(int oldIndex, int newIndex) onReorder;
   
@@ -42,8 +47,8 @@ class ReorderableColorGridView extends StatefulWidget {
   
   // Number of columns in the grid
   final int crossAxisCount;
-  
-  // Spacing between grid items
+
+  // Spacing between grid items (defaults to defaultSpacing constant)
   final double spacing;
   
   // Size of each color item
@@ -68,6 +73,9 @@ class ReorderableColorGridView extends StatefulWidget {
   // Available height for fillContainer mode (optional, calculated from screen - header - sheet)
   final double? availableHeight;
 
+  // Background color for determining text/icon colors
+  final Color bgColor;
+
   const ReorderableColorGridView({
     super.key,
     required this.onReorder,
@@ -78,7 +86,7 @@ class ReorderableColorGridView extends StatefulWidget {
     this.onDragStarted,
     this.onDragEnded,
     this.crossAxisCount = 4,
-    this.spacing = 12.0,
+    this.spacing = defaultSpacing,
     this.itemSize = 80.0,
     this.showAddButton = true,
     this.emptyStateMessage = 'No colors in grid\nTap + to add your first color',
@@ -86,6 +94,7 @@ class ReorderableColorGridView extends StatefulWidget {
     this.layoutMode = GridLayoutMode.responsive,
     this.heightMode = BoxHeightMode.proportional,
     this.availableHeight,
+    required this.bgColor,
   });
   
   @override
@@ -108,7 +117,12 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
   // Build the main grid view with drag-and-drop support
   Widget _buildGridView(List<ColorGridItem> items) {
     return Padding(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.only(
+        left: ReorderableColorGridView.horizontalPadding,
+        right: ReorderableColorGridView.horizontalPadding,
+        top: ReorderableColorGridView.verticalPadding,
+        bottom: ReorderableColorGridView.verticalPadding,
+      ),
       child: switch (widget.layoutMode) {
         GridLayoutMode.responsive => _buildResponsiveGrid(items),
         GridLayoutMode.fixedSize => _buildFixedSizeGrid(items),
@@ -173,12 +187,12 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
           columns: calculatedColumns,
         );
 
-        final gridView = ReorderableGridView.count(
+        return ReorderableGridView.count(
           crossAxisCount: calculatedColumns,
           crossAxisSpacing: widget.spacing,
           mainAxisSpacing: widget.spacing,
           childAspectRatio: aspectRatio,
-          shrinkWrap: widget.heightMode != BoxHeightMode.fillContainer,
+          shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           dragStartDelay: const Duration(milliseconds: 200),
           restrictDragScope: false,
@@ -187,16 +201,6 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
           dragWidgetBuilderV2: _buildDragWidget(items),
           children: items.map((item) => _buildColorItem(item)).toList(),
         );
-
-        // When filling container, wrap in SizedBox to enforce height
-        if (widget.heightMode == BoxHeightMode.fillContainer && widget.availableHeight != null) {
-          return SizedBox(
-            height: widget.availableHeight,
-            child: gridView,
-          );
-        }
-
-        return gridView;
       },
     );
   }
@@ -218,12 +222,12 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
           columns: widget.crossAxisCount,
         );
 
-        final gridView = ReorderableGridView.count(
+        return ReorderableGridView.count(
           crossAxisCount: widget.crossAxisCount,
           crossAxisSpacing: widget.spacing,
           mainAxisSpacing: widget.spacing,
           childAspectRatio: aspectRatio,
-          shrinkWrap: widget.heightMode != BoxHeightMode.fillContainer,
+          shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           dragStartDelay: const Duration(milliseconds: 200),
           restrictDragScope: false,
@@ -232,16 +236,6 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
           dragWidgetBuilderV2: _buildDragWidget(items),
           children: items.map((item) => _buildColorItem(item)).toList(),
         );
-
-        // When filling container, wrap in SizedBox to enforce height
-        if (widget.heightMode == BoxHeightMode.fillContainer && widget.availableHeight != null) {
-          return SizedBox(
-            height: widget.availableHeight,
-            child: gridView,
-          );
-        }
-
-        return gridView;
       },
     );
   }
@@ -262,12 +256,12 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
           columns: 1,
         );
 
-        final gridView = ReorderableGridView.count(
+        return ReorderableGridView.count(
           crossAxisCount: 1,
           crossAxisSpacing: widget.spacing,
           mainAxisSpacing: widget.spacing,
           childAspectRatio: aspectRatio,
-          shrinkWrap: widget.heightMode != BoxHeightMode.fillContainer,
+          shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           dragStartDelay: const Duration(milliseconds: 200),
           restrictDragScope: false,
@@ -276,28 +270,24 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
           dragWidgetBuilderV2: _buildDragWidget(items),
           children: items.map((item) => _buildColorItem(item)).toList(),
         );
-
-        // When filling container, wrap in SizedBox to enforce height
-        if (widget.heightMode == BoxHeightMode.fillContainer && widget.availableHeight != null) {
-          return SizedBox(
-            height: widget.availableHeight,
-            child: gridView,
-          );
-        }
-
-        return gridView;
       },
     );
   }
 
   // Handle reorder callback
   void _handleReorder(int oldIndex, int newIndex) {
+    debugPrint('REORDER: _handleReorder called - oldIndex=$oldIndex, newIndex=$newIndex');
+
     // Call the drag ended callback before reordering
     final wasDeleted = widget.onDragEnded?.call() ?? false;
+    debugPrint('REORDER: wasDeleted=$wasDeleted');
 
     // Only perform reorder if item wasn't deleted
     if (!wasDeleted) {
+      debugPrint('REORDER: Calling widget.onReorder($oldIndex, $newIndex)');
       widget.onReorder(oldIndex, newIndex);
+    } else {
+      debugPrint('REORDER: Skipping reorder because item was deleted');
     }
   }
 
@@ -344,22 +334,25 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
   
   // Build the add button
   Widget _buildAddButton() {
+    // Get appropriate color based on background
+    final iconColor = getTextColor(widget.bgColor);
+
     return GestureDetector(
       key: const ValueKey('add_button'),
       onTap: widget.onAddColor,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.1),
+          color: iconColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.3),
+            color: iconColor.withValues(alpha: 0.3),
             width: 2,
             style: BorderStyle.solid,
           ),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.add,
-          color: Colors.white70,
+          color: iconColor.withValues(alpha: 0.7),
           size: 32,
         ),
       ),
@@ -368,6 +361,9 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
   
   // Build empty state when no colors are present
   Widget _buildEmptyState() {
+    // Get appropriate color based on background
+    final textColor = getTextColor(widget.bgColor);
+
     return Container(
       padding: const EdgeInsets.all(32),
       child: Column(
@@ -376,14 +372,14 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
           Icon(
             Icons.palette_outlined,
             size: 64,
-            color: Colors.white.withValues(alpha: 0.5),
+            color: textColor.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             widget.emptyStateMessage,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.7),
+              color: textColor.withValues(alpha: 0.7),
               fontSize: 16,
               fontWeight: FontWeight.w500,
             ),
@@ -394,8 +390,8 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
             icon: const Icon(Icons.add),
             label: const Text('Add Color'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white.withValues(alpha: 0.2),
-              foregroundColor: Colors.white,
+              backgroundColor: textColor.withValues(alpha: 0.2),
+              foregroundColor: textColor,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
           ),

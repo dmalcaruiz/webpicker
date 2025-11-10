@@ -10,7 +10,8 @@
       "Bash(python:*)",
       "Bash(flutter clean:*)",
       "Bash(dart pub:*)",
-      "Bash(dart test_icc.dart:*)"
+      "Bash(dart test_icc.dart:*)",
+      "Bash(flutter test:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'home_app_bar.dart';
 
 // A drag target zone that appears when dragging grid items
 // Provides visual feedback for drag-to-delete functionality
@@ -111,13 +112,14 @@ class _DragDeleteZoneState extends State<DragDeleteZone>
               scale: _scaleAnimation.value,
               child: Container(
                 key: _zoneKey,
-                  margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                  height: HomeAppBar.height - 16,
+                  margin: const EdgeInsets.symmetric(horizontal: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: _isHoveringOver 
+                    color: _isHoveringOver
                         ? Colors.red.shade700.withOpacity(0.9)
                         : Colors.red.shade600.withOpacity(0.8),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: Colors.white.withOpacity(0.3),
                       width: 2,
@@ -137,7 +139,7 @@ class _DragDeleteZoneState extends State<DragDeleteZone>
                       Icon(
                         _isHoveringOver ? Icons.delete : Icons.delete_outline,
                         color: Colors.white,
-                        size: 32,
+                        size: 28,
                       ),
                       const SizedBox(width: 12),
                       Text(
