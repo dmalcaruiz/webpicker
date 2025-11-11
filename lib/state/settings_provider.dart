@@ -22,7 +22,7 @@ class SettingsProvider extends ChangeNotifier {
   bool _useRealPigmentsOnly = false;
   bool _autoCopyEnabled = true;
   bool _usePigmentMixing = false;
-  GridLayoutMode _gridLayoutMode = GridLayoutMode.fixedSize;
+  GridLayoutMode _gridLayoutMode = GridLayoutMode.horizontal;
   BoxHeightMode _boxHeightMode = BoxHeightMode.fillContainer;
 
   // Getters

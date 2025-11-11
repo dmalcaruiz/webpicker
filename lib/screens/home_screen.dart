@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -805,11 +806,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
               child: AnnotatedRegion<SystemUiOverlayStyle>(
                 value: const SystemUiOverlayStyle(
+                  systemNavigationBarColor: Colors.transparent,
+                  systemNavigationBarIconBrightness: Brightness.dark,
                   statusBarColor: Colors.transparent,
                   statusBarIconBrightness: Brightness.dark,
                   statusBarBrightness: Brightness.light,
-                  systemNavigationBarColor: Colors.transparent,
-                  systemNavigationBarIconBrightness: Brightness.dark,
                 ),
                 child: SafeArea(
                   child: Listener(
@@ -829,7 +830,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             // Calculate available height for the scrollable area
                             // = screen height - header - bottom sheet - bottom bar (+34px overlap)
                             final screenHeight = MediaQuery.of(context).size.height;
-                            final scrollableHeight = screenHeight - HomeAppBar.height - _currentSheetHeight - 40;
+                            final androidOffset = defaultTargetPlatform == TargetPlatform.android ? 24 : 0;
+                            final scrollableHeight = screenHeight - HomeAppBar.height - _currentSheetHeight - 40 - androidOffset;
                             // Account for grid's vertical padding (8px top + 8px bottom = 16px)
                             final gridContentHeight = scrollableHeight - (ReorderableColorGridView.verticalPadding * 2);
                             debugPrint('DEBUG: screenHeight=$screenHeight, _currentSheetHeight=$_currentSheetHeight, scrollableHeight=$scrollableHeight, gridContentHeight=$gridContentHeight');
