@@ -45,14 +45,17 @@ class ReorderableColorGridView extends StatefulWidget {
   // Returns true if item was deleted, false otherwise
   final bool Function()? onDragEnded;
   
-  // Number of columns in the grid
+  // Number of columns in the grid (used by responsive layout mode)
   final int crossAxisCount;
 
   // Spacing between grid items (defaults to defaultSpacing constant)
   final double spacing;
-  
-  // Size of each color item
-  final double itemSize;
+
+  // Width of each color item (used for fixed size grid calculation)
+  final double itemWidth;
+
+  // Height of each color item (used for fixed height mode - default 140px)
+  final double itemHeight;
   
   // Whether to show the add button
   final bool showAddButton;
@@ -87,7 +90,8 @@ class ReorderableColorGridView extends StatefulWidget {
     this.onDragEnded,
     this.crossAxisCount = 4,
     this.spacing = defaultSpacing,
-    this.itemSize = 80.0,
+    this.itemWidth = 70.0,
+    this.itemHeight = 140.0,
     this.showAddButton = true,
     this.emptyStateMessage = 'No colors in grid\nTap + to add your first color',
     this.colorFilter,
@@ -126,7 +130,6 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
       child: switch (widget.layoutMode) {
         GridLayoutMode.responsive => _buildResponsiveGrid(items),
         GridLayoutMode.fixedSize => _buildFixedSizeGrid(items),
-        GridLayoutMode.horizontal => _buildHorizontalGrid(items),
       },
     );
   }
@@ -159,18 +162,18 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
         return boxWidth / boxHeight;
 
       case BoxHeightMode.fixed:
-        return boxWidth / widget.itemSize; // Fixed height = itemSize
+        return boxWidth / widget.itemHeight; // Fixed height = itemHeight
     }
   }
 
   // Build grid with fixed box sizes
-  // Uses LayoutBuilder to calculate how many columns fit at the specified itemSize
+  // Uses LayoutBuilder to calculate how many columns fit at the specified itemWidth
   Widget _buildFixedSizeGrid(List<ColorGridItem> items) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Calculate how many columns can fit based on itemSize
+        // Calculate how many columns can fit based on itemWidth
         final availableWidth = constraints.maxWidth;
-        final columnWidth = widget.itemSize + widget.spacing;
+        final columnWidth = widget.itemWidth + widget.spacing;
         final calculatedColumns = (availableWidth / columnWidth).floor().clamp(1, 10);
         final boxWidth = (availableWidth - (calculatedColumns - 1) * widget.spacing) / calculatedColumns;
 
@@ -240,40 +243,6 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
     );
   }
 
-  // Build grid with horizontal layout (1 column, full width boxes)
-  Widget _buildHorizontalGrid(List<ColorGridItem> items) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final boxWidth = constraints.maxWidth;
-
-        // Use provided availableHeight if given, otherwise use constraints
-        final heightForCalculation = widget.availableHeight ?? constraints.maxHeight;
-
-        final aspectRatio = _calculateAspectRatio(
-          boxWidth: boxWidth,
-          availableHeight: heightForCalculation,
-          totalItems: items.length + (widget.showAddButton ? 1 : 0),
-          columns: 1,
-        );
-
-        return ReorderableGridView.count(
-          crossAxisCount: 1,
-          crossAxisSpacing: widget.spacing,
-          mainAxisSpacing: widget.spacing,
-          childAspectRatio: aspectRatio,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          dragStartDelay: const Duration(milliseconds: 200),
-          restrictDragScope: false,
-          onReorder: _handleReorder,
-          footer: widget.showAddButton ? [_buildAddButton()] : null,
-          dragWidgetBuilderV2: _buildDragWidget(items),
-          children: items.map((item) => _buildColorItem(item)).toList(),
-        );
-      },
-    );
-  }
-
   // Handle reorder callback
   void _handleReorder(int oldIndex, int newIndex) {
     debugPrint('REORDER: _handleReorder called - oldIndex=$oldIndex, newIndex=$newIndex');
@@ -323,7 +292,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
       key: ValueKey(item.id),
       item: item,
       displayColor: widget.colorFilter != null ? widget.colorFilter!(item) : null,
-      size: widget.itemSize,
+      size: widget.itemWidth,
       onTap: () => widget.onItemTap(item),
       onLongPress: () => widget.onItemLongPress(item),
       onDelete: () => widget.onItemDelete(item),

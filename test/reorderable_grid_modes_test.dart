@@ -211,29 +211,6 @@ void main() {
           ['cyan', 'green', 'blue', 'magenta', 'yellow', 'red']);
     });
 
-    testWidgets('Horizontal mode with fillContainer height - reorder',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(createTestWidget(
-        layoutMode: GridLayoutMode.horizontal,
-        heightMode: BoxHeightMode.fillContainer,
-        availableHeight: 500,
-      ));
-      await tester.pumpAndSettle();
-
-      // Verify initial order
-      expect(gridProvider.items[0].name, 'red');
-      expect(gridProvider.items[1].name, 'green');
-
-      // Simulate reorder
-      gridProvider.reorderItems(1, 2);
-      await tester.pumpAndSettle();
-
-      // Verify new order
-      expect(gridProvider.items[0].name, 'red');
-      expect(gridProvider.items[1].name, 'blue');
-      expect(gridProvider.items[2].name, 'green');
-    });
-
     testWidgets('Fixed size mode with fixed height - reorder',
         (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget(

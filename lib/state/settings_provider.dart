@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 
 // Grid layout modes
 enum GridLayoutMode {
-  responsive,  // Fixed 4 columns, boxes resize to fill width
-  fixedSize,   // Dynamic columns based on 80px target size
-  horizontal,  // 1 column, boxes fill full width
+  responsive,  // Fixed number of columns (configurable), boxes resize to fill width
+  fixedSize,   // Dynamic columns based on 70px target size
 }
 
 // Box height modes
 enum BoxHeightMode {
   proportional,  // Height matches width (1:1 aspect ratio - square boxes)
   fillContainer, // Height fills available container space based on number of rows
-  fixed,         // Fixed height, doesn't change with width
+  fixed,         // Fixed 140px height, doesn't change with width
 }
 
 // Provider for application settings
@@ -22,8 +21,9 @@ class SettingsProvider extends ChangeNotifier {
   bool _useRealPigmentsOnly = false;
   bool _autoCopyEnabled = true;
   bool _usePigmentMixing = false;
-  GridLayoutMode _gridLayoutMode = GridLayoutMode.horizontal;
+  GridLayoutMode _gridLayoutMode = GridLayoutMode.responsive;
   BoxHeightMode _boxHeightMode = BoxHeightMode.fillContainer;
+  int _responsiveColumnCount = 1;
 
   // Getters
   bool get useRealPigmentsOnly => _useRealPigmentsOnly;
@@ -31,6 +31,7 @@ class SettingsProvider extends ChangeNotifier {
   bool get usePigmentMixing => _usePigmentMixing;
   GridLayoutMode get gridLayoutMode => _gridLayoutMode;
   BoxHeightMode get boxHeightMode => _boxHeightMode;
+  int get responsiveColumnCount => _responsiveColumnCount;
 
   // Backward compatibility getter
   bool get useFixedBoxSizes => _gridLayoutMode == GridLayoutMode.fixedSize;
@@ -99,9 +100,6 @@ class SettingsProvider extends ChangeNotifier {
         _gridLayoutMode = GridLayoutMode.fixedSize;
         break;
       case GridLayoutMode.fixedSize:
-        _gridLayoutMode = GridLayoutMode.horizontal;
-        break;
-      case GridLayoutMode.horizontal:
         _gridLayoutMode = GridLayoutMode.responsive;
         break;
     }
@@ -112,6 +110,16 @@ class SettingsProvider extends ChangeNotifier {
   void setBoxHeightMode(BoxHeightMode mode) {
     if (_boxHeightMode != mode) {
       _boxHeightMode = mode;
+      notifyListeners();
+    }
+  }
+
+  // Set responsive column count (for responsive grid layout mode)
+  void setResponsiveColumnCount(int count) {
+    // Clamp to reasonable values (1-10 columns)
+    final clampedCount = count.clamp(1, 10);
+    if (_responsiveColumnCount != clampedCount) {
+      _responsiveColumnCount = clampedCount;
       notifyListeners();
     }
   }

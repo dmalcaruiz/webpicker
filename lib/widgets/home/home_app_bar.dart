@@ -4,7 +4,7 @@ import '../../utils/ui_color_utils.dart';
 
 // App bar for the home screen
 class HomeAppBar extends StatelessWidget {
-  static const double height = 76.0; // padding top (20) + IconButton (48) + padding bottom (8)
+  static const double height = 56.0; // Standard AppBar height (kToolbarHeight)
 
   final Color bgColor;
 
@@ -17,7 +17,7 @@ class HomeAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: bgColor,
-      padding: const EdgeInsets.fromLTRB(40, 20, 40, 8),
+      padding: const EdgeInsets.fromLTRB(40, 8, 40, 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

@@ -68,7 +68,7 @@ class MenuScreen extends StatelessWidget {
       children: [
         RadioListTile<GridLayoutMode>(
           title: const Text('Responsive Grid'),
-          subtitle: const Text('Fixed 4 columns, boxes resize to fill width'),
+          subtitle: Text('${settingsProvider.responsiveColumnCount} columns, boxes resize to fill width'),
           value: GridLayoutMode.responsive,
           groupValue: settingsProvider.gridLayoutMode,
           onChanged: (value) {
@@ -77,21 +77,52 @@ class MenuScreen extends StatelessWidget {
             }
           },
         ),
+        // Show column count slider when responsive mode is selected
+        if (settingsProvider.gridLayoutMode == GridLayoutMode.responsive)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Calculate max columns based on 70px target size + 8px spacing
+              // Using same calculation as fixedSize mode
+              const itemSize = 70.0;
+              const spacing = 8.0;
+              final availableWidth = constraints.maxWidth - 72 - 16; // Subtract padding
+              final columnWidth = itemSize + spacing;
+              final maxColumns = (availableWidth / columnWidth).floor().clamp(1, 10);
+
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(72, 0, 16, 16),
+                child: Row(
+                  children: [
+                    const Text('Columns:'),
+                    Expanded(
+                      child: Slider(
+                        value: settingsProvider.responsiveColumnCount.toDouble().clamp(1, maxColumns.toDouble()),
+                        min: 1,
+                        max: maxColumns.toDouble(),
+                        divisions: maxColumns - 1,
+                        label: settingsProvider.responsiveColumnCount.toString(),
+                        onChanged: (value) {
+                          settingsProvider.setResponsiveColumnCount(value.round());
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                      width: 30,
+                      child: Text(
+                        settingsProvider.responsiveColumnCount.toString(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         RadioListTile<GridLayoutMode>(
           title: const Text('Fixed Size Grid'),
-          subtitle: const Text('Dynamic columns based on 80px target size'),
+          subtitle: const Text('Dynamic columns based on 70px target size'),
           value: GridLayoutMode.fixedSize,
-          groupValue: settingsProvider.gridLayoutMode,
-          onChanged: (value) {
-            if (value != null) {
-              settingsProvider.setGridLayoutMode(value);
-            }
-          },
-        ),
-        RadioListTile<GridLayoutMode>(
-          title: const Text('Horizontal Layout'),
-          subtitle: const Text('1 column, boxes fill full width'),
-          value: GridLayoutMode.horizontal,
           groupValue: settingsProvider.gridLayoutMode,
           onChanged: (value) {
             if (value != null) {
@@ -130,7 +161,7 @@ class MenuScreen extends StatelessWidget {
         ),
         RadioListTile<BoxHeightMode>(
           title: const Text('Fixed Height'),
-          subtitle: const Text('Fixed 80px height, independent of width'),
+          subtitle: const Text('Fixed 140px height, independent of width'),
           value: BoxHeightMode.fixed,
           groupValue: settingsProvider.boxHeightMode,
           onChanged: (value) {
