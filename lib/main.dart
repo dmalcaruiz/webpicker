@@ -61,13 +61,17 @@ class MyApp extends StatelessWidget {
           systemNavigationBarColor: Colors.transparent,
           systemNavigationBarIconBrightness: Brightness.dark,
         ),
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            fontFamily: 'Livvic',
-          ),
-          home: GlobalPointerTrackerProvider(
-            child: EyeDrop(child: const HomeScreen()),
+        child: SafeArea(
+          top: false,
+          bottom: false,
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              fontFamily: 'Livvic',
+            ),
+            home: GlobalPointerTrackerProvider(
+              child: EyeDrop(child: const HomeScreen()),
+            ),
           ),
         ),
       ),

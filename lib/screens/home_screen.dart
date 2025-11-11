@@ -741,8 +741,8 @@ class _HomeScreenState extends State<HomeScreen> {
         onRedo: _handleRedo,
         child: Scaffold(
           backgroundColor: bgColor,
-        body: Stack(
-          children: [
+          body: Stack(
+            children: [
             SnappingSheet(
               controller: snappingSheetController,
               lockOverflowDrag: true,
@@ -803,14 +803,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              child: Listener(
-                behavior: HitTestBehavior.translucent,
-                onPointerMove: (event) {
-                  if (_dragDropController.isDragging) {
-                    _dragDropController.onDragUpdate(event.position);
-                  }
-                },
-                child: Stack(
+              child: AnnotatedRegion<SystemUiOverlayStyle>(
+                value: const SystemUiOverlayStyle(
+                  statusBarColor: Colors.transparent,
+                  statusBarIconBrightness: Brightness.dark,
+                  statusBarBrightness: Brightness.light,
+                  systemNavigationBarColor: Colors.transparent,
+                  systemNavigationBarIconBrightness: Brightness.dark,
+                ),
+                child: SafeArea(
+                  child: Listener(
+                  behavior: HitTestBehavior.translucent,
+                  onPointerMove: (event) {
+                    if (_dragDropController.isDragging) {
+                      _dragDropController.onDragUpdate(event.position);
+                    }
+                  },
+                  child: Stack(
                   children: [
                     Column(
                       children: [
@@ -881,6 +890,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+            ),
+            ),
 
             Positioned(
               bottom: 0,
@@ -908,9 +919,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ],
+          ),
         ),
       ),
-    ),
     );
   }
 }
