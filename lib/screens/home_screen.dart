@@ -897,6 +897,14 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: settingsProvider.boxHeightMode == BoxHeightMode.fillContainer
                                 ? GestureDetector(
                                     onVerticalDragUpdate: (details) {
+                                      // Don't handle resize gesture if a color item is being dragged
+                                      if (_dragDropController.isDragging) {
+                                        debugPrint('SCROLL: Blocked - item is being dragged');
+                                        return;
+                                      }
+
+                                      debugPrint('SCROLL: Handling resize - delta.dy=${details.delta.dy}, current modifier=$_rowModifier');
+
                                       setState(() {
                                         // Convert drag distance to row modifier
                                         // Drag up (negative dy) = increase rows = smaller boxes
@@ -905,15 +913,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                         // Negate delta to flip direction
                                         _rowModifier = (_rowModifier - details.delta.dy / 150).clamp(0.0, 3.0);
 
+                                        debugPrint('SCROLL: New modifier=$_rowModifier');
+
                                         // Track if user has scrolled to max (rowModifier >= 1.0 means maximum shrinkage)
                                         if (_rowModifier >= 1.0) {
                                           _wasAtMaxScroll = true;
+                                          debugPrint('SCROLL: Reached max scroll');
                                         }
                                       });
                                     },
                                     onVerticalDragEnd: (details) {
+                                      debugPrint('SCROLL: Drag ended - wasAtMaxScroll=$_wasAtMaxScroll');
+
                                       // If was at max scroll, add new box
                                       if (_wasAtMaxScroll) {
+                                        debugPrint('SCROLL: Adding new color box');
                                         _handleAddColor();
                                         _wasAtMaxScroll = false;
                                       }
@@ -922,6 +936,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                       setState(() {
                                         _rowModifier = 0.0;
                                       });
+
+                                      debugPrint('SCROLL: Reset modifier to 0.0');
                                     },
                                     child: ReorderableColorGridView(
                                       onReorder: _handleGridReorder,

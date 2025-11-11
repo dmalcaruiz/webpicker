@@ -138,32 +138,75 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
     );
   }
 
+  // Calculate how many add buttons to render in footer
+  // Returns 1 by default, or all at once when dragging
+  int _calculateAddButtonCount({
+    required int colorCount,
+    required int columns,
+  }) {
+    if (widget.heightMode != BoxHeightMode.fillContainer) {
+      return 1; // Only show multiple buttons in fillContainer mode
+    }
+
+    final modifier = widget.rowModifier ?? 0.0;
+    if (modifier <= 0) {
+      return 1; // At rest, show only 1 add button
+    }
+
+    // When dragging (modifier > 0), show all possible add buttons for max revealed rows
+    final totalItems = colorCount + 1; // colors + 1 add button
+    final rows = (totalItems / columns).ceil();
+    final isAddButtonAloneOnLastRow = colorCount % columns == 0;
+
+    final rowsForHeight = isAddButtonAloneOnLastRow
+        ? (rows - 1).clamp(1, rows)
+        : rows;
+
+    // Use maximum effective rows to show all add buttons at once
+    final maxEffectiveRows = rowsForHeight.toDouble() + 1.0;
+    final totalSlots = (maxEffectiveRows * columns).ceil();
+    final emptySlots = totalSlots - colorCount;
+
+    // Render one add button per empty slot (minimum 1)
+    return emptySlots.clamp(1, totalSlots);
+  }
+
   // Calculate aspect ratio based on height mode
   double _calculateAspectRatio({
     required double boxWidth,
     required double availableHeight,
     required int totalItems,
     required int columns,
+    required int colorCount,
   }) {
     switch (widget.heightMode) {
       case BoxHeightMode.proportional:
         return 1.0; // Square boxes (width = height)
 
       case BoxHeightMode.fillContainer:
-        // Calculate rows needed
-        final rows = (totalItems / columns).ceil();
-        if (rows <= 0) return 1.0;
+        // Calculate base rows using stable color count + 1 add button
+        // This ensures rows doesn't jump when dragging reveals more add buttons
+        final baseRows = ((colorCount + 1) / columns).ceil();
+        if (baseRows <= 0) return 1.0;
 
-        // Use one fewer row for height calculation to make boxes larger
-        // This forces scrolling and creates a more spacious feel
-        final rowsForHeight = (rows - 1).clamp(1, rows);
+        // Detect if add button is alone on last row based on COLOR items only
+        // This ensures consistent sizing even when multiple add buttons appear
+        final isAddButtonAloneOnLastRow = colorCount % columns == 0;
+
+        // Use conditional sizing based on last row contents:
+        // - If add button is alone: use (baseRows - 1) for larger boxes (keeps add button hidden)
+        // - If add button shares row with colors: use baseRows exactly to fit all actual content on screen
+        final rowsForHeight = isAddButtonAloneOnLastRow
+            ? (baseRows - 1).clamp(1, baseRows)
+            : baseRows;
 
         // Apply row modifier for dynamic resizing effect
         // Drag down (positive modifier) = more rows = smaller boxes
         // Drag up (negative from rest) should make boxes even larger
-        // Clamp maximum to actual row count to prevent boxes getting smaller than current count size
+        // Allow up to 1 extra row beyond starting position for drag-to-add UX
         final modifier = widget.rowModifier ?? 0.0;
-        final effectiveRowsForHeight = (rowsForHeight.toDouble() + modifier).clamp(1.0, rows.toDouble());
+        final maxEffectiveRows = rowsForHeight.toDouble() + 1.0;
+        final effectiveRowsForHeight = (rowsForHeight.toDouble() + modifier).clamp(1.0, maxEffectiveRows);
 
         // Calculate height per row to fill container
         final totalSpacing = (effectiveRowsForHeight - 1) * widget.spacing;
@@ -198,12 +241,24 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
             ? widget.availableHeight!
             : constraints.maxHeight;
 
+        // Calculate how many add buttons to show
+        final addButtonCount = widget.showAddButton
+            ? _calculateAddButtonCount(colorCount: items.length, columns: calculatedColumns)
+            : 0;
+
         final aspectRatio = _calculateAspectRatio(
           boxWidth: boxWidth,
           availableHeight: heightForCalculation,
-          totalItems: items.length + (widget.showAddButton ? 1 : 0),
+          totalItems: items.length + addButtonCount,
           columns: calculatedColumns,
+          colorCount: items.length,
         );
+
+        // Build all children: color items + add buttons
+        final allChildren = <Widget>[
+          ...items.map((item) => _buildColorItem(item)),
+          ...List.generate(addButtonCount, (index) => _buildAddButton(index, false)),
+        ];
 
         return ReorderableGridView.count(
           crossAxisCount: calculatedColumns,
@@ -215,9 +270,8 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
           dragStartDelay: const Duration(milliseconds: 200),
           restrictDragScope: false,
           onReorder: _handleReorder,
-          footer: widget.showAddButton ? [_buildAddButton()] : null,
           dragWidgetBuilderV2: _buildDragWidget(items),
-          children: items.map((item) => _buildColorItem(item)).toList(),
+          children: allChildren,
         );
       },
     );
@@ -233,12 +287,24 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
         // Use provided availableHeight directly when given, otherwise use constraints minus padding
         final heightForCalculation = widget.availableHeight ?? (constraints.maxHeight);
 
+        // Calculate how many add buttons to show
+        final addButtonCount = widget.showAddButton
+            ? _calculateAddButtonCount(colorCount: items.length, columns: widget.crossAxisCount)
+            : 0;
+
         final aspectRatio = _calculateAspectRatio(
           boxWidth: boxWidth,
           availableHeight: heightForCalculation,
-          totalItems: items.length + (widget.showAddButton ? 1 : 0),
+          totalItems: items.length + addButtonCount,
           columns: widget.crossAxisCount,
+          colorCount: items.length,
         );
+
+        // Build all children: color items + add buttons
+        final allChildren = <Widget>[
+          ...items.map((item) => _buildColorItem(item)),
+          ...List.generate(addButtonCount, (index) => _buildAddButton(index, false)),
+        ];
 
         return ReorderableGridView.count(
           crossAxisCount: widget.crossAxisCount,
@@ -250,9 +316,8 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
           dragStartDelay: const Duration(milliseconds: 200),
           restrictDragScope: false,
           onReorder: _handleReorder,
-          footer: widget.showAddButton ? [_buildAddButton()] : null,
           dragWidgetBuilderV2: _buildDragWidget(items),
-          children: items.map((item) => _buildColorItem(item)).toList(),
+          children: allChildren,
         );
       },
     );
@@ -262,14 +327,24 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
   void _handleReorder(int oldIndex, int newIndex) {
     debugPrint('REORDER: _handleReorder called - oldIndex=$oldIndex, newIndex=$newIndex');
 
+    // Get the number of actual color items (not including add buttons)
+    final items = context.read<ColorGridProvider>().items;
+    final colorItemCount = items.length;
+
     // Call the drag ended callback before reordering
     final wasDeleted = widget.onDragEnded?.call() ?? false;
     debugPrint('REORDER: wasDeleted=$wasDeleted');
 
-    // Only perform reorder if item wasn't deleted
+    // Only perform reorder if:
+    // 1. Item wasn't deleted
+    // 2. Both indices are within color items range (not add buttons)
     if (!wasDeleted) {
-      debugPrint('REORDER: Calling widget.onReorder($oldIndex, $newIndex)');
-      widget.onReorder(oldIndex, newIndex);
+      if (oldIndex < colorItemCount && newIndex < colorItemCount) {
+        debugPrint('REORDER: Calling widget.onReorder($oldIndex, $newIndex)');
+        widget.onReorder(oldIndex, newIndex);
+      } else {
+        debugPrint('REORDER: Skipping reorder - involves add button (colorItemCount=$colorItemCount)');
+      }
     } else {
       debugPrint('REORDER: Skipping reorder because item was deleted');
     }
@@ -320,29 +395,40 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
   }
   
   // Build the add button
-  Widget _buildAddButton() {
+  Widget _buildAddButton([int index = 0, bool isDraggable = true]) {
     // Get appropriate color based on background
     final iconColor = getTextColor(widget.bgColor);
 
-    return GestureDetector(
-      key: const ValueKey('add_button'),
-      onTap: widget.onAddColor,
-      child: Container(
-        decoration: BoxDecoration(
-          color: iconColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: iconColor.withValues(alpha: 0.3),
-            width: 2,
-            style: BorderStyle.solid,
-          ),
-        ),
-        child: Icon(
-          Icons.add,
-          color: iconColor.withValues(alpha: 0.7),
-          size: 32,
+    final button = Container(
+      decoration: BoxDecoration(
+        color: iconColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: iconColor.withValues(alpha: 0.3),
+          width: 2,
+          style: BorderStyle.solid,
         ),
       ),
+      child: Icon(
+        Icons.add,
+        color: iconColor.withValues(alpha: 0.7),
+        size: 32,
+      ),
+    );
+
+    // If not draggable, absorb long press gestures to prevent drag initiation
+    // but still allow tap and allow being a reorder target
+    final content = isDraggable
+        ? button
+        : GestureDetector(
+            onLongPress: () {}, // Absorb long press to prevent drag
+            child: button,
+          );
+
+    return GestureDetector(
+      key: ValueKey('add_button_$index'),
+      onTap: widget.onAddColor,
+      child: content,
     );
   }
   

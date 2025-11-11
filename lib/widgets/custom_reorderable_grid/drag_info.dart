@@ -185,6 +185,12 @@ class DragInfo extends Drag {
       double? newOffset;
       bool needScroll = false;
       final ScrollPosition position = scrollable.position;
+
+      // Skip auto-scroll if using NeverScrollableScrollPhysics (fillContainer mode)
+      if (position.physics is NeverScrollableScrollPhysics) {
+        return;
+      }
+
       final RenderObject? renderObject = scrollable.context.findRenderObject();
       if (renderObject == null) {
         return;
