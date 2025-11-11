@@ -79,6 +79,9 @@ class ReorderableColorGridView extends StatefulWidget {
   // Background color for determining text/icon colors
   final Color bgColor;
 
+  // Row modifier for dynamic resizing (used in fillContainer mode)
+  final double? rowModifier;
+
   const ReorderableColorGridView({
     super.key,
     required this.onReorder,
@@ -99,6 +102,7 @@ class ReorderableColorGridView extends StatefulWidget {
     this.heightMode = BoxHeightMode.proportional,
     this.availableHeight,
     required this.bgColor,
+    this.rowModifier,
   });
   
   @override
@@ -150,9 +154,20 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
         final rows = (totalItems / columns).ceil();
         if (rows <= 0) return 1.0;
 
+        // Use one fewer row for height calculation to make boxes larger
+        // This forces scrolling and creates a more spacious feel
+        final rowsForHeight = (rows - 1).clamp(1, rows);
+
+        // Apply row modifier for dynamic resizing effect
+        // Drag down (positive modifier) = more rows = smaller boxes
+        // Drag up (negative from rest) should make boxes even larger
+        // Clamp maximum to actual row count to prevent boxes getting smaller than current count size
+        final modifier = widget.rowModifier ?? 0.0;
+        final effectiveRowsForHeight = (rowsForHeight.toDouble() + modifier).clamp(1.0, rows.toDouble());
+
         // Calculate height per row to fill container
-        final totalSpacing = (rows - 1) * widget.spacing;
-        final boxHeight = (availableHeight - totalSpacing) / rows;
+        final totalSpacing = (effectiveRowsForHeight - 1) * widget.spacing;
+        final boxHeight = (availableHeight - totalSpacing) / effectiveRowsForHeight;
 
         // Guard against invalid values - fallback to proportional if calculations fail
         if (boxHeight <= 0 || boxWidth <= 0 || !boxHeight.isFinite || !availableHeight.isFinite) {

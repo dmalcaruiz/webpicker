@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -27,6 +28,53 @@ import '../services/icc_color_service.dart';
 import '../utils/color_operations.dart';
 import '../utils/ui_color_utils.dart';
 import '../cyclop_eyedropper/eye_dropper_layer.dart';
+
+// Custom scroll physics that resists scrolling and pulls back to position 0
+class ResistantScrollPhysics extends ScrollPhysics {
+  const ResistantScrollPhysics({super.parent});
+
+  @override
+  ResistantScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return ResistantScrollPhysics(parent: buildParent(ancestor));
+  }
+
+  @override
+  double applyPhysicsToUserOffset(ScrollMetrics position, double offset) {
+    // Reduce the scroll offset to create resistance
+    // The further from 0, the more resistance
+    final resistanceFactor = 0.4; // Lower = more resistance
+    return offset * resistanceFactor;
+  }
+
+  @override
+  double applyBoundaryConditions(ScrollMetrics position, double value) {
+    // Allow scrolling beyond bounds with resistance (no clamping)
+    // This ensures resistance continues even at the end
+    return 0.0;
+  }
+
+  @override
+  Simulation? createBallisticSimulation(
+    ScrollMetrics position,
+    double velocity,
+  ) {
+    // Create a spring simulation that pulls back to position 0
+    final SpringDescription spring = SpringDescription.withDampingRatio(
+      mass: 0.5,
+      stiffness: 100.0,
+      ratio: 1.0,
+    );
+
+    // Always pull back to position 0 (scroll offset 0)
+    return ScrollSpringSimulation(
+      spring,
+      position.pixels,
+      0.0, // Target position (top)
+      velocity,
+      tolerance: tolerance,
+    );
+  }
+}
 
 // Color Picker Home Screen
 //
@@ -83,6 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
   double _currentSheetHeight = 0.0;
   final ScrollController scrollController = ScrollController();
   bool _isInteractingWithSlider = false;
+  double _rowModifier = 0.0; // Virtual row modifier for resize effect (0.0 to 2.0+)
 
   // ================================================
   // ========== Lifecycle & Initialization ==========
@@ -833,40 +882,99 @@ class _HomeScreenState extends State<HomeScreen> {
                             final androidOffset = defaultTargetPlatform == TargetPlatform.android ? 24 : 0;
                             final scrollableHeight = screenHeight - HomeAppBar.height - _currentSheetHeight - 40 - androidOffset;
                             // Account for grid's vertical padding (8px top + 8px bottom = 16px)
+                            // Note: Only subtract padding for availableHeight calculation, not for container sizing
                             final gridContentHeight = scrollableHeight - (ReorderableColorGridView.verticalPadding * 2);
+                            // Add extra spacing for fillContainer mode to account for grid spacing
+                            final containerHeight = settingsProvider.boxHeightMode == BoxHeightMode.fillContainer
+                                ? scrollableHeight + ReorderableColorGridView.defaultSpacing
+                                : scrollableHeight;
                             debugPrint('DEBUG: screenHeight=$screenHeight, _currentSheetHeight=$_currentSheetHeight, scrollableHeight=$scrollableHeight, gridContentHeight=$gridContentHeight');
 
                             return SizedBox(
-                              height: scrollableHeight,
-                              child: SingleChildScrollView(
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                child: ReorderableColorGridView(
-                                  onReorder: _handleGridReorder,
-                                  onItemTap: _handleGridItemTap,
-                                  onItemLongPress: _handleGridItemLongPress,
-                                  onItemDelete: _handleGridItemDelete,
-                                  onAddColor: _handleAddColor,
-                                  onDragStarted: _dragDropController.onDragStarted,
-                                  onDragEnded: _dragDropController.onDragEnded,
-                                  crossAxisCount: settingsProvider.responsiveColumnCount,
-                                  spacing: ReorderableColorGridView.defaultSpacing,
-                                  itemWidth: 70.0,
-                                  itemHeight: 140.0,
-                                  showAddButton: true,
-                                  emptyStateMessage: 'No colors in grid\nCreate a color above and tap + to add it',
-                                  layoutMode: settingsProvider.gridLayoutMode,
-                                  heightMode: settingsProvider.boxHeightMode,
-                                  availableHeight: gridContentHeight,
-                                  bgColor: bgColor,
-                                  colorFilter: (item) => _applyIccFilter(
-                                    item.color,
-                                    lightness: item.oklchValues.lightness,
-                                    chroma: item.oklchValues.chroma,
-                                    hue: item.oklchValues.hue,
-                                    alpha: item.oklchValues.alpha,
+                              height: containerHeight,
+                              child: settingsProvider.boxHeightMode == BoxHeightMode.fillContainer
+                                ? GestureDetector(
+                                    onVerticalDragUpdate: (details) {
+                                      setState(() {
+                                        // Convert drag distance to row modifier
+                                        // Drag up (negative dy) = increase rows = smaller boxes
+                                        // Drag down (positive dy) = decrease rows = larger boxes
+                                        // Sensitivity: 150 pixels = 1 row modifier
+                                        // Negate delta to flip direction
+                                        _rowModifier = (_rowModifier - details.delta.dy / 150).clamp(0.0, 3.0);
+                                      });
+                                    },
+                                    onVerticalDragEnd: (details) {
+                                      // Animate back to rest position
+                                      setState(() {
+                                        _rowModifier = 0.0;
+                                      });
+                                    },
+                                    child: ReorderableColorGridView(
+                                      onReorder: _handleGridReorder,
+                                      onItemTap: _handleGridItemTap,
+                                      onItemLongPress: _handleGridItemLongPress,
+                                      onItemDelete: _handleGridItemDelete,
+                                      onAddColor: _handleAddColor,
+                                      onDragStarted: _dragDropController.onDragStarted,
+                                      onDragEnded: _dragDropController.onDragEnded,
+                                      crossAxisCount: settingsProvider.responsiveColumnCount,
+                                      spacing: ReorderableColorGridView.defaultSpacing,
+                                      itemWidth: 70.0,
+                                      itemHeight: 140.0,
+                                      showAddButton: true,
+                                      emptyStateMessage: 'No colors in grid\nCreate a color above and tap + to add it',
+                                      layoutMode: settingsProvider.gridLayoutMode,
+                                      heightMode: settingsProvider.boxHeightMode,
+                                      availableHeight: gridContentHeight,
+                                      bgColor: bgColor,
+                                      rowModifier: _rowModifier,
+                                      colorFilter: (item) => _applyIccFilter(
+                                        item.color,
+                                        lightness: item.oklchValues.lightness,
+                                        chroma: item.oklchValues.chroma,
+                                        hue: item.oklchValues.hue,
+                                        alpha: item.oklchValues.alpha,
+                                      ),
+                                    )
+                                  )
+                                : ScrollConfiguration(
+                                    behavior: ScrollConfiguration.of(context).copyWith(
+                                      dragDevices: {
+                                        PointerDeviceKind.touch,
+                                        PointerDeviceKind.mouse,
+                                      },
+                                    ),
+                                    child: SingleChildScrollView(
+                                      physics: const AlwaysScrollableScrollPhysics(),
+                                      child: ReorderableColorGridView(
+                                        onReorder: _handleGridReorder,
+                                        onItemTap: _handleGridItemTap,
+                                        onItemLongPress: _handleGridItemLongPress,
+                                        onItemDelete: _handleGridItemDelete,
+                                        onAddColor: _handleAddColor,
+                                        onDragStarted: _dragDropController.onDragStarted,
+                                        onDragEnded: _dragDropController.onDragEnded,
+                                        crossAxisCount: settingsProvider.responsiveColumnCount,
+                                        spacing: ReorderableColorGridView.defaultSpacing,
+                                        itemWidth: 70.0,
+                                        itemHeight: 140.0,
+                                        showAddButton: true,
+                                        emptyStateMessage: 'No colors in grid\nCreate a color above and tap + to add it',
+                                        layoutMode: settingsProvider.gridLayoutMode,
+                                        heightMode: settingsProvider.boxHeightMode,
+                                        availableHeight: gridContentHeight,
+                                        bgColor: bgColor,
+                                        colorFilter: (item) => _applyIccFilter(
+                                          item.color,
+                                          lightness: item.oklchValues.lightness,
+                                          chroma: item.oklchValues.chroma,
+                                          hue: item.oklchValues.hue,
+                                          alpha: item.oklchValues.alpha,
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
                             );
                           },
                         ),
