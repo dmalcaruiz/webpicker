@@ -132,6 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final ScrollController scrollController = ScrollController();
   bool _isInteractingWithSlider = false;
   double _rowModifier = 0.0; // Virtual row modifier for resize effect (0.0 to 2.0+)
+  bool _wasAtMaxScroll = false; // Track if user was at max scroll position
 
   // ================================================
   // ========== Lifecycle & Initialization ==========
@@ -219,6 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Clean up widget-scoped objects
     _undoRedoService.dispose();
     _dragDropController.dispose();
+    scrollController.dispose();
 
     // Call the parent class's dispose method to complete widget lifecycle, after this,
     //the widget is dead and doesnt access any resources.
@@ -902,9 +904,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                         // Sensitivity: 150 pixels = 1 row modifier
                                         // Negate delta to flip direction
                                         _rowModifier = (_rowModifier - details.delta.dy / 150).clamp(0.0, 3.0);
+
+                                        // Track if user has scrolled to max (rowModifier >= 1.0 means maximum shrinkage)
+                                        if (_rowModifier >= 1.0) {
+                                          _wasAtMaxScroll = true;
+                                        }
                                       });
                                     },
                                     onVerticalDragEnd: (details) {
+                                      // If was at max scroll, add new box
+                                      if (_wasAtMaxScroll) {
+                                        _handleAddColor();
+                                        _wasAtMaxScroll = false;
+                                      }
+
                                       // Animate back to rest position
                                       setState(() {
                                         _rowModifier = 0.0;
@@ -946,6 +959,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       },
                                     ),
                                     child: SingleChildScrollView(
+                                      controller: scrollController,
                                       physics: const AlwaysScrollableScrollPhysics(),
                                       child: ReorderableColorGridView(
                                         onReorder: _handleGridReorder,
