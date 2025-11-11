@@ -77,7 +77,7 @@ class ColorItemWidget extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: displayColor ?? item.color,
+            color: displayColor ?? item.color!,
             borderRadius: BorderRadius.circular(12),
             border: item.isSelected
                 ? Border.all(
@@ -166,7 +166,7 @@ class ColorItemWidget extends StatelessWidget {
   // Build the lock icon overlay
   Widget _buildLockIcon() {
     // Use the same color determination method as action buttons
-    final bgColor = displayColor ?? item.color;
+    final bgColor = displayColor ?? item.color!;
     final iconColor = getTextColor(bgColor);
 
     return Positioned(

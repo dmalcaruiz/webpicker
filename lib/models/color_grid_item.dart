@@ -1,41 +1,45 @@
 import 'package:flutter/material.dart';
 import '../utils/color_operations.dart';
 
-// Represents a single color item in a grid
+// Represents a single color item in a grid (or an empty slot)
 class ColorGridItem {
   // Unique identifier for this color item
   final String id;
-  
-  // The actual color value
-  final Color color;
-  
+
+  // The actual color value (null for empty slots)
+  final Color? color;
+
   // Optional name/label for the color
   final String? name;
-  
+
   // When this color was created
   final DateTime createdAt;
-  
+
   // When this color was last modified
   final DateTime lastModified;
-  
+
   // Whether this color is currently selected
   final bool isSelected;
 
   // Whether this color is locked (prevents randomization)
   final bool isLocked;
 
-  // OKLCH values for this color (source of truth)
-  final OklchValues oklchValues;
+  // Whether this is an empty slot (no color)
+  final bool isEmpty;
+
+  // OKLCH values for this color (null for empty slots)
+  final OklchValues? oklchValues;
 
   const ColorGridItem({
     required this.id,
-    required this.color,
+    this.color,
     this.name,
     required this.createdAt,
     required this.lastModified,
     this.isSelected = false,
     this.isLocked = false,
-    required this.oklchValues,
+    this.isEmpty = false,
+    this.oklchValues,
   });
   
   // Create a copy of this item with updated values
@@ -47,6 +51,7 @@ class ColorGridItem {
     DateTime? lastModified,
     bool? isSelected,
     bool? isLocked,
+    bool? isEmpty,
     OklchValues? oklchValues,
   }) {
     return ColorGridItem(
@@ -57,6 +62,7 @@ class ColorGridItem {
       lastModified: lastModified ?? this.lastModified,
       isSelected: isSelected ?? this.isSelected,
       isLocked: isLocked ?? this.isLocked,
+      isEmpty: isEmpty ?? this.isEmpty,
       oklchValues: oklchValues ?? this.oklchValues,
     );
   }
@@ -103,6 +109,20 @@ class ColorGridItem {
     );
   }
 
+  // Create an empty slot (no color)
+  factory ColorGridItem.empty() {
+    final now = DateTime.now();
+    return ColorGridItem(
+      id: _generateEmptySlotId(),
+      color: null,
+      name: null,
+      createdAt: now,
+      lastModified: now,
+      isEmpty: true,
+      oklchValues: null,
+    );
+  }
+
   // Helper: Convert Color to OklchValues
   static OklchValues _colorToOklchValues(Color color) {
     final oklch = srgbToOklch(color);
@@ -126,13 +146,21 @@ class ColorGridItem {
   
   // Counter for generating unique IDs
   static int _idCounter = 0;
-  
+
   // Generate a unique ID for the color item
   static String _generateId() {
     _idCounter++;
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     // Combine timestamp with counter for guaranteed uniqueness
     return 'color_${timestamp}_$_idCounter';
+  }
+
+  // Generate a unique ID for an empty slot
+  static String _generateEmptySlotId() {
+    _idCounter++;
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    // Combine timestamp with counter for guaranteed uniqueness
+    return 'empty_${timestamp}_$_idCounter';
   }
   
   @override

@@ -159,8 +159,8 @@ class ColorGridProvider extends ChangeNotifier {
   void randomizeAllColors() {
     final random = Random();
     _items = _items.map((item) {
-      // Skip locked items
-      if (item.isLocked) {
+      // Skip locked items and empty slots
+      if (item.isLocked || item.isEmpty) {
         return item;
       }
 
@@ -177,7 +177,7 @@ class ColorGridProvider extends ChangeNotifier {
         lightness: lightness,
         chroma: chroma,
         hue: hue,
-        alpha: item.oklchValues.alpha, // Preserve alpha
+        alpha: item.oklchValues!.alpha, // Preserve alpha
         name: item.name, // Preserve name
       );
 
@@ -191,4 +191,47 @@ class ColorGridProvider extends ChangeNotifier {
 
     notifyListeners();
   }
+
+  // Add an empty slot to the grid
+  void addEmptySlot({int? index}) {
+    _items = ColorGridManager.addEmptySlot(
+      currentGrid: _items,
+      index: index,
+    );
+    notifyListeners();
+  }
+
+  // Replace an empty slot with a color
+  void replaceEmptySlot({
+    required String slotId,
+    required Color color,
+    String? name,
+    bool selectNew = true,
+  }) {
+    _items = ColorGridManager.replaceEmptySlot(
+      currentGrid: _items,
+      slotId: slotId,
+      color: color,
+      name: name,
+      selectNew: selectNew,
+    );
+    notifyListeners();
+  }
+
+  // Clean up trailing empty rows
+  void cleanupEmptyRows(int columns) {
+    final originalLength = _items.length;
+    _items = ColorGridManager.cleanupTrailingEmptyRows(
+      currentGrid: _items,
+      columns: columns,
+    );
+
+    // Only notify if something was actually removed
+    if (_items.length != originalLength) {
+      notifyListeners();
+    }
+  }
+
+  // Get count of trailing empty slots (for debugging/UI)
+  int get trailingEmptyCount => ColorGridManager.getTrailingEmptyCount(_items);
 }

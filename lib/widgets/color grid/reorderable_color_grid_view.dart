@@ -28,13 +28,16 @@ class ReorderableColorGridView extends StatefulWidget {
   
   // Callback when an item is tapped
   final Function(ColorGridItem) onItemTap;
-  
+
+  // Callback when an empty slot is tapped
+  final Function(ColorGridItem)? onEmptySlotTap;
+
   // Callback when an item is long pressed
   final Function(ColorGridItem) onItemLongPress;
-  
+
   // Callback when an item should be deleted
   final Function(ColorGridItem) onItemDelete;
-  
+
   // Callback when add button is pressed
   final VoidCallback onAddColor;
   
@@ -86,6 +89,7 @@ class ReorderableColorGridView extends StatefulWidget {
     super.key,
     required this.onReorder,
     required this.onItemTap,
+    this.onEmptySlotTap,
     required this.onItemLongPress,
     required this.onItemDelete,
     required this.onAddColor,
@@ -254,9 +258,9 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
           colorCount: items.length,
         );
 
-        // Build all children: color items + add buttons
+        // Build all children: color items (or empty slots) + add buttons
         final allChildren = <Widget>[
-          ...items.map((item) => _buildColorItem(item)),
+          ...items.map((item) => item.isEmpty ? _buildEmptySlot(item) : _buildColorItem(item)),
           ...List.generate(addButtonCount, (index) => _buildAddButton(index, false)),
         ];
 
@@ -300,9 +304,9 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
           colorCount: items.length,
         );
 
-        // Build all children: color items + add buttons
+        // Build all children: color items (or empty slots) + add buttons
         final allChildren = <Widget>[
-          ...items.map((item) => _buildColorItem(item)),
+          ...items.map((item) => item.isEmpty ? _buildEmptySlot(item) : _buildColorItem(item)),
           ...List.generate(addButtonCount, (index) => _buildAddButton(index, false)),
         ];
 
@@ -327,23 +331,34 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
   void _handleReorder(int oldIndex, int newIndex) {
     debugPrint('REORDER: _handleReorder called - oldIndex=$oldIndex, newIndex=$newIndex');
 
-    // Get the number of actual color items (not including add buttons)
-    final items = context.read<ColorGridProvider>().items;
-    final colorItemCount = items.length;
+    // Get the number of actual items (color items + empty slots, not including add buttons)
+    final gridProvider = context.read<ColorGridProvider>();
+    final items = gridProvider.items;
+    final itemCount = items.length;
 
     // Call the drag ended callback before reordering
     final wasDeleted = widget.onDragEnded?.call() ?? false;
     debugPrint('REORDER: wasDeleted=$wasDeleted');
 
-    // Only perform reorder if:
-    // 1. Item wasn't deleted
-    // 2. Both indices are within color items range (not add buttons)
+    // Only perform operations if item wasn't deleted
     if (!wasDeleted) {
-      if (oldIndex < colorItemCount && newIndex < colorItemCount) {
+      // Check if dragging to add button position (newIndex >= itemCount)
+      if (oldIndex < itemCount && newIndex >= itemCount) {
+        // Dragging a color/empty slot to add button position
+        // Create an empty slot at the old position
+        final draggedItem = items[oldIndex];
+        if (!draggedItem.isEmpty) {
+          debugPrint('REORDER: Dragging color to add button position - creating empty slot at $oldIndex');
+          gridProvider.addEmptySlot(index: oldIndex);
+        } else {
+          debugPrint('REORDER: Dragging empty slot to add button position - no action needed');
+        }
+      } else if (oldIndex < itemCount && newIndex < itemCount) {
+        // Normal reorder within grid items (both colors and empty slots)
         debugPrint('REORDER: Calling widget.onReorder($oldIndex, $newIndex)');
         widget.onReorder(oldIndex, newIndex);
       } else {
-        debugPrint('REORDER: Skipping reorder - involves add button (colorItemCount=$colorItemCount)');
+        debugPrint('REORDER: Skipping reorder - invalid indices (itemCount=$itemCount)');
       }
     } else {
       debugPrint('REORDER: Skipping reorder because item was deleted');
@@ -393,7 +408,34 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
       onDragToDeleteEnd: widget.onDragEnded,
     );
   }
-  
+
+  // Build an empty slot
+  Widget _buildEmptySlot(ColorGridItem item) {
+    // Get appropriate color based on background
+    final iconColor = getTextColor(widget.bgColor);
+
+    return GestureDetector(
+      key: ValueKey(item.id),
+      onTap: widget.onEmptySlotTap != null ? () => widget.onEmptySlotTap!(item) : null,
+      child: Container(
+        decoration: BoxDecoration(
+          color: iconColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: iconColor.withValues(alpha: 0.3),
+            width: 2,
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Icon(
+          Icons.add,
+          color: iconColor.withValues(alpha: 0.7),
+          size: 32,
+        ),
+      ),
+    );
+  }
+
   // Build the add button
   Widget _buildAddButton([int index = 0, bool isDraggable = true]) {
     // Get appropriate color based on background

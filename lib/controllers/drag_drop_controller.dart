@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/color_grid_item.dart';
 import '../state/color_grid_provider.dart';
+import '../state/settings_provider.dart';
 import '../coordinators/state_history_coordinator.dart';
 import '../widgets/home/home_app_bar.dart';
 
@@ -12,10 +13,12 @@ import '../widgets/home/home_app_bar.dart';
 // - Drag lifecycle (start, update, end)
 class DragDropController extends ChangeNotifier {
   final ColorGridProvider gridProvider;
+  final SettingsProvider settingsProvider;
   final StateHistoryCoordinator coordinator;
 
   DragDropController({
     required this.gridProvider,
+    required this.settingsProvider,
     required this.coordinator,
   });
 
@@ -98,6 +101,10 @@ class DragDropController extends ChangeNotifier {
 
       // Remove item from grid
       gridProvider.removeColor(itemToDelete.id);
+
+      // Clean up trailing empty rows after deletion
+      gridProvider.cleanupEmptyRows(settingsProvider.responsiveColumnCount);
+
       coordinator.saveState('Deleted ${itemToDelete.name ?? "color"} via drag');
     }
   }

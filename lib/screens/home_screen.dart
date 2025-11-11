@@ -160,6 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Create drag & drop controller (manages drag UI state)
     _dragDropController = DragDropController(
       gridProvider: context.read<ColorGridProvider>(),
+      settingsProvider: context.read<SettingsProvider>(),
       coordinator: _coordinator,
     );
 
@@ -187,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Initialize ColorEditorProvider with the first sample color
     // This ensures the add button works immediately on app launch
     final colorEditor = context.read<ColorEditorProvider>();
-    colorEditor.setFromOklchValues(sampleColors.first.oklchValues);
+    colorEditor.setFromOklchValues(sampleColors.first.oklchValues!);
   }
 
   // Loads ICC color profile for "Real Pigments Only" feature
@@ -352,7 +353,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Handles reordering grid items via drag-and-drop
   void _handleGridReorder(int oldIndex, int newIndex) {
-    context.read<ColorGridProvider>().reorderItems(oldIndex, newIndex);
+    final grid = context.read<ColorGridProvider>();
+    final settings = context.read<SettingsProvider>();
+
+    grid.reorderItems(oldIndex, newIndex);
+
+    // Clean up trailing empty rows after reorder
+    grid.cleanupEmptyRows(settings.responsiveColumnCount);
+
     _coordinator.saveState('Reordered grid items');
   }
 
@@ -379,10 +387,10 @@ class _HomeScreenState extends State<HomeScreen> {
     grid.selectItem(item.id);
     extremes.deselectAll();
     bgColor.setSelected(false);
-    colorEditor.setFromOklchValues(item.oklchValues);
+    colorEditor.setFromOklchValues(item.oklchValues!);
 
     if (settings.autoCopyEnabled) {
-      ClipboardService.copyColorToClipboard(item.color);
+      ClipboardService.copyColorToClipboard(item.color!);
     }
   }
 
@@ -464,7 +472,18 @@ class _HomeScreenState extends State<HomeScreen> {
   //
   // Removes the item from the grid and saves undo state
   void _handleGridItemDelete(ColorGridItem item) {
-    context.read<ColorGridProvider>().removeColor(item.id);
+    final grid = context.read<ColorGridProvider>();
+    final settings = context.read<SettingsProvider>();
+
+    debugPrint('DELETE: Deleting item, grid size before remove: ${grid.items.length}');
+    grid.removeColor(item.id);
+    debugPrint('DELETE: Grid size after remove: ${grid.items.length}');
+
+    // Clean up trailing empty rows after deletion
+    debugPrint('DELETE: Calling cleanup with columns: ${settings.responsiveColumnCount}');
+    grid.cleanupEmptyRows(settings.responsiveColumnCount);
+    debugPrint('DELETE: Grid size after cleanup: ${grid.items.length}');
+
     _coordinator.saveState('Deleted ${item.name ?? "color"} from grid');
   }
 
@@ -481,6 +500,29 @@ class _HomeScreenState extends State<HomeScreen> {
     if (colorToAdd != null) {
       grid.addColor(colorToAdd, selectNew: true);
       _coordinator.saveState('Added new color to grid');
+    }
+  }
+
+  // Handles tapping an empty slot
+  //
+  // Replaces the empty slot with the current color from ColorEditor
+  void _handleEmptySlotTap(ColorGridItem emptySlot) {
+    final grid = context.read<ColorGridProvider>();
+    final colorEditor = context.read<ColorEditorProvider>();
+    final settings = context.read<SettingsProvider>();
+    final colorToAdd = colorEditor.currentColor;
+
+    if (colorToAdd != null) {
+      grid.replaceEmptySlot(
+        slotId: emptySlot.id,
+        color: colorToAdd,
+        selectNew: true,
+      );
+
+      // Clean up trailing empty rows after replacement
+      grid.cleanupEmptyRows(settings.responsiveColumnCount);
+
+      _coordinator.saveState('Filled empty slot with color');
     }
   }
 
@@ -630,12 +672,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: item.color,
+                  color: item.color!,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
               title: Text(item.name ?? 'Unnamed Color'),
-              subtitle: Text('#${item.color.toARGB32().toRadixString(16).substring(2).toUpperCase()}'),
+              subtitle: Text('#${item.color!.toARGB32().toRadixString(16).substring(2).toUpperCase()}'),
             ),
             ListTile(
               leading: const Icon(Icons.delete_outline),
@@ -942,6 +984,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     child: ReorderableColorGridView(
                                       onReorder: _handleGridReorder,
                                       onItemTap: _handleGridItemTap,
+                                      onEmptySlotTap: _handleEmptySlotTap,
                                       onItemLongPress: _handleGridItemLongPress,
                                       onItemDelete: _handleGridItemDelete,
                                       onAddColor: _handleAddColor,
@@ -959,11 +1002,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                       bgColor: bgColor,
                                       rowModifier: _rowModifier,
                                       colorFilter: (item) => _applyIccFilter(
-                                        item.color,
-                                        lightness: item.oklchValues.lightness,
-                                        chroma: item.oklchValues.chroma,
-                                        hue: item.oklchValues.hue,
-                                        alpha: item.oklchValues.alpha,
+                                        item.color!,
+                                        lightness: item.oklchValues!.lightness,
+                                        chroma: item.oklchValues!.chroma,
+                                        hue: item.oklchValues!.hue,
+                                        alpha: item.oklchValues!.alpha,
                                       ),
                                     )
                                   )
@@ -980,6 +1023,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       child: ReorderableColorGridView(
                                         onReorder: _handleGridReorder,
                                         onItemTap: _handleGridItemTap,
+                                        onEmptySlotTap: _handleEmptySlotTap,
                                         onItemLongPress: _handleGridItemLongPress,
                                         onItemDelete: _handleGridItemDelete,
                                         onAddColor: _handleAddColor,
@@ -996,11 +1040,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                         availableHeight: gridContentHeight,
                                         bgColor: bgColor,
                                         colorFilter: (item) => _applyIccFilter(
-                                          item.color,
-                                          lightness: item.oklchValues.lightness,
-                                          chroma: item.oklchValues.chroma,
-                                          hue: item.oklchValues.hue,
-                                          alpha: item.oklchValues.alpha,
+                                          item.color!,
+                                          lightness: item.oklchValues!.lightness,
+                                          chroma: item.oklchValues!.chroma,
+                                          hue: item.oklchValues!.hue,
+                                          alpha: item.oklchValues!.alpha,
                                         ),
                                       ),
                                     ),

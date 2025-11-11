@@ -184,16 +184,118 @@ class ColorGridManager {
     required List<ColorGridItem> currentGrid,
   }) {
     final selectedItems = currentGrid.where((item) => item.isSelected).toList();
-    
+
     if (selectedItems.length <= 1) {
       return currentGrid; // Already consistent
     }
-    
+
     // Keep only the first selected item
     final firstSelectedId = selectedItems.first.id;
-    return currentGrid.map((item) => 
+    return currentGrid.map((item) =>
       item.copyWith(isSelected: item.id == firstSelectedId)
     ).toList();
   }
-}
 
+  // Add an empty slot to the grid
+  static List<ColorGridItem> addEmptySlot({
+    required List<ColorGridItem> currentGrid,
+    int? index,
+  }) {
+    final grid = List<ColorGridItem>.from(currentGrid);
+    final emptySlot = ColorGridItem.empty();
+
+    if (index == null || index >= grid.length) {
+      grid.add(emptySlot);
+    } else {
+      grid.insert(index, emptySlot);
+    }
+
+    return grid;
+  }
+
+  // Replace an empty slot with a color
+  static List<ColorGridItem> replaceEmptySlot({
+    required List<ColorGridItem> currentGrid,
+    required String slotId,
+    required Color color,
+    String? name,
+    bool selectNew = true,
+  }) {
+    // Deselect all if we're selecting the new one
+    final grid = selectNew
+        ? currentGrid.map((item) => item.copyWith(isSelected: false)).toList()
+        : List<ColorGridItem>.from(currentGrid);
+
+    // Find the empty slot and replace it with a color
+    final index = grid.indexWhere((item) => item.id == slotId);
+    if (index == -1) {
+      debugPrint('WARNING: Empty slot with id $slotId not found');
+      return currentGrid;
+    }
+
+    final item = grid[index];
+    if (!item.isEmpty) {
+      debugPrint('WARNING: Item with id $slotId is not an empty slot');
+      return currentGrid;
+    }
+
+    // Create new color item and replace the empty slot
+    final newItem = ColorGridItem.fromColor(color, name: name)
+        .copyWith(isSelected: selectNew);
+    grid[index] = newItem;
+
+    return grid;
+  }
+
+  // Clean up trailing empty-only rows
+  // Removes empty slots from the end if they form complete rows with no colors
+  static List<ColorGridItem> cleanupTrailingEmptyRows({
+    required List<ColorGridItem> currentGrid,
+    required int columns,
+  }) {
+    debugPrint('CLEANUP: Called with ${currentGrid.length} items, $columns columns');
+
+    if (currentGrid.isEmpty || columns <= 0) {
+      debugPrint('CLEANUP: Early return - empty grid or invalid columns');
+      return currentGrid;
+    }
+
+    final grid = List<ColorGridItem>.from(currentGrid);
+
+    // Find the last color item index
+    final lastColorIndex = grid.lastIndexWhere((item) => !item.isEmpty);
+    debugPrint('CLEANUP: Last color index = $lastColorIndex, grid length = ${grid.length}');
+
+    // If no colors exist, return empty grid
+    if (lastColorIndex == -1) {
+      debugPrint('CLEANUP: Removing all ${grid.length} items (no colors found)');
+      return [];
+    }
+
+    // If last item is a color, no cleanup needed
+    if (lastColorIndex == grid.length - 1) {
+      debugPrint('CLEANUP: No cleanup needed - last item is a color');
+      return currentGrid;
+    }
+
+    // Remove all trailing empty slots after the last color
+    final itemsToRemove = grid.length - lastColorIndex - 1;
+    debugPrint('CLEANUP: Removing $itemsToRemove trailing empty slots');
+    return grid.sublist(0, lastColorIndex + 1);
+  }
+
+  // Get count of trailing empty slots (for debugging/UI)
+  static int getTrailingEmptyCount(List<ColorGridItem> grid) {
+    if (grid.isEmpty) return 0;
+
+    int count = 0;
+    for (int i = grid.length - 1; i >= 0; i--) {
+      if (grid[i].isEmpty) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    return count;
+  }
+}
