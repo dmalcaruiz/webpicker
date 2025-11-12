@@ -106,7 +106,7 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
           // Left extreme circle
           ExtremeColorCircle(
             extreme: widget.leftExtreme,
-            size: 50.0,
+            size: 46.0,
             onTap: () => widget.onExtremeTap(widget.leftExtreme.id),
             colorFilter: widget.extremeColorFilter,
             bgColor: widget.bgColor,
@@ -152,7 +152,7 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
                     ),
                     thumbColor: _getCurrentThumbColor(),
                     showCheckerboard: true,
-                    trackHeight: 50.0,
+                    trackHeight: 46.0,
                     hitAreaExtension: 13.5,
                     thumbSize: 27.0,
                     thumbOffset: 8.0,
@@ -167,7 +167,7 @@ class _MixedChannelSliderState extends State<MixedChannelSlider> {
           // Right extreme circle
           ExtremeColorCircle(
             extreme: widget.rightExtreme,
-            size: 50.0,
+            size: 46.0,
             onTap: () => widget.onExtremeTap(widget.rightExtreme.id),
             colorFilter: widget.extremeColorFilter,
             bgColor: widget.bgColor,

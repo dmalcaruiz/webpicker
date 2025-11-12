@@ -1,5 +1,6 @@
 // ignore_for_file: unused_field
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 // import 'package:provider/provider.dart';
 import '../../services/clipboard_service.dart';
@@ -208,12 +209,40 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
 
           // const SizedBox(width: 12),
 
-          // Generate button
-          _buildActionButton(
-            label: 'Generate',
-            onPressed: widget.onGenerateColors,
-            tooltip: 'Randomize all colors',
-            parentBgColor: widget.bgColor, // Pass bgColor
+          // Generate button - transparent to drags but catches taps/long presses
+          RawGestureDetector(
+            behavior: HitTestBehavior.translucent, // Receive hits but don't block what's behind
+            gestures: <Type, GestureRecognizerFactory>{
+              // Tap recognizer - accepts taps, rejects drags
+              TapGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+                () => TapGestureRecognizer(),
+                (TapGestureRecognizer instance) {
+                  instance.onTap = () {
+                    // Manually trigger the generate action on tap
+                    widget.onGenerateColors?.call();
+                  };
+                },
+              ),
+              // Long press recognizer
+              LongPressGestureRecognizer: GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+                () => LongPressGestureRecognizer(),
+                (LongPressGestureRecognizer instance) {
+                  instance.onLongPress = () {
+                    // Also trigger on long press
+                    widget.onGenerateColors?.call();
+                  };
+                },
+              ),
+            },
+            child: IgnorePointer(
+              ignoring: true, // Prevent the button widget itself from responding
+              child: _buildActionButton(
+                label: 'Generate',
+                onPressed: widget.onGenerateColors,
+                tooltip: 'Randomize all colors',
+                parentBgColor: widget.bgColor,
+              ),
+            ),
           ),
 
           const SizedBox(width: 12),

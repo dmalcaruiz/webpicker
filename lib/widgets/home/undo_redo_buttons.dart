@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/undo_redo_service.dart';
@@ -71,36 +72,61 @@ class UndoRedoButtons extends StatelessWidget {
     Color effectiveBgColor = bgColor ?? Colors.transparent;
     Color textColor = getTextColor(effectiveBgColor);
 
-    return Tooltip(
-      message: '$tooltip\n$shortcut',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: isEnabled ? onPressed : null,
-          borderRadius: BorderRadius.circular(8),
-          child: Container(
-            padding: const EdgeInsets.all(8), // Adjusted padding
-            decoration: BoxDecoration(
-              color: isEnabled 
-                  ? effectiveBgColor.withOpacity(0.15)
-                  : effectiveBgColor.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isEnabled 
-                    ? effectiveBgColor.withOpacity(0.3)
-                    : effectiveBgColor.withOpacity(0.1),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  color: isEnabled ? textColor : textColor.withOpacity(0.3),
-                  size: 20,
+    return RawGestureDetector(
+      behavior: HitTestBehavior.translucent,
+      gestures: <Type, GestureRecognizerFactory>{
+        TapGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+          () => TapGestureRecognizer(),
+          (TapGestureRecognizer instance) {
+            instance.onTap = () {
+              if (isEnabled) {
+                onPressed();
+              }
+            };
+          },
+        ),
+        LongPressGestureRecognizer: GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+          () => LongPressGestureRecognizer(),
+          (LongPressGestureRecognizer instance) {
+            instance.onLongPress = () {
+              if (isEnabled) {
+                onPressed();
+              }
+            };
+          },
+        ),
+      },
+      child: IgnorePointer(
+        ignoring: true,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: isEnabled ? onPressed : null,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isEnabled
+                    ? effectiveBgColor.withOpacity(0.15)
+                    : effectiveBgColor.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isEnabled
+                      ? effectiveBgColor.withOpacity(0.3)
+                      : effectiveBgColor.withOpacity(0.1),
+                  width: 1,
                 ),
-              ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    color: isEnabled ? textColor : textColor.withOpacity(0.3),
+                    size: 20,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

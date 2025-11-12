@@ -105,7 +105,7 @@ class _HsbGradientSliderState extends State<HsbGradientSlider> {
               ),
               thumbColor: _getCurrentThumbColor(),
               showCheckerboard: false,
-              trackHeight: 50.0,
+              trackHeight: 46.0,
               hitAreaExtension: 13.5,
               thumbSize: 27.0,
               thumbOffset: 8.0,
