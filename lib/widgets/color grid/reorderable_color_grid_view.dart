@@ -260,7 +260,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
 
         // Build all children: color items (or empty slots) + add buttons
         final allChildren = <Widget>[
-          ...items.map((item) => item.isEmpty ? _buildEmptySlot(item) : _buildColorItem(item)),
+          ...items.map((item) => item.isEmpty ? _buildEmptySlot(item) : _buildColorItem(item, calculatedColumns)),
           ...List.generate(addButtonCount, (index) => _buildAddButton(index, false)),
         ];
 
@@ -306,7 +306,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
 
         // Build all children: color items (or empty slots) + add buttons
         final allChildren = <Widget>[
-          ...items.map((item) => item.isEmpty ? _buildEmptySlot(item) : _buildColorItem(item)),
+          ...items.map((item) => item.isEmpty ? _buildEmptySlot(item) : _buildColorItem(item, widget.crossAxisCount)),
           ...List.generate(addButtonCount, (index) => _buildAddButton(index, false)),
         ];
 
@@ -390,7 +390,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
   }
 
   // Build a single color item
-  Widget _buildColorItem(ColorGridItem item) {
+  Widget _buildColorItem(ColorGridItem item, int columnCount) {
     final gridProvider = context.read<ColorGridProvider>();
 
     return ColorItemWidget(
@@ -406,6 +406,8 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
           ? () => widget.onDragStarted!(item)
           : null,
       onDragToDeleteEnd: widget.onDragEnded,
+      layoutMode: widget.layoutMode,
+      crossAxisCount: columnCount,
     );
   }
 

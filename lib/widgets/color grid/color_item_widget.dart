@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/color_grid_item.dart';
 import '../../utils/ui_color_utils.dart';
+import '../../state/settings_provider.dart';
 
 // Individual color item widget for the reorderable grid
-// 
+//
 // Features:
 // - Color preview with hex code
 // - Drag handle for reordering
@@ -47,6 +48,12 @@ class ColorItemWidget extends StatelessWidget {
   // Whether to show the drag handle
   final bool showDragHandle;
 
+  // Grid layout mode (for lock button positioning)
+  final GridLayoutMode layoutMode;
+
+  // Number of columns (for lock button positioning)
+  final int crossAxisCount;
+
   ColorItemWidget({
     super.key,
     required this.item,
@@ -60,6 +67,8 @@ class ColorItemWidget extends StatelessWidget {
     this.isDragging = false,
     this.size = 80.0,
     this.showDragHandle = true,
+    this.layoutMode = GridLayoutMode.responsive,
+    this.crossAxisCount = 1,
   });
   
   @override
@@ -169,24 +178,40 @@ class ColorItemWidget extends StatelessWidget {
     final bgColor = displayColor ?? item.color!;
     final iconColor = getTextColor(bgColor);
 
+    // Check if we should center vertically (responsive mode with 1 column)
+    final shouldCenterVertically = layoutMode == GridLayoutMode.responsive && crossAxisCount == 1;
+
     return Positioned(
-      bottom: 18,
-      left: 0,
-      right: 0,
-      child: Center(
-        child: GestureDetector(
-          onTap: onToggleLock,
-          child: SvgPicture.asset(
-            item.isLocked ? 'assets/icons/locked.svg' : 'assets/icons/unlocked.svg',
-            width: 26,
-            height: 18,
-            colorFilter: ColorFilter.mode(
-              iconColor.withValues(alpha: item.isLocked ? 0.5 : 0.2),
-              BlendMode.srcIn,
+      bottom: shouldCenterVertically ? 0 : 16,
+      top: shouldCenterVertically ? 0 : null,
+      right: 16,
+      child: shouldCenterVertically
+        ? Center(
+            child: GestureDetector(
+              onTap: onToggleLock,
+              child: SvgPicture.asset(
+                item.isLocked ? 'assets/icons/locked.svg' : 'assets/icons/unlocked.svg',
+                width: 26,
+                height: 18,
+                colorFilter: ColorFilter.mode(
+                  iconColor.withValues(alpha: item.isLocked ? 0.5 : 0.2),
+                  BlendMode.srcIn,
+                ),
+              ),
+            ),
+          )
+        : GestureDetector(
+            onTap: onToggleLock,
+            child: SvgPicture.asset(
+              item.isLocked ? 'assets/icons/locked.svg' : 'assets/icons/unlocked.svg',
+              width: 26,
+              height: 18,
+              colorFilter: ColorFilter.mode(
+                iconColor.withValues(alpha: item.isLocked ? 0.5 : 0.2),
+                BlendMode.srcIn,
+              ),
             ),
           ),
-        ),
-      ),
     );
   }
 }

@@ -132,7 +132,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final ScrollController scrollController = ScrollController();
   bool _isInteractingWithSlider = false;
   double _rowModifier = 0.0; // Virtual row modifier for resize effect (0.0 to 2.0+)
-  bool _wasAtMaxScroll = false; // Track if user was at max scroll position
 
   // ================================================
   // ========== Lifecycle & Initialization ==========
@@ -876,13 +875,13 @@ class _HomeScreenState extends State<HomeScreen> {
               // Bottom sheet snap positions (height in pixels from bottom)
               snappingPositions: const [
                 SnappingPosition.pixels(
-                  positionPixels: 26,
+                  positionPixels: 6,
                   snappingCurve: Curves.easeOutExpo,
                   snappingDuration: Duration(milliseconds: 900),
                   grabbingContentOffset: GrabbingContentOffset.top,
                 ),
                 SnappingPosition.pixels(
-                  positionPixels: 412,
+                  positionPixels: 327,
                   snappingCurve: Curves.easeOutExpo,
                   snappingDuration: Duration(milliseconds: 900),
                 ),
@@ -989,22 +988,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                         _rowModifier = (_rowModifier - details.delta.dy / 150).clamp(0.0, 3.0);
 
                                         debugPrint('SCROLL: New modifier=$_rowModifier');
-
-                                        // Track if user has scrolled to max (rowModifier >= 1.0 means maximum shrinkage)
-                                        if (_rowModifier >= 1.0) {
-                                          _wasAtMaxScroll = true;
-                                          debugPrint('SCROLL: Reached max scroll');
-                                        }
                                       });
                                     },
                                     onVerticalDragEnd: (details) {
-                                      debugPrint('SCROLL: Drag ended - wasAtMaxScroll=$_wasAtMaxScroll');
+                                      debugPrint('SCROLL: Drag ended - current modifier=$_rowModifier');
 
-                                      // If was at max scroll, add multiple boxes (fill incomplete row + complete row)
-                                      if (_wasAtMaxScroll) {
-                                        debugPrint('SCROLL: Adding multiple color boxes via drag gesture');
+                                      // Only commit if user releases while at threshold (>= 1.0)
+                                      // This allows users to "cancel" by dragging back before releasing
+                                      if (_rowModifier >= 1.0) {
+                                        debugPrint('SCROLL: Committing - adding multiple color boxes via drag gesture');
                                         _handleDragToAddColor();
-                                        _wasAtMaxScroll = false;
+                                      } else {
+                                        debugPrint('SCROLL: Cancelled - user backtracked before releasing');
                                       }
 
                                       // Animate back to rest position

@@ -176,7 +176,7 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
     // final pastePreviewColor = context.watch<ColorEditorProvider>().currentColor;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(0, 12, 0, 12),
+      padding: const EdgeInsets.fromLTRB(0, 2, 0, 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -253,7 +253,7 @@ class _GlobalActionButtonsState extends State<GlobalActionButtons> {
             onPanStart: (details) => _startEyedropper(),
             child: Container(
               width: 48,
-              height: 48,
+              height: 38,
               decoration: BoxDecoration(
                 color: widget.bgColor ?? Colors.transparent,
                 borderRadius: BorderRadius.circular(12),

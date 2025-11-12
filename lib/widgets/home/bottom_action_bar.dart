@@ -63,7 +63,7 @@ class BottomActionBar extends StatelessWidget {
 
         // Interactive buttons on top
         Padding(
-          padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+          padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
           child: Row(
             children: [
               // Other action buttons
@@ -89,7 +89,7 @@ class BottomActionBar extends StatelessWidget {
                 onPanStart: onBgColorPanStart,
                 child: Container(
                   width: 48,
-                  height: 48,
+                  height: 38,
                   decoration: BoxDecoration(
                     color: colorFilter(bgColor),
                     borderRadius: BorderRadius.circular(12),
