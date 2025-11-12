@@ -487,7 +487,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _coordinator.saveState('Deleted ${item.name ?? "color"} from grid');
   }
 
-  // Handles adding a new color to the grid
+  // Handles adding a new color to the grid (tap behavior)
   //
   // Adds the currently selected color (or current editor color if nothing selected)
   // to the grid and selects it automatically
@@ -499,7 +499,40 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (colorToAdd != null) {
       grid.addColor(colorToAdd, selectNew: true);
-      _coordinator.saveState('Added new color to grid');
+      _coordinator.saveState('Added color to grid');
+    }
+  }
+
+  // Handles adding multiple colors via drag gesture (drag-to-reveal behavior)
+  //
+  // Adds enough colors to fill the incomplete row + a complete new row
+  // Example: If grid has 3 columns and last row has 1 item, adds 2 (to fill) + 3 (new row) = 5 items
+  void _handleDragToAddColor() {
+    final grid = context.read<ColorGridProvider>();
+    final colorEditor = context.read<ColorEditorProvider>();
+    final settings = context.read<SettingsProvider>();
+    final selectedItem = grid.selectedItem;
+    final colorToAdd = selectedItem?.color ?? colorEditor.currentColor;
+
+    if (colorToAdd != null) {
+      final columns = settings.responsiveColumnCount;
+      final currentItemCount = grid.items.length;
+
+      // Calculate items in the last row
+      final itemsInLastRow = currentItemCount % columns;
+
+      // If last row is incomplete, fill it first, then add a complete row
+      // If last row is complete (or empty grid), just add a complete row
+      final itemsToFillLastRow = itemsInLastRow == 0 ? 0 : (columns - itemsInLastRow);
+      final totalItemsToAdd = itemsToFillLastRow + columns;
+
+      for (int i = 0; i < totalItemsToAdd; i++) {
+        // Only select the last added color
+        final isLast = i == totalItemsToAdd - 1;
+        grid.addColor(colorToAdd, selectNew: isLast);
+      }
+
+      _coordinator.saveState('Added $totalItemsToAdd color${totalItemsToAdd > 1 ? 's' : ''} to grid');
     }
   }
 
@@ -967,10 +1000,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                     onVerticalDragEnd: (details) {
                                       debugPrint('SCROLL: Drag ended - wasAtMaxScroll=$_wasAtMaxScroll');
 
-                                      // If was at max scroll, add new box
+                                      // If was at max scroll, add multiple boxes (fill incomplete row + complete row)
                                       if (_wasAtMaxScroll) {
-                                        debugPrint('SCROLL: Adding new color box');
-                                        _handleAddColor();
+                                        debugPrint('SCROLL: Adding multiple color boxes via drag gesture');
+                                        _handleDragToAddColor();
                                         _wasAtMaxScroll = false;
                                       }
 

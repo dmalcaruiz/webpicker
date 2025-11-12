@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'reorderable_wrapper_widget.dart';
 import 'reorderable_item.dart';
+import 'util.dart';
 
 export 'reorderable_sliver_grid_view.dart' show ReorderableSliverGridView;
 export 'reorderable_wrapper_widget.dart' show ReorderableWrapperWidget;
@@ -87,6 +88,7 @@ class ReorderableGridView extends StatelessWidget {
   final PlaceholderBuilder? placeholderBuilder;
   final OnDragStart? onDragStart;
   final OnDragUpdate? onDragUpdate;
+  final DragEnableConfig? dragEnableConfig;
 
   final bool? primary;
   final bool shrinkWrap;
@@ -119,6 +121,7 @@ class ReorderableGridView extends StatelessWidget {
     PlaceholderBuilder? placeholderBuilder,
     OnDragStart? onDragStart,
     OnDragUpdate? onDragUpdate,
+    DragEnableConfig? dragEnableConfig,
     bool reverse = false,
     ScrollController? controller,
     bool? primary,
@@ -149,6 +152,7 @@ class ReorderableGridView extends StatelessWidget {
           placeholderBuilder: placeholderBuilder,
           onDragStart: onDragStart,
           onDragUpdate: onDragUpdate,
+          dragEnableConfig: dragEnableConfig,
 
           // how to determine the
           childrenDelegate: SliverChildBuilderDelegate(
@@ -201,6 +205,7 @@ class ReorderableGridView extends StatelessWidget {
     PlaceholderBuilder? placeholderBuilder,
     OnDragStart? onDragStart,
     OnDragUpdate? onDragUpdate,
+    DragEnableConfig? dragEnableConfig,
     List<Widget>? footer,
     List<Widget>? header,
     double mainAxisSpacing = 0.0,
@@ -241,6 +246,7 @@ class ReorderableGridView extends StatelessWidget {
       placeholderBuilder: placeholderBuilder,
       onDragStart: onDragStart,
       onDragUpdate: onDragUpdate,
+      dragEnableConfig: dragEnableConfig,
       childrenDelegate: SliverChildListDelegate(
         ReorderableItemView.wrapMeList(header, children, footer),
         addAutomaticKeepAlives: addAutomaticKeepAlives,
@@ -279,6 +285,7 @@ class ReorderableGridView extends StatelessWidget {
     this.placeholderBuilder,
     this.onDragStart,
     this.onDragUpdate,
+    this.dragEnableConfig,
     required this.gridDelegate,
     required this.childrenDelegate,
     this.restrictDragScope = false,
@@ -307,6 +314,7 @@ class ReorderableGridView extends StatelessWidget {
       placeholderBuilder: placeholderBuilder,
       onDragStart: onDragStart,
       onDragUpdate: onDragUpdate,
+      dragEnableConfig: dragEnableConfig,
       dragEnabled: dragEnabled,
       dragStartDelay: dragStartDelay,
       restrictDragScope: restrictDragScope,

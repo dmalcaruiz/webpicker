@@ -417,6 +417,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
     return GestureDetector(
       key: ValueKey(item.id),
       onTap: widget.onEmptySlotTap != null ? () => widget.onEmptySlotTap!(item) : null,
+      onLongPress: () {}, // Block long press to prevent drag from starting
       child: Container(
         decoration: BoxDecoration(
           color: iconColor.withValues(alpha: 0.1),

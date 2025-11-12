@@ -383,6 +383,166 @@ void main() {
     });
   });
 
+  group('Empty Slots - Middle Row Cleanup', () {
+    test('Complete empty row in the middle should be removed (2 columns)', () {
+      // [Red][Blue]
+      // [Empty][Empty]  <- Should be removed
+      // [Green][Yellow]
+      final grid = [
+        ColorGridItem.fromColor(Colors.red, name: 'Red'),
+        ColorGridItem.fromColor(Colors.blue, name: 'Blue'),
+        ColorGridItem.empty(),
+        ColorGridItem.empty(),
+        ColorGridItem.fromColor(Colors.green, name: 'Green'),
+        ColorGridItem.fromColor(Colors.yellow, name: 'Yellow'),
+      ];
+
+      final result = ColorGridManager.cleanupTrailingEmptyRows(
+        currentGrid: grid,
+        columns: 2,
+      );
+
+      // Should remove the empty row, leaving 4 items
+      expect(result.length, 4);
+      expect(result[0].name, 'Red');
+      expect(result[1].name, 'Blue');
+      expect(result[2].name, 'Green');
+      expect(result[3].name, 'Yellow');
+    });
+
+    test('Multiple complete empty rows in the middle should be removed (3 columns)', () {
+      // [Red][Blue][Green]
+      // [Empty][Empty][Empty]  <- Should be removed
+      // [Empty][Empty][Empty]  <- Should be removed
+      // [Yellow][Purple][Orange]
+      final grid = [
+        ColorGridItem.fromColor(Colors.red, name: 'Red'),
+        ColorGridItem.fromColor(Colors.blue, name: 'Blue'),
+        ColorGridItem.fromColor(Colors.green, name: 'Green'),
+        ColorGridItem.empty(),
+        ColorGridItem.empty(),
+        ColorGridItem.empty(),
+        ColorGridItem.empty(),
+        ColorGridItem.empty(),
+        ColorGridItem.empty(),
+        ColorGridItem.fromColor(Colors.yellow, name: 'Yellow'),
+        ColorGridItem.fromColor(Colors.purple, name: 'Purple'),
+        ColorGridItem.fromColor(Colors.orange, name: 'Orange'),
+      ];
+
+      final result = ColorGridManager.cleanupTrailingEmptyRows(
+        currentGrid: grid,
+        columns: 3,
+      );
+
+      // Should remove both empty rows, leaving 6 items
+      expect(result.length, 6);
+      expect(result[0].name, 'Red');
+      expect(result[1].name, 'Blue');
+      expect(result[2].name, 'Green');
+      expect(result[3].name, 'Yellow');
+      expect(result[4].name, 'Purple');
+      expect(result[5].name, 'Orange');
+    });
+
+    test('Incomplete empty row in the middle should NOT be removed', () {
+      // [Red][Blue]
+      // [Empty][Green]  <- Not all empty, keep it
+      // [Yellow][Purple]
+      final grid = [
+        ColorGridItem.fromColor(Colors.red, name: 'Red'),
+        ColorGridItem.fromColor(Colors.blue, name: 'Blue'),
+        ColorGridItem.empty(),
+        ColorGridItem.fromColor(Colors.green, name: 'Green'),
+        ColorGridItem.fromColor(Colors.yellow, name: 'Yellow'),
+        ColorGridItem.fromColor(Colors.purple, name: 'Purple'),
+      ];
+
+      final result = ColorGridManager.cleanupTrailingEmptyRows(
+        currentGrid: grid,
+        columns: 2,
+      );
+
+      // Should keep all items
+      expect(result.length, 6);
+      expect(result[2].isEmpty, true); // Empty still there
+      expect(result[3].name, 'Green');
+    });
+
+    test('Partial last row with empties should NOT be removed', () {
+      // [Red][Blue]
+      // [Green][Empty]  <- Last row is incomplete (only 2 items with 3 columns)
+      final grid = [
+        ColorGridItem.fromColor(Colors.red, name: 'Red'),
+        ColorGridItem.fromColor(Colors.blue, name: 'Blue'),
+        ColorGridItem.fromColor(Colors.green, name: 'Green'),
+        ColorGridItem.empty(),
+      ];
+
+      final result = ColorGridManager.cleanupTrailingEmptyRows(
+        currentGrid: grid,
+        columns: 3,
+      );
+
+      // Trailing empty gets removed (step 1), but row isn't removed as complete row
+      expect(result.length, 3);
+      expect(result[0].name, 'Red');
+      expect(result[1].name, 'Blue');
+      expect(result[2].name, 'Green');
+    });
+
+    test('Combined: Empty row in middle + trailing empties', () {
+      // [Red][Blue]
+      // [Empty][Empty]  <- Should be removed (middle)
+      // [Green][Yellow]
+      // [Empty][Empty]  <- Should be removed (trailing)
+      final grid = [
+        ColorGridItem.fromColor(Colors.red, name: 'Red'),
+        ColorGridItem.fromColor(Colors.blue, name: 'Blue'),
+        ColorGridItem.empty(),
+        ColorGridItem.empty(),
+        ColorGridItem.fromColor(Colors.green, name: 'Green'),
+        ColorGridItem.fromColor(Colors.yellow, name: 'Yellow'),
+        ColorGridItem.empty(),
+        ColorGridItem.empty(),
+      ];
+
+      final result = ColorGridManager.cleanupTrailingEmptyRows(
+        currentGrid: grid,
+        columns: 2,
+      );
+
+      // Should remove both the middle empty row and trailing empties
+      expect(result.length, 4);
+      expect(result[0].name, 'Red');
+      expect(result[1].name, 'Blue');
+      expect(result[2].name, 'Green');
+      expect(result[3].name, 'Yellow');
+    });
+
+    test('First row all empty, second row has colors', () {
+      // This shouldn't happen in normal usage, but test for completeness
+      // [Empty][Empty]  <- Should be removed
+      // [Red][Blue]
+      final grid = [
+        ColorGridItem.empty(),
+        ColorGridItem.empty(),
+        ColorGridItem.fromColor(Colors.red, name: 'Red'),
+        ColorGridItem.fromColor(Colors.blue, name: 'Blue'),
+      ];
+
+      final result = ColorGridManager.cleanupTrailingEmptyRows(
+        currentGrid: grid,
+        columns: 2,
+      );
+
+      // Should remove the first empty row
+      expect(result.length, 2);
+      expect(result[0].name, 'Red');
+      expect(result[1].name, 'Blue');
+    });
+  });
+
   group('Empty Slots - Edge Cases', () {
     test('Add empty slot at specific index', () {
       final grid = [

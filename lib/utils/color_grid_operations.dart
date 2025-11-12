@@ -247,8 +247,10 @@ class ColorGridManager {
     return grid;
   }
 
-  // Clean up trailing empty-only rows
-  // Removes empty slots from the end if they form complete rows with no colors
+  // Clean up empty rows
+  // Removes:
+  // 1. All trailing empty slots after the last color
+  // 2. Complete rows where ALL boxes are empty (even in the middle)
   static List<ColorGridItem> cleanupTrailingEmptyRows({
     required List<ColorGridItem> currentGrid,
     required int columns,
@@ -260,9 +262,9 @@ class ColorGridManager {
       return currentGrid;
     }
 
-    final grid = List<ColorGridItem>.from(currentGrid);
+    var grid = List<ColorGridItem>.from(currentGrid);
 
-    // Find the last color item index
+    // Step 1: Remove trailing empty slots
     final lastColorIndex = grid.lastIndexWhere((item) => !item.isEmpty);
     debugPrint('CLEANUP: Last color index = $lastColorIndex, grid length = ${grid.length}');
 
@@ -272,16 +274,40 @@ class ColorGridManager {
       return [];
     }
 
-    // If last item is a color, no cleanup needed
-    if (lastColorIndex == grid.length - 1) {
-      debugPrint('CLEANUP: No cleanup needed - last item is a color');
-      return currentGrid;
+    if (lastColorIndex < grid.length - 1) {
+      final itemsToRemove = grid.length - lastColorIndex - 1;
+      debugPrint('CLEANUP: Removing $itemsToRemove trailing empty slots');
+      grid = grid.sublist(0, lastColorIndex + 1);
     }
 
-    // Remove all trailing empty slots after the last color
-    final itemsToRemove = grid.length - lastColorIndex - 1;
-    debugPrint('CLEANUP: Removing $itemsToRemove trailing empty slots');
-    return grid.sublist(0, lastColorIndex + 1);
+    // Step 2: Remove complete empty rows anywhere in the grid
+    final totalRows = (grid.length / columns).ceil();
+    List<ColorGridItem> cleanedGrid = [];
+    int removedRows = 0;
+
+    for (int row = 0; row < totalRows; row++) {
+      final rowStart = row * columns;
+      final rowEnd = (rowStart + columns).clamp(0, grid.length);
+      final rowItems = grid.sublist(rowStart, rowEnd);
+
+      // Only remove if it's a complete row (has exactly `columns` items) and all are empty
+      final isCompleteRow = rowItems.length == columns;
+      final isRowCompletelyEmpty = rowItems.every((item) => item.isEmpty);
+
+      if (isCompleteRow && isRowCompletelyEmpty) {
+        debugPrint('CLEANUP: Removing complete empty row $row (indices $rowStart-${rowEnd - 1})');
+        removedRows++;
+      } else {
+        cleanedGrid.addAll(rowItems);
+      }
+    }
+
+    if (removedRows > 0) {
+      debugPrint('CLEANUP: Removed $removedRows complete empty row(s)');
+    }
+
+    debugPrint('CLEANUP: Final grid size: ${cleanedGrid.length} (was ${currentGrid.length})');
+    return cleanedGrid;
   }
 
   // Get count of trailing empty slots (for debugging/UI)
