@@ -49,54 +49,68 @@ class BottomActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: bgColor,
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-      child: Row(
-        children: [
-          // Other action buttons
-          Expanded(
-            child: ActionButtonsRow(
-              currentColor: currentColor,
-              selectedExtremeId: selectedExtremeId,
-              leftExtreme: leftExtreme,
-              rightExtreme: rightExtreme,
-              onColorSelected: onColorSelected,
-              undoRedoManager: undoRedoManager,
-              onUndo: onUndo,
-              onRedo: onRedo,
-              onGenerateColors: onGenerateColors,
-              colorFilter: colorFilter,
-              bgColor: bgColor,
+    return Stack(
+      children: [
+        // Background color box that ignores pointer events
+        Positioned.fill(
+          child: IgnorePointer(
+            ignoring: true,
+            child: Container(
+              color: bgColor,
             ),
           ),
+        ),
 
-          // Background color button (acts like a grid box)
-          GestureDetector(
-            onTap: onBgColorBoxTap,
-            onPanStart: onBgColorPanStart,
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: colorFilter(bgColor),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isBgColorSelected
-                      ? getTextColor(bgColor).withOpacity(0.9)
-                      : getTextColor(bgColor).withOpacity(0.3),
-                  width: isBgColorSelected ? 3 : 2,
+        // Interactive buttons on top
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+          child: Row(
+            children: [
+              // Other action buttons
+              Expanded(
+                child: ActionButtonsRow(
+                  currentColor: currentColor,
+                  selectedExtremeId: selectedExtremeId,
+                  leftExtreme: leftExtreme,
+                  rightExtreme: rightExtreme,
+                  onColorSelected: onColorSelected,
+                  undoRedoManager: undoRedoManager,
+                  onUndo: onUndo,
+                  onRedo: onRedo,
+                  onGenerateColors: onGenerateColors,
+                  colorFilter: colorFilter,
+                  bgColor: bgColor,
                 ),
               ),
-              child: Icon(
-                Icons.format_paint,
-                color: getTextColor(bgColor).withOpacity(isBgColorSelected ? 0.9 : 0.7),
-                size: 24,
+
+              // Background color button (acts like a grid box)
+              GestureDetector(
+                onTap: onBgColorBoxTap,
+                onPanStart: onBgColorPanStart,
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: colorFilter(bgColor),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isBgColorSelected
+                          ? getTextColor(bgColor).withOpacity(0.9)
+                          : getTextColor(bgColor).withOpacity(0.3),
+                      width: isBgColorSelected ? 3 : 2,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.format_paint,
+                    color: getTextColor(bgColor).withOpacity(isBgColorSelected ? 0.9 : 0.7),
+                    size: 24,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
