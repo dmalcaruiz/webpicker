@@ -95,7 +95,7 @@ class BottomActionBar extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isBgColorSelected
-                          ? getTextColor(bgColor).withOpacity(0.9)
+                          ? Colors.black
                           : getTextColor(bgColor).withOpacity(0.3),
                       width: isBgColorSelected ? 3 : 2,
                     ),

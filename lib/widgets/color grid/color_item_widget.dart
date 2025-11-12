@@ -81,7 +81,7 @@ class ColorItemWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: item.isSelected
                 ? Border.all(
-                    color: Colors.white,
+                    color: Colors.black,
                     width: 2,
                   )
                 : null,

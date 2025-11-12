@@ -50,9 +50,7 @@ class ExtremeColorCircle extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           border: extreme.isSelected
               ? Border.all(
-                  color: (bgColor ?? Colors.white).computeLuminance() > 0.5
-                      ? Colors.black.withOpacity(0.9)
-                      : Colors.white.withOpacity(0.9),
+                  color: Colors.black,
                   width: 3,
                 )
               : null,
