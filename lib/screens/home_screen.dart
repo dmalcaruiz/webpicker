@@ -954,10 +954,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         Builder(
                           builder: (context) {
                             // Calculate available height for the scrollable area
-                            // = screen height - header - bottom sheet - bottom bar (+34px overlap)
+                            // = screen height - header - bottom sheet - bottom bar (-8px overlap)
                             final screenHeight = MediaQuery.of(context).size.height;
                             final androidOffset = defaultTargetPlatform == TargetPlatform.android ? 24 : 0;
-                            final scrollableHeight = screenHeight - HomeAppBar.height - _currentSheetHeight - 40 - androidOffset;
+                            final scrollableHeight = screenHeight - HomeAppBar.height - _currentSheetHeight + 8 - androidOffset;
                             // Account for grid's vertical padding (8px top + 8px bottom = 16px)
                             // Note: Only subtract padding for availableHeight calculation, not for container sizing
                             final gridContentHeight = scrollableHeight - (ReorderableColorGridView.verticalPadding * 2);
@@ -1038,7 +1038,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       spacing: ReorderableColorGridView.defaultSpacing,
                                       itemWidth: 70.0,
                                       itemHeight: 140.0,
-                                      showAddButton: true,
+                                      showAddButton: false, // Disabled - can be re-enabled if needed
                                       emptyStateMessage: 'No colors in grid\nCreate a color above and tap + to add it',
                                       layoutMode: settingsProvider.gridLayoutMode,
                                       heightMode: settingsProvider.boxHeightMode,

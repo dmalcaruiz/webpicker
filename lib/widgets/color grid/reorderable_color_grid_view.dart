@@ -128,18 +128,10 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
   
   // Build the main grid view with drag-and-drop support
   Widget _buildGridView(List<ColorGridItem> items) {
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: ReorderableColorGridView.horizontalPadding,
-        right: ReorderableColorGridView.horizontalPadding,
-        top: ReorderableColorGridView.verticalPadding,
-        bottom: ReorderableColorGridView.verticalPadding,
-      ),
-      child: switch (widget.layoutMode) {
-        GridLayoutMode.responsive => _buildResponsiveGrid(items),
-        GridLayoutMode.fixedSize => _buildFixedSizeGrid(items),
-      },
-    );
+    return switch (widget.layoutMode) {
+      GridLayoutMode.responsive => _buildResponsiveGrid(items),
+      GridLayoutMode.fixedSize => _buildFixedSizeGrid(items),
+    };
   }
 
   // Calculate how many add buttons to render in footer
@@ -266,8 +258,8 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
 
         return ReorderableGridView.count(
           crossAxisCount: calculatedColumns,
-          crossAxisSpacing: widget.spacing,
-          mainAxisSpacing: widget.spacing,
+          crossAxisSpacing: 0,
+          mainAxisSpacing: 0,
           childAspectRatio: aspectRatio,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -312,8 +304,8 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
 
         return ReorderableGridView.count(
           crossAxisCount: widget.crossAxisCount,
-          crossAxisSpacing: widget.spacing,
-          mainAxisSpacing: widget.spacing,
+          crossAxisSpacing: 0,
+          mainAxisSpacing: 0,
           childAspectRatio: aspectRatio,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -416,24 +408,27 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
     // Get appropriate color based on background
     final iconColor = getTextColor(widget.bgColor);
 
-    return GestureDetector(
+    return Padding(
       key: ValueKey(item.id),
-      onTap: widget.onEmptySlotTap != null ? () => widget.onEmptySlotTap!(item) : null,
-      onLongPress: () {}, // Block long press to prevent drag from starting
-      child: Container(
-        decoration: BoxDecoration(
-          color: iconColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: iconColor.withValues(alpha: 0.3),
-            width: 2,
-            style: BorderStyle.solid,
+      padding: const EdgeInsets.all(4.0),
+      child: GestureDetector(
+        onTap: widget.onEmptySlotTap != null ? () => widget.onEmptySlotTap!(item) : null,
+        onLongPress: () {}, // Block long press to prevent drag from starting
+        child: Container(
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: iconColor.withValues(alpha: 0.3),
+              width: 2,
+              style: BorderStyle.solid,
+            ),
           ),
-        ),
-        child: Icon(
-          Icons.add,
-          color: iconColor.withValues(alpha: 0.7),
-          size: 32,
+          child: Icon(
+            Icons.add,
+            color: iconColor.withValues(alpha: 0.7),
+            size: 32,
+          ),
         ),
       ),
     );
@@ -470,10 +465,13 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
             child: button,
           );
 
-    return GestureDetector(
+    return Padding(
       key: ValueKey('add_button_$index'),
-      onTap: widget.onAddColor,
-      child: content,
+      padding: const EdgeInsets.all(4.0),
+      child: GestureDetector(
+        onTap: widget.onAddColor,
+        child: content,
+      ),
     );
   }
   

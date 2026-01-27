@@ -54,7 +54,7 @@ class ColorItemWidget extends StatelessWidget {
   // Number of columns (for lock button positioning)
   final int crossAxisCount;
 
-  ColorItemWidget({
+  const ColorItemWidget({
     super.key,
     required this.item,
     this.displayColor,
@@ -73,85 +73,105 @@ class ColorItemWidget extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    final colorWidget = AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeInOut,
-      transform: isDragging 
-          ? (Matrix4.identity()..scale(1.05))
-          : Matrix4.identity(),
-      child: GestureDetector(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: displayColor ?? item.color!,
-            borderRadius: BorderRadius.circular(12),
-            border: item.isSelected
-                ? Border.all(
-                    color: Colors.black,
-                    width: 2,
-                  )
-                : null,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: isDragging ? 8 : 0,
-                offset: Offset(0, isDragging ? 4 : 0),
+    final colorWidget = Padding(
+      padding: const EdgeInsets.all(4.0),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        transform: isDragging
+            ? (Matrix4.identity()..scale(1.05))
+            : Matrix4.identity(),
+        child: GestureDetector(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: displayColor ?? item.color!,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: item.isSelected ? Colors.black : Colors.transparent,
+                width: 2,
               ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              // Main color content
-              _buildColorContent(),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: isDragging ? 8 : 0,
+                  offset: Offset(0, isDragging ? 4 : 0),
+                ),
+              ],
+            ),
+            child: Stack(
+              children: [
+                // Main color content
+                _buildColorContent(),
 
-              // Drag handle
-              if (showDragHandle) _buildDragHandle(),
+                // Drag handle
+                if (showDragHandle) _buildDragHandle(),
 
-              // Selection indicator
-              if (item.isSelected) _buildSelectionIndicator(),
+                // Selection indicator
+                if (item.isSelected) _buildSelectionIndicator(),
 
-              // Lock icon (always visible)
-              _buildLockIcon(),
-            ],
+                // Lock icon (always visible)
+                _buildLockIcon(),
+              ],
+            ),
           ),
         ),
       ),
     );
-    
+
     // Wrap in LongPressDraggable for drag-to-delete functionality
+    // Key must be on the outermost widget for ReorderableGridView
     if (onDragToDeleteStart != null && onDragToDeleteEnd != null) {
-      return LongPressDraggable<String>(
-        data: item.id,
-        delay: const Duration(milliseconds: 500), // Longer delay to avoid conflicting with reorder
-        feedback: Transform.scale(
-          scale: 1.1,
-          child: Opacity(
-            opacity: 0.8,
-            child: Material(
-              color: Colors.transparent,
-              child: colorWidget,
-            ),
+      return Container(
+        key: key,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: Colors.red,
+            width: 1,
           ),
         ),
-        childWhenDragging: Opacity(
-          opacity: 0.3,
+        child: LongPressDraggable<String>(
+          data: item.id,
+          delay: const Duration(milliseconds: 500), // Longer delay to avoid conflicting with reorder
+          feedback: Transform.scale(
+            scale: 1.1,
+            child: Opacity(
+              opacity: 0.8,
+              child: Material(
+                color: Colors.transparent,
+                child: colorWidget,
+              ),
+            ),
+          ),
+          childWhenDragging: Opacity(
+            opacity: 0.3,
+            child: colorWidget,
+          ),
+          onDragStarted: onDragToDeleteStart,
+          onDragEnd: (_) {
+            onDragToDeleteEnd?.call();
+          },
+          onDraggableCanceled: (_, __) {
+            onDragToDeleteEnd?.call();
+          },
           child: colorWidget,
         ),
-        onDragStarted: onDragToDeleteStart,
-        onDragEnd: (_) {
-          onDragToDeleteEnd?.call();
-        },
-        onDraggableCanceled: (_, __) {
-          onDragToDeleteEnd?.call();
-        },
-        child: colorWidget,
       );
     }
-    
-    return colorWidget;
+
+    return Container(
+      key: key,
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Colors.red,
+          width: 1,
+        ),
+      ),
+      child: colorWidget,
+    );
   }
   
   // Build the main color content area
