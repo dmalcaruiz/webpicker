@@ -981,7 +981,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       // Control the sheet position directly
                                       // Drag down (positive dy) = move sheet down (reduce height)
                                       // Drag up (negative dy) = move sheet up (increase height)
-                                      final newPosition = (_currentSheetHeight - details.delta.dy).clamp(6.0, 327.0);
+                                      final newPosition = (_currentSheetHeight - details.delta.dy).clamp(46.0, 327.0);
 
                                       snappingSheetController.setSnappingSheetPosition(newPosition);
 
