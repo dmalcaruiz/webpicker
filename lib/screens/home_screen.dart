@@ -181,6 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ColorGridItem.fromColor(const Color.fromARGB(255, 87, 165, 218), name: 'Blue'),
       ColorGridItem.fromColor(const Color.fromARGB(255, 85, 219, 141), name: 'Green'),
       ColorGridItem.fromColor(const Color.fromARGB(255, 255, 190, 86), name: 'Orange'),
+      ColorGridItem.fromColor(const Color.fromARGB(255, 168, 100, 253), name: 'Purple'),
     ];
     context.read<ColorGridProvider>().syncFromSnapshot(sampleColors);
 
@@ -971,43 +972,58 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: settingsProvider.boxHeightMode == BoxHeightMode.fillContainer
                                 ? GestureDetector(
                                     onVerticalDragUpdate: (details) {
-                                      // Don't handle resize gesture if a color item is being dragged
+                                      // Don't handle sheet drag if a color item is being dragged
                                       if (_dragDropController.isDragging) {
-                                        debugPrint('SCROLL: Blocked - item is being dragged');
+                                        debugPrint('SHEET: Blocked - item is being dragged');
                                         return;
                                       }
 
-                                      debugPrint('SCROLL: Handling resize - delta.dy=${details.delta.dy}, current modifier=$_rowModifier');
+                                      // Control the sheet position directly
+                                      // Drag down (positive dy) = move sheet down (reduce height)
+                                      // Drag up (negative dy) = move sheet up (increase height)
+                                      final newPosition = (_currentSheetHeight - details.delta.dy).clamp(6.0, 327.0);
 
-                                      setState(() {
-                                        // Convert drag distance to row modifier
-                                        // Drag up (negative dy) = increase rows = smaller boxes
-                                        // Drag down (positive dy) = decrease rows = larger boxes
-                                        // Sensitivity: 150 pixels = 1 row modifier
-                                        // Negate delta to flip direction
-                                        _rowModifier = (_rowModifier - details.delta.dy / 150).clamp(0.0, 3.0);
+                                      snappingSheetController.setSnappingSheetPosition(newPosition);
 
-                                        debugPrint('SCROLL: New modifier=$_rowModifier');
-                                      });
+                                      debugPrint('SHEET: Moving sheet - delta.dy=${details.delta.dy}, newPosition=$newPosition');
                                     },
                                     onVerticalDragEnd: (details) {
-                                      debugPrint('SCROLL: Drag ended - current modifier=$_rowModifier');
+                                      // Snap to nearest position based on current position and velocity
+                                      final velocity = details.primaryVelocity ?? 0;
 
-                                      // Only commit if user releases while at threshold (>= 1.0)
-                                      // This allows users to "cancel" by dragging back before releasing
-                                      if (_rowModifier >= 1.0) {
-                                        debugPrint('SCROLL: Committing - adding multiple color boxes via drag gesture');
-                                        _handleDragToAddColor();
+                                      debugPrint('SHEET: Drag ended - position=$_currentSheetHeight, velocity=$velocity');
+
+                                      // Define snap positions with full configuration to match sheet behavior
+                                      const collapsedPosition = SnappingPosition.pixels(
+                                        positionPixels: 6,
+                                        snappingCurve: Curves.easeOutExpo,
+                                        snappingDuration: Duration(milliseconds: 900),
+                                        grabbingContentOffset: GrabbingContentOffset.top,
+                                      );
+                                      const expandedPosition = SnappingPosition.pixels(
+                                        positionPixels: 327,
+                                        snappingCurve: Curves.easeOutExpo,
+                                        snappingDuration: Duration(milliseconds: 900),
+                                      );
+
+                                      // Snap to closest position based on current position and velocity
+                                      if (velocity.abs() > 500) {
+                                        // Fast swipe - snap based on direction
+                                        if (velocity < 0) {
+                                          // Swiping up - snap to expanded
+                                          snappingSheetController.snapToPosition(expandedPosition);
+                                        } else {
+                                          // Swiping down - snap to collapsed
+                                          snappingSheetController.snapToPosition(collapsedPosition);
+                                        }
                                       } else {
-                                        debugPrint('SCROLL: Cancelled - user backtracked before releasing');
+                                        // Slow drag - snap to nearest position
+                                        if (_currentSheetHeight < 166.5) {
+                                          snappingSheetController.snapToPosition(collapsedPosition);
+                                        } else {
+                                          snappingSheetController.snapToPosition(expandedPosition);
+                                        }
                                       }
-
-                                      // Animate back to rest position
-                                      setState(() {
-                                        _rowModifier = 0.0;
-                                      });
-
-                                      debugPrint('SCROLL: Reset modifier to 0.0');
                                     },
                                     child: ReorderableColorGridView(
                                       onReorder: _handleGridReorder,
