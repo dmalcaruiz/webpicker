@@ -130,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // - _selectedChips: Toggle states for chip filters (currently unused?)
 
   final SnappingSheetController snappingSheetController = SnappingSheetController();
-  double _currentSheetHeight = 0.0;
+  final ValueNotifier<double> _currentSheetHeight = ValueNotifier(0.0);
   final ScrollController scrollController = ScrollController();
   bool _isInteractingWithSlider = false;
   double _rowModifier = 0.0; // Virtual row modifier for resize effect (0.0 to 2.0+)
@@ -251,6 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _undoRedoService.dispose();
     _dragDropController.dispose();
     scrollController.dispose();
+    _currentSheetHeight.dispose();
 
     // Call the parent class's dispose method to complete widget lifecycle, after this,
     //the widget is dead and doesnt access any resources.
@@ -424,7 +425,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     // Snap sheet up if currently in collapsed position (only once per session)
-    if (!_hasAutoSnappedUp && _currentSheetHeight < 100) {
+    if (!_hasAutoSnappedUp && _currentSheetHeight.value < 100) {
       const expandedPosition = SnappingPosition.pixels(
         positionPixels: 327,
         snappingCurve: Curves.easeOutExpo,
@@ -462,7 +463,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     // Snap sheet up if currently in collapsed position (only once per session)
-    if (!_hasAutoSnappedUp && _currentSheetHeight < 100) {
+    if (!_hasAutoSnappedUp && _currentSheetHeight.value < 100) {
       const expandedPosition = SnappingPosition.pixels(
         positionPixels: 327,
         snappingCurve: Curves.easeOutExpo,
@@ -501,7 +502,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     // Snap sheet up if currently in collapsed position (only once per session)
-    if (!_hasAutoSnappedUp && _currentSheetHeight < 100) {
+    if (!_hasAutoSnappedUp && _currentSheetHeight.value < 100) {
       const expandedPosition = SnappingPosition.pixels(
         positionPixels: 327,
         snappingCurve: Curves.easeOutExpo,
@@ -968,9 +969,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
               onSheetMoved: (positionData) {
-                setState(() {
-                  _currentSheetHeight = positionData.pixels;
-                });
+                _currentSheetHeight.value = positionData.pixels;
               },
 
               grabbingHeight: 80,
@@ -1031,8 +1030,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     Column(
                       children: [
                         const SizedBox(height: HomeAppBar.height),
-                        Builder(
-                          builder: (context) {
+                        ValueListenableBuilder<double>(
+                          valueListenable: _currentSheetHeight,
+                          builder: (context, sheetHeight, _) {
                             // Calculate available height for the scrollable area
                             // = screen height - header - bottom sheet - bottom bar (-8px overlap)
                             final screenHeight = MediaQuery.of(context).size.height;
@@ -1048,7 +1048,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             final rowDifference = baselineRows - rowCount;
                             final dynamicSpacing = 8.0 - (rowDifference * spacingPerRow);
 
-                            final scrollableHeight = screenHeight - HomeAppBar.height - _currentSheetHeight + dynamicSpacing - androidOffset;
+                            final scrollableHeight = screenHeight - HomeAppBar.height - sheetHeight + dynamicSpacing - androidOffset;
                             // Account for grid's vertical padding (0px top + 12px bottom = 12px total)
                             // Add extra 8px to maintain proper box sizing
                             final gridContentHeight = scrollableHeight - 20.0;
@@ -1056,7 +1056,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             final containerHeight = settingsProvider.boxHeightMode == BoxHeightMode.fillContainer
                                 ? scrollableHeight + ReorderableColorGridView.defaultSpacing
                                 : scrollableHeight;
-                            debugPrint('DEBUG: screenHeight=$screenHeight, _currentSheetHeight=$_currentSheetHeight, scrollableHeight=$scrollableHeight, gridContentHeight=$gridContentHeight');
+                            debugPrint('DEBUG: screenHeight=$screenHeight, _currentSheetHeight=$sheetHeight, scrollableHeight=$scrollableHeight, gridContentHeight=$gridContentHeight');
 
                             return SizedBox(
                               height: containerHeight,
@@ -1072,7 +1072,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       // Control the sheet position directly
                                       // Drag down (positive dy) = move sheet down (reduce height)
                                       // Drag up (negative dy) = move sheet up (increase height)
-                                      final newPosition = (_currentSheetHeight - details.delta.dy).clamp(46.0, 327.0);
+                                      final newPosition = (_currentSheetHeight.value - details.delta.dy).clamp(46.0, 327.0);
 
                                       snappingSheetController.setSnappingSheetPosition(newPosition);
 
@@ -1082,7 +1082,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       // Snap to nearest position based on current position and velocity
                                       final velocity = details.primaryVelocity ?? 0;
 
-                                      debugPrint('SHEET: Drag ended - position=$_currentSheetHeight, velocity=$velocity');
+                                      debugPrint('SHEET: Drag ended - position=${_currentSheetHeight.value}, velocity=$velocity');
 
                                       // Define snap positions with full configuration to match sheet behavior
                                       const collapsedPosition = SnappingPosition.pixels(
@@ -1109,7 +1109,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         }
                                       } else {
                                         // Slow drag - snap to nearest position
-                                        if (_currentSheetHeight < 166.5) {
+                                        if (_currentSheetHeight.value < 166.5) {
                                           snappingSheetController.snapToPosition(collapsedPosition);
                                         } else {
                                           snappingSheetController.snapToPosition(expandedPosition);

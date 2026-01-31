@@ -266,13 +266,13 @@ class _SwipeableActionCellState extends State<SwipeableActionCell>
               ),
               alignment: Alignment.center,
               margin: shouldExpand
-                ? EdgeInsets.only(
+                ? const EdgeInsets.only(
                     top: 4.0,
                     bottom: 4.0,
-                    left: 4.0,
-                    right: 4.0,
+                    left: 6.0,
+                    right: 6.0,
                   )
-                : const EdgeInsets.all(4.0),
+                : const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
               child: Icon(
                 action.icon,
                 color: action.iconColor ?? Colors.white,
