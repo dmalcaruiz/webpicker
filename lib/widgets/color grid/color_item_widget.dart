@@ -94,7 +94,7 @@ class ColorItemWidget extends StatelessWidget {
     final bgColor = displayColor ?? item.color!;
 
     final colorWidget = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
@@ -177,13 +177,13 @@ class ColorItemWidget extends StatelessWidget {
     return SwipeableActionCell(
       key: ObjectKey(item.id),
       snapPositionPixels: 130.0, // Reveal ~2 action buttons
-      // Leading actions (right swipe) - Add and More
+      // Leading actions (right swipe) - Delete and More
       leadingActions: [
-        if (onAddInterpolated != null)
+        if (onDelete != null)
           SwipeableAction(
-            color: interpolatedPreviewColor ?? Colors.green,
-            icon: Icons.add,
-            onTap: onAddInterpolated!,
+            color: Colors.red,
+            icon: Icons.delete,
+            onTap: onDelete!,
             expandOnFullSwipe: true,
           ),
         if (onEdit != null || onDuplicate != null)
@@ -195,13 +195,13 @@ class ColorItemWidget extends StatelessWidget {
             expandOnFullSwipe: false,
           ),
       ],
-      // Trailing actions (left swipe) - Delete only
+      // Trailing actions (left swipe) - Add only
       trailingActions: [
-        if (onDelete != null)
+        if (onAddInterpolated != null)
           SwipeableAction(
-            color: Colors.red,
-            icon: Icons.delete,
-            onTap: onDelete!,
+            color: interpolatedPreviewColor ?? Colors.green,
+            icon: Icons.add,
+            onTap: onAddInterpolated!,
             expandOnFullSwipe: true,
           ),
       ],

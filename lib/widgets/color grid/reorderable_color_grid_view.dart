@@ -424,35 +424,35 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
     );
   }
 
-  // Calculate the interpolated preview color (50-50 between item above and current)
+  // Calculate the interpolated preview color (50-50 between current and item below)
   Color? _calculateInterpolatedPreview(ColorGridItem item, List<ColorGridItem> items) {
     final itemIndex = items.indexWhere((i) => i.id == item.id);
 
     // Not found - no preview
     if (itemIndex == -1) return null;
 
-    // First item - return its own color
-    if (itemIndex == 0) return item.color;
+    // Last item - return its own color
+    if (itemIndex == items.length - 1) return item.color;
 
-    // Get item above
-    final itemAbove = items[itemIndex - 1];
+    // Get item below
+    final itemBelow = items[itemIndex + 1];
 
     // Check if both items have valid OKLCH values
-    if (item.oklchValues == null || itemAbove.oklchValues == null) return null;
+    if (item.oklchValues == null || itemBelow.oklchValues == null) return null;
 
-    // Interpolate 50-50 between item above and current item
-    final aboveOklch = itemAbove.oklchValues!;
+    // Interpolate 50-50 between current item and item below
     final currentOklch = item.oklchValues!;
+    final belowOklch = itemBelow.oklchValues!;
     const t = 0.5; // 50-50 mix
 
     // Interpolate each OKLCH component
-    final l = aboveOklch.lightness + (currentOklch.lightness - aboveOklch.lightness) * t;
-    final c = aboveOklch.chroma + (currentOklch.chroma - aboveOklch.chroma) * t;
-    final a = aboveOklch.alpha + (currentOklch.alpha - aboveOklch.alpha) * t;
+    final l = currentOklch.lightness + (belowOklch.lightness - currentOklch.lightness) * t;
+    final c = currentOklch.chroma + (belowOklch.chroma - currentOklch.chroma) * t;
+    final a = currentOklch.alpha + (belowOklch.alpha - currentOklch.alpha) * t;
 
     // Interpolate hue with wraparound (shortest path)
-    double h1 = aboveOklch.hue % 360;
-    double h2 = currentOklch.hue % 360;
+    double h1 = currentOklch.hue % 360;
+    double h2 = belowOklch.hue % 360;
     if (h1 < 0) h1 += 360;
     if (h2 < 0) h2 += 360;
 

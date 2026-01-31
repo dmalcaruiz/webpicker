@@ -134,7 +134,7 @@ class ColorGridProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Add an interpolated color (precalculated) before the specified item
+  // Add an interpolated color (precalculated) after the specified item
   void addInterpolatedColor(String itemId, Color interpolatedColor) {
     final itemIndex = _items.indexWhere((item) => item.id == itemId);
     if (itemIndex == -1) return;
@@ -147,8 +147,8 @@ class ColorGridProvider extends ChangeNotifier {
       name: originalItem.name,
     );
 
-    // Insert right before the original
-    _items.insert(itemIndex, newItem);
+    // Insert right after the original
+    _items.insert(itemIndex + 1, newItem);
     notifyListeners();
   }
 

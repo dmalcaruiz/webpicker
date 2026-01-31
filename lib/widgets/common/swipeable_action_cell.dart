@@ -49,6 +49,7 @@ class _SwipeableActionCellState extends State<SwipeableActionCell>
   bool _isCommitting = false;
   bool _isLocked = false;
   bool _wasExpanded = false;
+  DateTime? _expansionStartTime;
 
   @override
   void initState() {
@@ -248,13 +249,26 @@ class _SwipeableActionCellState extends State<SwipeableActionCell>
     // Animate only during state transitions, not while staying in same state
     final isTransitioning = shouldAnyExpand != _wasExpanded;
 
-    // Update state immediately to prevent re-detecting transition on next frame
+    // Update state and track expansion timing
     if (isTransitioning) {
       _wasExpanded = shouldAnyExpand;
+      if (shouldAnyExpand) {
+        // Starting expansion - record the time
+        _expansionStartTime = DateTime.now();
+      } else {
+        // Starting collapse - clear the time
+        _expansionStartTime = null;
+      }
     }
 
-    final animationDuration = isTransitioning
-        ? const Duration(milliseconds: 5000)
+    // Check if we're still in the initial 100ms of expansion
+    final isInInitialExpansion = shouldAnyExpand &&
+        _expansionStartTime != null &&
+        DateTime.now().difference(_expansionStartTime!) <= const Duration(milliseconds: 100);
+
+    // Animate during: 1) initial 100ms of expansion, 2) collapse transitions
+    final animationDuration = (isInInitialExpansion || (isTransitioning && !shouldAnyExpand))
+        ? const Duration(milliseconds: 100)
         : Duration.zero;
 
     return Row(
@@ -268,11 +282,25 @@ class _SwipeableActionCellState extends State<SwipeableActionCell>
                                index == expandingActionIndex &&
                                isNearThreshold;
 
+          // Calculate margins - outer edge gets 8px to match box spacing, inner edges 4px
+          final isOuterEdge = isLeading ? index == 0 : index == actions.length - 1;
+          var leftMargin = (isLeading && isOuterEdge) ? 8.0 : 4.0;
+          var rightMargin = (!isLeading && isOuterEdge) ? 8.0 : 4.0;
+
+          // When expanded, set margin on the side facing the sliding box
+          if (shouldExpand) {
+            if (isLeading) {
+              rightMargin = 4.0; // Right side faces the box for leading actions
+            } else {
+              leftMargin = 4.0; // Left side faces the box for trailing actions
+            }
+          }
+
           return GestureDetector(
             onTap: () => _handleActionTap(action),
             child: AnimatedContainer(
               duration: animationDuration,
-              width: shouldExpand ? _maxDragExtent - 4 : 60,
+              width: shouldExpand ? absOffset - 8 : 60,
               height: double.infinity,
               decoration: BoxDecoration(
                 color: action.color,
@@ -280,13 +308,18 @@ class _SwipeableActionCellState extends State<SwipeableActionCell>
               ),
               alignment: Alignment.center,
               margin: shouldExpand
-                ? const EdgeInsets.only(
+                ? EdgeInsets.only(
                     top: 4.0,
                     bottom: 4.0,
-                    left: 6.0,
-                    right: 6.0,
+                    left: leftMargin,
+                    right: rightMargin,
                   )
-                : const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
+                : EdgeInsets.only(
+                    left: leftMargin,
+                    right: rightMargin,
+                    top: 4.0,
+                    bottom: 4.0,
+                  ),
               child: Icon(
                 action.icon,
                 color: action.iconColor ?? Colors.white,
