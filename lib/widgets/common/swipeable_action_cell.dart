@@ -48,6 +48,7 @@ class _SwipeableActionCellState extends State<SwipeableActionCell>
   double _maxDragExtent = 0;
   bool _isCommitting = false;
   bool _isLocked = false;
+  bool _wasExpanded = false;
 
   @override
   void initState() {
@@ -242,6 +243,19 @@ class _SwipeableActionCellState extends State<SwipeableActionCell>
     // Find expanding action
     final expandingActionIndex = actions.indexWhere((a) => a.expandOnFullSwipe);
     final hasExpandingAction = expandingActionIndex != -1;
+    final shouldAnyExpand = hasExpandingAction && isNearThreshold;
+
+    // Animate only during state transitions, not while staying in same state
+    final isTransitioning = shouldAnyExpand != _wasExpanded;
+
+    // Update state immediately to prevent re-detecting transition on next frame
+    if (isTransitioning) {
+      _wasExpanded = shouldAnyExpand;
+    }
+
+    final animationDuration = isTransitioning
+        ? const Duration(milliseconds: 5000)
+        : Duration.zero;
 
     return Row(
       mainAxisAlignment: isLeading ? MainAxisAlignment.start : MainAxisAlignment.end,
@@ -257,8 +271,8 @@ class _SwipeableActionCellState extends State<SwipeableActionCell>
           return GestureDetector(
             onTap: () => _handleActionTap(action),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 100),
-              width: shouldExpand ? absOffset - 4 : 60,
+              duration: animationDuration,
+              width: shouldExpand ? _maxDragExtent - 4 : 60,
               height: double.infinity,
               decoration: BoxDecoration(
                 color: action.color,
