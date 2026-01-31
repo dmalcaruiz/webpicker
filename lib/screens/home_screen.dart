@@ -135,7 +135,10 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isInteractingWithSlider = false;
   double _rowModifier = 0.0; // Virtual row modifier for resize effect (0.0 to 2.0+)
   Timer? _autoSaveTimer;
-  bool _hasAutoSnappedUp = false; // Track if we've auto-snapped sheet up once this session
+  bool _hasAutoSnappedUp = false; // Track if we've done initial auto-snap (first tap)
+  bool _hasReturnedToLowSnap = false; // Track if returned to low snap after first auto-snap
+  int _selectionCountAfterReturn = 0; // Count selections after returning to low snap
+  String? _lastSelectedItemId; // Track last selected item to detect box changes
 
   // ================================================
   // ========== Lifecycle & Initialization ==========
@@ -424,15 +427,44 @@ class _HomeScreenState extends State<HomeScreen> {
       ClipboardService.copyColorToClipboard(item.color!);
     }
 
-    // Snap sheet up if currently in collapsed position (only once per session)
-    if (!_hasAutoSnappedUp && _currentSheetHeight.value < 100) {
-      const expandedPosition = SnappingPosition.pixels(
-        positionPixels: 327,
-        snappingCurve: Curves.easeOutExpo,
-        snappingDuration: Duration(milliseconds: 900),
-      );
-      snappingSheetController.snapToPosition(expandedPosition);
-      _hasAutoSnappedUp = true;
+    // Auto-snap behavior when in low snap mode
+    if (_currentSheetHeight.value < 100) {
+      if (!_hasAutoSnappedUp) {
+        // First tap ever - snap immediately
+        const expandedPosition = SnappingPosition.pixels(
+          positionPixels: 327,
+          snappingCurve: Curves.easeOutExpo,
+          snappingDuration: Duration(milliseconds: 900),
+        );
+        snappingSheetController.snapToPosition(expandedPosition);
+        _hasAutoSnappedUp = true;
+      } else if (_hasReturnedToLowSnap) {
+        // Get current selection ID - use item.id for grid items
+        final currentId = item.id;
+
+        // Reset counter if different box is selected
+        if (_lastSelectedItemId != null && _lastSelectedItemId != currentId) {
+          _selectionCountAfterReturn = 0;
+        }
+
+        // Track this selection
+        _lastSelectedItemId = currentId;
+
+        // After returning to low snap, count taps before snapping again
+        _selectionCountAfterReturn++;
+        if (_selectionCountAfterReturn >= 2) {
+          // After 2 taps (selection + deselection), snap on 3rd tap
+          const expandedPosition = SnappingPosition.pixels(
+            positionPixels: 327,
+            snappingCurve: Curves.easeOutExpo,
+            snappingDuration: Duration(milliseconds: 900),
+          );
+          snappingSheetController.snapToPosition(expandedPosition);
+          _hasReturnedToLowSnap = false; // Reset for next time
+          _selectionCountAfterReturn = 0;
+          _lastSelectedItemId = null;
+        }
+      }
     }
   }
 
@@ -462,15 +494,44 @@ class _HomeScreenState extends State<HomeScreen> {
       alpha: bgColor.alpha,
     );
 
-    // Snap sheet up if currently in collapsed position (only once per session)
-    if (!_hasAutoSnappedUp && _currentSheetHeight.value < 100) {
-      const expandedPosition = SnappingPosition.pixels(
-        positionPixels: 327,
-        snappingCurve: Curves.easeOutExpo,
-        snappingDuration: Duration(milliseconds: 900),
-      );
-      snappingSheetController.snapToPosition(expandedPosition);
-      _hasAutoSnappedUp = true;
+    // Auto-snap behavior when in low snap mode
+    if (_currentSheetHeight.value < 100) {
+      if (!_hasAutoSnappedUp) {
+        // First tap ever - snap immediately
+        const expandedPosition = SnappingPosition.pixels(
+          positionPixels: 327,
+          snappingCurve: Curves.easeOutExpo,
+          snappingDuration: Duration(milliseconds: 900),
+        );
+        snappingSheetController.snapToPosition(expandedPosition);
+        _hasAutoSnappedUp = true;
+      } else if (_hasReturnedToLowSnap) {
+        // Get current selection ID
+        final currentId = 'bg'; // Background color box
+
+        // Reset counter if different box is selected
+        if (_lastSelectedItemId != null && _lastSelectedItemId != currentId) {
+          _selectionCountAfterReturn = 0;
+        }
+
+        // Track this selection
+        _lastSelectedItemId = currentId;
+
+        // After returning to low snap, count taps before snapping again
+        _selectionCountAfterReturn++;
+        if (_selectionCountAfterReturn >= 2) {
+          // After 2 taps (selection + deselection), snap on 3rd tap
+          const expandedPosition = SnappingPosition.pixels(
+            positionPixels: 327,
+            snappingCurve: Curves.easeOutExpo,
+            snappingDuration: Duration(milliseconds: 900),
+          );
+          snappingSheetController.snapToPosition(expandedPosition);
+          _hasReturnedToLowSnap = false; // Reset for next time
+          _selectionCountAfterReturn = 0;
+          _lastSelectedItemId = null;
+        }
+      }
     }
   }
 
@@ -501,15 +562,44 @@ class _HomeScreenState extends State<HomeScreen> {
       ClipboardService.copyColorToClipboard(selectedExtreme.color);
     }
 
-    // Snap sheet up if currently in collapsed position (only once per session)
-    if (!_hasAutoSnappedUp && _currentSheetHeight.value < 100) {
-      const expandedPosition = SnappingPosition.pixels(
-        positionPixels: 327,
-        snappingCurve: Curves.easeOutExpo,
-        snappingDuration: Duration(milliseconds: 900),
-      );
-      snappingSheetController.snapToPosition(expandedPosition);
-      _hasAutoSnappedUp = true;
+    // Auto-snap behavior when in low snap mode
+    if (_currentSheetHeight.value < 100) {
+      if (!_hasAutoSnappedUp) {
+        // First tap ever - snap immediately
+        const expandedPosition = SnappingPosition.pixels(
+          positionPixels: 327,
+          snappingCurve: Curves.easeOutExpo,
+          snappingDuration: Duration(milliseconds: 900),
+        );
+        snappingSheetController.snapToPosition(expandedPosition);
+        _hasAutoSnappedUp = true;
+      } else if (_hasReturnedToLowSnap) {
+        // Get current selection ID - use extremeId for extremes
+        final currentId = 'extreme_$extremeId';
+
+        // Reset counter if different box is selected
+        if (_lastSelectedItemId != null && _lastSelectedItemId != currentId) {
+          _selectionCountAfterReturn = 0;
+        }
+
+        // Track this selection
+        _lastSelectedItemId = currentId;
+
+        // After returning to low snap, count taps before snapping again
+        _selectionCountAfterReturn++;
+        if (_selectionCountAfterReturn >= 2) {
+          // After 2 taps (selection + deselection), snap on 3rd tap
+          const expandedPosition = SnappingPosition.pixels(
+            positionPixels: 327,
+            snappingCurve: Curves.easeOutExpo,
+            snappingDuration: Duration(milliseconds: 900),
+          );
+          snappingSheetController.snapToPosition(expandedPosition);
+          _hasReturnedToLowSnap = false; // Reset for next time
+          _selectionCountAfterReturn = 0;
+          _lastSelectedItemId = null;
+        }
+      }
     }
   }
 
@@ -970,6 +1060,18 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
               onSheetMoved: (positionData) {
                 _currentSheetHeight.value = positionData.pixels;
+
+                // Detect when sheet returns to low snap after first auto-snap
+                if (_hasAutoSnappedUp && positionData.pixels < 100 && !_hasReturnedToLowSnap) {
+                  _hasReturnedToLowSnap = true;
+                  _selectionCountAfterReturn = 0; // Reset counter
+                }
+
+                // Reset flag when sheet goes up
+                if (positionData.pixels >= 100) {
+                  _hasReturnedToLowSnap = false;
+                  _selectionCountAfterReturn = 0;
+                }
               },
 
               grabbingHeight: 80,
