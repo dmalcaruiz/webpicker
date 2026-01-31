@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +25,7 @@ import '../state/extreme_colors_provider.dart';
 import '../state/bg_color_provider.dart';
 import '../state/settings_provider.dart';
 import '../state/sheet_state_provider.dart';
+import '../state/saved_palettes_provider.dart';
 import '../services/icc_color_service.dart';
 import '../utils/color_operations.dart';
 import '../utils/ui_color_utils.dart';
@@ -132,6 +134,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final ScrollController scrollController = ScrollController();
   bool _isInteractingWithSlider = false;
   double _rowModifier = 0.0; // Virtual row modifier for resize effect (0.0 to 2.0+)
+  Timer? _autoSaveTimer;
+  bool _hasAutoSnappedUp = false; // Track if we've auto-snapped sheet up once this session
 
   // ================================================
   // ========== Lifecycle & Initialization ==========
@@ -172,6 +176,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Load ICC profile asynchronously (doesn't block UI)
     _initializeIccProfile();
+
+    // Start auto-save timer (saves palette every 3 seconds)
+    _startAutoSaveTimer();
   }
 
   // Loads sample colors into the grid on first launch
@@ -211,10 +218,32 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Starts auto-save timer that saves palette every 3 seconds
+  void _startAutoSaveTimer() {
+    _autoSaveTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      _autoSavePalette();
+    });
+  }
+
+  // Auto-saves the current palette
+  Future<void> _autoSavePalette() async {
+    final grid = context.read<ColorGridProvider>();
+    final palettes = context.read<SavedPalettesProvider>();
+
+    // Only save if there are colors in the grid
+    if (grid.items.isNotEmpty) {
+      await palettes.saveCurrentPalette(grid.items);
+      debugPrint('Auto-saved palette');
+    }
+  }
+
   // dispose():
   //   Cleans up all resources to prevent memory leaks
   @override
   void dispose() {
+    // Cancel auto-save timer
+    _autoSaveTimer?.cancel();
+
     // Clean up singleton service
     IccColorManager.instance.dispose();
 
@@ -372,6 +401,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // - BgColorProvider (deselect background)
   // - ColorEditorProvider (load item's color)
   // - ClipboardService (auto-copy if enabled)
+  // - Snaps sheet up if in collapsed position
   void _handleGridItemTap(ColorGridItem item) {
     final grid = context.read<ColorGridProvider>();
     final extremes = context.read<ExtremeColorsProvider>();
@@ -392,11 +422,23 @@ class _HomeScreenState extends State<HomeScreen> {
     if (settings.autoCopyEnabled) {
       ClipboardService.copyColorToClipboard(item.color!);
     }
+
+    // Snap sheet up if currently in collapsed position (only once per session)
+    if (!_hasAutoSnappedUp && _currentSheetHeight < 100) {
+      const expandedPosition = SnappingPosition.pixels(
+        positionPixels: 327,
+        snappingCurve: Curves.easeOutExpo,
+        snappingDuration: Duration(milliseconds: 900),
+      );
+      snappingSheetController.snapToPosition(expandedPosition);
+      _hasAutoSnappedUp = true;
+    }
   }
 
   // Handles tapping the background color box
   //
   // Coordinates selection across all providers (deselects grid items and extremes)
+  // - Snaps sheet up if in collapsed position
   void _handleBgColorBoxTap() {
     final bgColor = context.read<BgColorProvider>();
     final grid = context.read<ColorGridProvider>();
@@ -418,11 +460,23 @@ class _HomeScreenState extends State<HomeScreen> {
       hue: bgColor.hue,
       alpha: bgColor.alpha,
     );
+
+    // Snap sheet up if currently in collapsed position (only once per session)
+    if (!_hasAutoSnappedUp && _currentSheetHeight < 100) {
+      const expandedPosition = SnappingPosition.pixels(
+        positionPixels: 327,
+        snappingCurve: Curves.easeOutExpo,
+        snappingDuration: Duration(milliseconds: 900),
+      );
+      snappingSheetController.snapToPosition(expandedPosition);
+      _hasAutoSnappedUp = true;
+    }
   }
 
   // Handles tapping a mixer extreme (left or right)
   //
   // Coordinates selection across all providers
+  // - Snaps sheet up if in collapsed position
   void _handleExtremeTap(String extremeId) {
     final extremes = context.read<ExtremeColorsProvider>();
     final grid = context.read<ColorGridProvider>();
@@ -445,19 +499,40 @@ class _HomeScreenState extends State<HomeScreen> {
     if (settings.autoCopyEnabled) {
       ClipboardService.copyColorToClipboard(selectedExtreme.color);
     }
+
+    // Snap sheet up if currently in collapsed position (only once per session)
+    if (!_hasAutoSnappedUp && _currentSheetHeight < 100) {
+      const expandedPosition = SnappingPosition.pixels(
+        positionPixels: 327,
+        snappingCurve: Curves.easeOutExpo,
+        snappingDuration: Duration(milliseconds: 900),
+      );
+      snappingSheetController.snapToPosition(expandedPosition);
+      _hasAutoSnappedUp = true;
+    }
   }
 
   // Handles when user touches the mixer slider
   //
-  // Deselects extremes and background color since the mixer slider
-  // operates independently and should clear any extreme/background selection
+  // Deselects extremes. If BG is selected, applies current mixer color
+  // to background and stays in BG edit mode.
   void _handleMixerSliderTouched() {
     final extremes = context.read<ExtremeColorsProvider>();
     final bgColor = context.read<BgColorProvider>();
+    final colorEditor = context.read<ColorEditorProvider>();
 
-    if (extremes.selectedExtremeId != null || bgColor.isSelected) {
-      extremes.deselectAll();
-      bgColor.setSelected(false);
+    // Always deselect extremes when touching mixer
+    extremes.deselectAll();
+
+    // If BG is selected, apply current mixer color to it and stay in BG edit mode
+    if (bgColor.isSelected && colorEditor.hasValues) {
+      bgColor.updateOklch(
+        lightness: colorEditor.lightness!,
+        chroma: colorEditor.chroma!,
+        hue: colorEditor.hue!,
+        alpha: colorEditor.alpha ?? 1.0,
+      );
+      _coordinator.saveState('Applied mixer color to background');
     }
   }
 
@@ -672,6 +747,11 @@ class _HomeScreenState extends State<HomeScreen> {
   // printer gamut limitations (only colors achievable with real pigments)
   void _handleRealPigmentsOnlyChanged(bool value) {
     context.read<SettingsProvider>().setRealPigmentsOnly(value);
+  }
+
+  // Handles menu button press - saves palette before opening menu
+  void _handleMenuPressed() {
+    _autoSavePalette();
   }
 
   // ========== UI Helpers ==========
@@ -957,10 +1037,21 @@ class _HomeScreenState extends State<HomeScreen> {
                             // = screen height - header - bottom sheet - bottom bar (-8px overlap)
                             final screenHeight = MediaQuery.of(context).size.height;
                             final androidOffset = defaultTargetPlatform == TargetPlatform.android ? 24 : 0;
-                            final scrollableHeight = screenHeight - HomeAppBar.height - _currentSheetHeight + 8 - androidOffset;
-                            // Account for grid's vertical padding (8px top + 8px bottom = 16px)
-                            // Note: Only subtract padding for availableHeight calculation, not for container sizing
-                            final gridContentHeight = scrollableHeight - (ReorderableColorGridView.verticalPadding * 2);
+
+                            // Calculate dynamic spacing adjustment based on number of rows
+                            final gridProvider = context.watch<ColorGridProvider>();
+                            final itemCount = gridProvider.items.length;
+                            final columnsCount = settingsProvider.responsiveColumnCount;
+                            final rowCount = (itemCount / columnsCount).ceil();
+                            const baselineRows = 5; // Perfect spacing at 5 rows
+                            const spacingPerRow = 8.0; // 8px vertical spacing per row
+                            final rowDifference = baselineRows - rowCount;
+                            final dynamicSpacing = 8.0 - (rowDifference * spacingPerRow);
+
+                            final scrollableHeight = screenHeight - HomeAppBar.height - _currentSheetHeight + dynamicSpacing - androidOffset;
+                            // Account for grid's vertical padding (0px top + 12px bottom = 12px total)
+                            // Add extra 8px to maintain proper box sizing
+                            final gridContentHeight = scrollableHeight - 20.0;
                             // Add extra spacing for fillContainer mode to account for grid spacing
                             final containerHeight = settingsProvider.boxHeightMode == BoxHeightMode.fillContainer
                                 ? scrollableHeight + ReorderableColorGridView.defaultSpacing
@@ -1103,7 +1194,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       top: 0,
                       left: 0,
                       right: 0,
-                      child: HomeAppBar(bgColor: bgColor),
+                      child: HomeAppBar(
+                        bgColor: bgColor,
+                        onBgEditMode: _handleBgColorBoxTap,
+                        isBgColorSelected: isBgColorSelected,
+                        onBgColorPanStart: _startEyedropperForBgColor,
+                        colorFilter: _applyIccFilter,
+                        onMenuPressed: _handleMenuPressed,
+                      ),
                     ),
 
                     Positioned(
@@ -1128,13 +1226,10 @@ class _HomeScreenState extends State<HomeScreen> {
               right: 20,
               child: BottomActionBar(
                 bgColor: bgColor,
-                isBgColorSelected: isBgColorSelected,
                 currentColor: colorEditor.currentColor,
                 selectedExtremeId: selectedExtremeId,
                 leftExtreme: leftExtreme,
                 rightExtreme: rightExtreme,
-                onBgColorBoxTap: _handleBgColorBoxTap,
-                onBgColorPanStart: _startEyedropperForBgColor,
                 onColorSelected: _handleColorSelection,
                 undoRedoManager: _undoRedoService,
                 onUndo: _handleUndo,

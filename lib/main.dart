@@ -9,9 +9,11 @@ import 'state/extreme_colors_provider.dart';
 import 'state/bg_color_provider.dart';
 import 'state/settings_provider.dart';
 import 'state/sheet_state_provider.dart';
+import 'state/saved_palettes_provider.dart';
+import 'repositories/palette_repository.dart';
 import 'utils/global_pointer_tracker.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Lock orientation to portrait only
@@ -37,11 +39,16 @@ void main() {
     SystemUiMode.edgeToEdge,
   );
 
-  runApp(const MyApp());
+  // Initialize palette repository
+  final paletteRepository = await PaletteRepository.initialize();
+
+  runApp(MyApp(paletteRepository: paletteRepository));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final PaletteRepository paletteRepository;
+
+  const MyApp({super.key, required this.paletteRepository});
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +60,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BgColorProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => SheetStateProvider()),
+        ChangeNotifierProvider(create: (_) => SavedPalettesProvider(paletteRepository)),
       ],
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: const SystemUiOverlayStyle(

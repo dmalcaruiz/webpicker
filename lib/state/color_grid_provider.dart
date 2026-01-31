@@ -45,6 +45,113 @@ class ColorGridProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Duplicate a color and insert it right before the original
+  // If not the first item, creates a 50-50 interpolation with the item above
+  void duplicateColor(String itemId) {
+    final itemIndex = _items.indexWhere((item) => item.id == itemId);
+    if (itemIndex == -1) return;
+
+    final originalItem = _items[itemIndex];
+    if (originalItem.color == null || originalItem.oklchValues == null) return;
+
+    ColorGridItem duplicateItem;
+
+    // If first item (index 0), just duplicate as-is
+    if (itemIndex == 0) {
+      duplicateItem = ColorGridItem.fromColor(
+        originalItem.color!,
+        name: originalItem.name,
+      );
+    } else {
+      // Get the item above (previous item)
+      final itemAbove = _items[itemIndex - 1];
+      if (itemAbove.color == null || itemAbove.oklchValues == null) {
+        // If item above is empty, just duplicate as-is
+        duplicateItem = ColorGridItem.fromColor(
+          originalItem.color!,
+          name: originalItem.name,
+        );
+      } else {
+        // Interpolate 50-50 between item above and current item
+        final aboveOklch = itemAbove.oklchValues!;
+        final currentOklch = originalItem.oklchValues!;
+        const t = 0.5; // 50-50 mix
+
+        // Interpolate each OKLCH component
+        final l = aboveOklch.lightness + (currentOklch.lightness - aboveOklch.lightness) * t;
+        final c = aboveOklch.chroma + (currentOklch.chroma - aboveOklch.chroma) * t;
+        final a = aboveOklch.alpha + (currentOklch.alpha - aboveOklch.alpha) * t;
+
+        // Interpolate hue with wraparound (shortest path)
+        double h1 = aboveOklch.hue % 360;
+        double h2 = currentOklch.hue % 360;
+        if (h1 < 0) h1 += 360;
+        if (h2 < 0) h2 += 360;
+
+        double diff = h2 - h1;
+        if (diff > 180) {
+          diff -= 360;
+        } else if (diff < -180) {
+          diff += 360;
+        }
+
+        double h = h1 + diff * t;
+        if (h < 0) h += 360;
+        if (h >= 360) h -= 360;
+
+        // Create duplicate with interpolated OKLCH values
+        duplicateItem = ColorGridItem.fromOklch(
+          lightness: l,
+          chroma: c,
+          hue: h,
+          alpha: a,
+          name: originalItem.name,
+        );
+      }
+    }
+
+    // Insert right before the original
+    _items.insert(itemIndex, duplicateItem);
+    notifyListeners();
+  }
+
+  // Duplicate a color exactly (no interpolation) and insert it right before the original
+  void duplicateColorExact(String itemId) {
+    final itemIndex = _items.indexWhere((item) => item.id == itemId);
+    if (itemIndex == -1) return;
+
+    final originalItem = _items[itemIndex];
+    if (originalItem.color == null) return;
+
+    // Create exact duplicate with a new ID
+    final duplicateItem = ColorGridItem.fromColor(
+      originalItem.color!,
+      name: originalItem.name,
+    );
+
+    // Insert right before the original
+    _items.insert(itemIndex, duplicateItem);
+    notifyListeners();
+  }
+
+  // Add an interpolated color (precalculated) before the specified item
+  void addInterpolatedColor(String itemId, Color interpolatedColor) {
+    final itemIndex = _items.indexWhere((item) => item.id == itemId);
+    if (itemIndex == -1) return;
+
+    final originalItem = _items[itemIndex];
+
+    // Create item from precalculated color (no recalculation needed!)
+    final newItem = ColorGridItem.fromColor(
+      interpolatedColor,
+      name: originalItem.name,
+    );
+
+    // Insert right before the original
+    _items.insert(itemIndex, newItem);
+    notifyListeners();
+  }
+
   // Reorder items in the grid
   void reorderItems(int oldIndex, int newIndex) {
     debugPrint('REORDER: ColorGridProvider.reorderItems called - oldIndex=$oldIndex, newIndex=$newIndex');

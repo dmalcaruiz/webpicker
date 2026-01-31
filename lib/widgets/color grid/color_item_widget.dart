@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/color_grid_item.dart';
 import '../../utils/ui_color_utils.dart';
 import '../../state/settings_provider.dart';
+import '../common/swipeable_action_cell.dart';
 
 // Individual color item widget for the reorderable grid
 //
@@ -19,6 +20,10 @@ class ColorItemWidget extends StatelessWidget {
   // Optional display color (e.g., ICC filtered)
   // If provided, this is used instead of item.color for display only
   final Color? displayColor;
+
+  // Optional interpolated preview color for duplicate action
+  // Shows the result of 50-50 interpolation with item above
+  final Color? interpolatedPreviewColor;
 
   // Callback when this item is tapped
   final VoidCallback? onTap;
@@ -39,6 +44,15 @@ class ColorItemWidget extends StatelessWidget {
   // Returns true if deleted, false otherwise
   final bool Function()? onDragToDeleteEnd;
 
+  // Callback when add interpolated action is triggered
+  final VoidCallback? onAddInterpolated;
+
+  // Callback when duplicate action is triggered
+  final VoidCallback? onDuplicate;
+
+  // Callback when edit action is triggered
+  final VoidCallback? onEdit;
+
   // Whether this item is currently being dragged
   final bool isDragging;
 
@@ -58,12 +72,16 @@ class ColorItemWidget extends StatelessWidget {
     super.key,
     required this.item,
     this.displayColor,
+    this.interpolatedPreviewColor,
     this.onTap,
     this.onLongPress,
     this.onDelete,
     this.onToggleLock,
     this.onDragToDeleteStart,
     this.onDragToDeleteEnd,
+    this.onAddInterpolated,
+    this.onDuplicate,
+    this.onEdit,
     this.isDragging = false,
     this.size = 80.0,
     this.showDragHandle = true,
@@ -73,8 +91,10 @@ class ColorItemWidget extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
+    final bgColor = displayColor ?? item.color!;
+
     final colorWidget = Padding(
-      padding: const EdgeInsets.all(4.0),
+      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
@@ -85,10 +105,8 @@ class ColorItemWidget extends StatelessWidget {
           onTap: onTap,
           onLongPress: onLongPress,
           child: Container(
-            width: size,
-            height: size,
             decoration: BoxDecoration(
-              color: displayColor ?? item.color!,
+              color: bgColor,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: item.isSelected ? Colors.black : Colors.transparent,
@@ -122,58 +140,141 @@ class ColorItemWidget extends StatelessWidget {
       ),
     );
 
-    // Wrap in LongPressDraggable for drag-to-delete functionality
-    // Key must be on the outermost widget for ReorderableGridView
+    // Build the content based on whether drag-to-delete is enabled
+    Widget content;
     if (onDragToDeleteStart != null && onDragToDeleteEnd != null) {
-      return Container(
-        key: key,
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.red,
-            width: 1,
-          ),
-        ),
-        child: LongPressDraggable<String>(
-          data: item.id,
-          delay: const Duration(milliseconds: 500), // Longer delay to avoid conflicting with reorder
-          feedback: Transform.scale(
-            scale: 1.1,
-            child: Opacity(
-              opacity: 0.8,
-              child: Material(
-                color: Colors.transparent,
-                child: colorWidget,
-              ),
+      content = LongPressDraggable<String>(
+        data: item.id,
+        delay: const Duration(milliseconds: 500),
+        feedback: Transform.scale(
+          scale: 1.1,
+          child: Opacity(
+            opacity: 0.8,
+            child: Material(
+              color: Colors.transparent,
+              child: colorWidget,
             ),
           ),
-          childWhenDragging: Opacity(
-            opacity: 0.3,
-            child: colorWidget,
-          ),
-          onDragStarted: onDragToDeleteStart,
-          onDragEnd: (_) {
-            onDragToDeleteEnd?.call();
-          },
-          onDraggableCanceled: (_, __) {
-            onDragToDeleteEnd?.call();
-          },
+        ),
+        childWhenDragging: Opacity(
+          opacity: 0.3,
           child: colorWidget,
         ),
+        onDragStarted: onDragToDeleteStart,
+        onDragEnd: (_) {
+          onDragToDeleteEnd?.call();
+        },
+        onDraggableCanceled: (_, __) {
+          onDragToDeleteEnd?.call();
+        },
+        child: colorWidget,
       );
+    } else {
+      content = colorWidget;
     }
 
-    return Container(
-      key: key,
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.red,
-          width: 1,
-        ),
-      ),
-      child: colorWidget,
+    // Wrap everything with SwipeableActionCell for swipe gestures
+    return SwipeableActionCell(
+      key: ObjectKey(item.id),
+      snapPositionPixels: 130.0, // Reveal ~2 action buttons
+      // Leading actions (right swipe) - Add and More
+      leadingActions: [
+        if (onAddInterpolated != null)
+          SwipeableAction(
+            color: interpolatedPreviewColor ?? Colors.green,
+            icon: Icons.add,
+            onTap: onAddInterpolated!,
+            expandOnFullSwipe: true,
+          ),
+        if (onEdit != null || onDuplicate != null)
+          SwipeableAction(
+            color: Colors.grey.withValues(alpha: 0.32),
+            icon: Icons.more_horiz,
+            iconColor: Colors.black,
+            onTapWithUnlock: (unlock) => _showMoreMenu(context, unlock),
+            expandOnFullSwipe: false,
+          ),
+      ],
+      // Trailing actions (left swipe) - Delete only
+      trailingActions: [
+        if (onDelete != null)
+          SwipeableAction(
+            color: Colors.red,
+            icon: Icons.delete,
+            onTap: onDelete!,
+            expandOnFullSwipe: true,
+          ),
+      ],
+      child: content,
     );
   }
-  
+
+  // Show more options menu
+  void _showMoreMenu(BuildContext context, VoidCallback unlock) {
+    final bgColor = displayColor ?? item.color!;
+    final textColor = getTextColor(bgColor);
+
+    // Find the position of the widget to anchor the menu
+    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+
+    if (renderBox != null && overlay != null) {
+      final position = renderBox.localToGlobal(Offset.zero, ancestor: overlay);
+      final size = renderBox.size;
+
+      showMenu(
+        context: context,
+        position: RelativeRect.fromLTRB(
+          position.dx + 80, // Position near left edge where button is
+          position.dy + size.height / 2, // Center vertically
+          position.dx + size.width,
+          position.dy,
+        ),
+        color: bgColor,
+        items: [
+          if (onDuplicate != null)
+            PopupMenuItem(
+              value: 'duplicate',
+              child: Row(
+                children: [
+                  Icon(Icons.content_copy, color: textColor, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Duplicate',
+                    style: TextStyle(color: textColor),
+                  ),
+                ],
+              ),
+            ),
+          if (onEdit != null)
+            PopupMenuItem(
+              value: 'edit',
+              child: Row(
+                children: [
+                  Icon(Icons.edit, color: textColor, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Edit',
+                    style: TextStyle(color: textColor),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ).then((value) {
+        if (value == 'duplicate' && onDuplicate != null) {
+          onDuplicate!();
+        } else if (value == 'edit' && onEdit != null) {
+          onEdit!();
+        }
+        // Unlock and close the swipe sheet after menu action or dismissal
+        unlock();
+      });
+    } else {
+      unlock();
+    }
+  }
+
   // Build the main color content area
   Widget _buildColorContent() {
     // Just pure color - no text or labels

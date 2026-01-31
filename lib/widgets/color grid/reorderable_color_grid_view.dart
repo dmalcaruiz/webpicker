@@ -5,6 +5,7 @@ import '../../models/color_grid_item.dart';
 import '../../state/color_grid_provider.dart';
 import '../../state/settings_provider.dart';
 import '../../utils/ui_color_utils.dart';
+import '../../utils/color_operations.dart';
 import 'color_item_widget.dart';
 
 // A reorderable grid view for displaying and managing color grids
@@ -21,7 +22,9 @@ class ReorderableColorGridView extends StatefulWidget {
   // Grid layout constants - single source of truth
   static const double defaultSpacing = 8.0;
   static const double horizontalPadding = 8.0;
-  static const double verticalPadding = 8.0;
+  static const double topPadding = 0.0;
+  static const double bottomPadding = 12.0;
+  static const double verticalPadding = topPadding + bottomPadding; // Total: 12.0
 
   // Callback when items are reordered
   final Function(int oldIndex, int newIndex) onReorder;
@@ -256,18 +259,21 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
           ...List.generate(addButtonCount, (index) => _buildAddButton(index, false)),
         ];
 
-        return ReorderableGridView.count(
-          crossAxisCount: calculatedColumns,
-          crossAxisSpacing: 0,
-          mainAxisSpacing: 0,
-          childAspectRatio: aspectRatio,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          dragStartDelay: const Duration(milliseconds: 200),
-          restrictDragScope: false,
-          onReorder: _handleReorder,
-          dragWidgetBuilderV2: _buildDragWidget(items),
-          children: allChildren,
+        return Padding(
+          padding: const EdgeInsets.only(top: 0, bottom: 12),
+          child: ReorderableGridView.count(
+            crossAxisCount: calculatedColumns,
+            crossAxisSpacing: 0,
+            mainAxisSpacing: 0,
+            childAspectRatio: aspectRatio,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            dragStartDelay: const Duration(milliseconds: 200),
+            restrictDragScope: false,
+            onReorder: _handleReorder,
+            dragWidgetBuilderV2: _buildDragWidget(items),
+            children: allChildren,
+          ),
         );
       },
     );
@@ -302,18 +308,21 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
           ...List.generate(addButtonCount, (index) => _buildAddButton(index, false)),
         ];
 
-        return ReorderableGridView.count(
-          crossAxisCount: widget.crossAxisCount,
-          crossAxisSpacing: 0,
-          mainAxisSpacing: 0,
-          childAspectRatio: aspectRatio,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          dragStartDelay: const Duration(milliseconds: 200),
-          restrictDragScope: false,
-          onReorder: _handleReorder,
-          dragWidgetBuilderV2: _buildDragWidget(items),
-          children: allChildren,
+        return Padding(
+          padding: const EdgeInsets.only(top: 0, bottom: 12),
+          child: ReorderableGridView.count(
+            crossAxisCount: widget.crossAxisCount,
+            crossAxisSpacing: 0,
+            mainAxisSpacing: 0,
+            childAspectRatio: aspectRatio,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            dragStartDelay: const Duration(milliseconds: 200),
+            restrictDragScope: false,
+            onReorder: _handleReorder,
+            dragWidgetBuilderV2: _buildDragWidget(items),
+            children: allChildren,
+          ),
         );
       },
     );
@@ -385,10 +394,14 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
   Widget _buildColorItem(ColorGridItem item, int columnCount) {
     final gridProvider = context.read<ColorGridProvider>();
 
+    // Precalculate interpolated preview color for duplicate action
+    final interpolatedPreview = _calculateInterpolatedPreview(item, gridProvider.items);
+
     return ColorItemWidget(
       key: ValueKey(item.id),
       item: item,
       displayColor: widget.colorFilter != null ? widget.colorFilter!(item) : null,
+      interpolatedPreviewColor: interpolatedPreview,
       size: widget.itemWidth,
       onTap: () => widget.onItemTap(item),
       onLongPress: () => widget.onItemLongPress(item),
@@ -398,9 +411,64 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
           ? () => widget.onDragStarted!(item)
           : null,
       onDragToDeleteEnd: widget.onDragEnded,
+      onAddInterpolated: interpolatedPreview != null
+          ? () => gridProvider.addInterpolatedColor(item.id, interpolatedPreview)
+          : () => gridProvider.duplicateColorExact(item.id), // Fallback if no preview
+      onDuplicate: () => gridProvider.duplicateColorExact(item.id),
+      onEdit: () {
+        // Edit action: Select the item for editing
+        widget.onItemTap(item);
+      },
       layoutMode: widget.layoutMode,
       crossAxisCount: columnCount,
     );
+  }
+
+  // Calculate the interpolated preview color (50-50 between item above and current)
+  Color? _calculateInterpolatedPreview(ColorGridItem item, List<ColorGridItem> items) {
+    final itemIndex = items.indexWhere((i) => i.id == item.id);
+
+    // Not found - no preview
+    if (itemIndex == -1) return null;
+
+    // First item - return its own color
+    if (itemIndex == 0) return item.color;
+
+    // Get item above
+    final itemAbove = items[itemIndex - 1];
+
+    // Check if both items have valid OKLCH values
+    if (item.oklchValues == null || itemAbove.oklchValues == null) return null;
+
+    // Interpolate 50-50 between item above and current item
+    final aboveOklch = itemAbove.oklchValues!;
+    final currentOklch = item.oklchValues!;
+    const t = 0.5; // 50-50 mix
+
+    // Interpolate each OKLCH component
+    final l = aboveOklch.lightness + (currentOklch.lightness - aboveOklch.lightness) * t;
+    final c = aboveOklch.chroma + (currentOklch.chroma - aboveOklch.chroma) * t;
+    final a = aboveOklch.alpha + (currentOklch.alpha - aboveOklch.alpha) * t;
+
+    // Interpolate hue with wraparound (shortest path)
+    double h1 = aboveOklch.hue % 360;
+    double h2 = currentOklch.hue % 360;
+    if (h1 < 0) h1 += 360;
+    if (h2 < 0) h2 += 360;
+
+    double diff = h2 - h1;
+    if (diff > 180) {
+      diff -= 360;
+    } else if (diff < -180) {
+      diff += 360;
+    }
+
+    double h = h1 + diff * t;
+    if (h < 0) h += 360;
+    if (h >= 360) h -= 360;
+
+    // Convert to color
+    return colorFromOklch(l, c, h, a);
   }
 
   // Build an empty slot

@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../utils/ui_color_utils.dart';
 import '../home/action_buttons_row.dart';
 import '../../models/extreme_color_item.dart';
 import '../../services/undo_redo_service.dart';
 
-// Bottom action bar with background color button and action buttons
+// Bottom action bar with action buttons
 class BottomActionBar extends StatelessWidget {
   final Color bgColor;
-  final bool isBgColorSelected;
   final Color? currentColor;
   final String? selectedExtremeId;
   final ExtremeColorItem leftExtreme;
   final ExtremeColorItem rightExtreme;
-  final VoidCallback onBgColorBoxTap;
-  final void Function(DragStartDetails) onBgColorPanStart;
   final void Function(Color) onColorSelected;
   final UndoRedoService undoRedoManager;
   final VoidCallback onUndo;
@@ -28,13 +24,10 @@ class BottomActionBar extends StatelessWidget {
   const BottomActionBar({
     super.key,
     required this.bgColor,
-    required this.isBgColorSelected,
     required this.currentColor,
     required this.selectedExtremeId,
     required this.leftExtreme,
     required this.rightExtreme,
-    required this.onBgColorBoxTap,
-    required this.onBgColorPanStart,
     required this.onColorSelected,
     required this.undoRedoManager,
     required this.onUndo,
@@ -80,31 +73,6 @@ class BottomActionBar extends StatelessWidget {
                   onGenerateColors: onGenerateColors,
                   colorFilter: colorFilter,
                   bgColor: bgColor,
-                ),
-              ),
-
-              // Background color button (acts like a grid box)
-              GestureDetector(
-                onTap: onBgColorBoxTap,
-                onPanStart: onBgColorPanStart,
-                child: Container(
-                  width: 48,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: colorFilter(bgColor),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isBgColorSelected
-                          ? Colors.black
-                          : getTextColor(bgColor).withOpacity(0.3),
-                      width: isBgColorSelected ? 3 : 2,
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.format_paint,
-                    color: getTextColor(bgColor).withOpacity(isBgColorSelected ? 0.9 : 0.7),
-                    size: 24,
-                  ),
                 ),
               ),
             ],
