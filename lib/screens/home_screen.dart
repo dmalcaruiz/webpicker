@@ -1085,25 +1085,27 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Expanded(
                       child: Container(
-                        decoration: BoxDecoration(
-                          color: bgColor,
-                          border: Border(
-                            left: BorderSide(
-                              color: getTextColor(bgColor).withOpacity(0.15),
-                              width: 1.5,
-                            ),
-                            right: BorderSide(
-                              color: getTextColor(bgColor).withOpacity(0.15),
-                              width: 1.5,
+                        color: Colors.transparent,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border(
+                              left: BorderSide(
+                                color: getTextColor(bgColor).withOpacity(0.15),
+                                width: 1.5,
+                              ),
+                              right: BorderSide(
+                                color: getTextColor(bgColor).withOpacity(0.15),
+                                width: 1.5,
+                              ),
                             ),
                           ),
-                        ),
-                        child: _buildSheetContent(
-                          sheetState.selectedChipIndex,
-                          bgColor,
-                          leftExtreme,
-                          rightExtreme,
-                          useRealPigmentsOnly,
+                          child: _buildSheetContent(
+                            sheetState.selectedChipIndex,
+                            bgColor,
+                            leftExtreme,
+                            rightExtreme,
+                            useRealPigmentsOnly,
+                          ),
                         ),
                       ),
                     ),
@@ -1131,37 +1133,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Column(
                       children: [
-                        const SizedBox(height: HomeAppBar.height),
+                        Container(
+                          height: HomeAppBar.height,
+                          color: Colors.transparent,
+                        ),
                         ValueListenableBuilder<double>(
                           valueListenable: _currentSheetHeight,
                           builder: (context, sheetHeight, _) {
                             // Calculate available height for the scrollable area
                             // = screen height - header - bottom sheet - bottom bar (-8px overlap)
                             final screenHeight = MediaQuery.of(context).size.height;
-                            final androidOffset = defaultTargetPlatform == TargetPlatform.android ? 24 : 0;
-
-                            // Calculate dynamic spacing adjustment based on number of rows
-                            final gridProvider = context.watch<ColorGridProvider>();
-                            final itemCount = gridProvider.items.length;
-                            final columnsCount = settingsProvider.responsiveColumnCount;
-                            final rowCount = (itemCount / columnsCount).ceil();
-                            const baselineRows = 5; // Perfect spacing at 5 rows
-                            const spacingPerRow = 8.0; // 8px vertical spacing per row
-                            final rowDifference = baselineRows - rowCount;
-                            final dynamicSpacing = 8.0 - (rowDifference * spacingPerRow);
-
-                            final scrollableHeight = screenHeight - HomeAppBar.height - sheetHeight + dynamicSpacing - androidOffset;
-                            // Account for grid's vertical padding (0px top + 12px bottom = 12px total)
-                            // Add extra 8px to maintain proper box sizing
-                            final gridContentHeight = scrollableHeight - 20.0;
-                            // Add extra spacing for fillContainer mode to account for grid spacing
-                            final containerHeight = settingsProvider.boxHeightMode == BoxHeightMode.fillContainer
-                                ? scrollableHeight + ReorderableColorGridView.defaultSpacing
-                                : scrollableHeight;
+                            final scrollableHeight = screenHeight - HomeAppBar.height - sheetHeight - 40;
+                            final gridContentHeight = scrollableHeight;
+                            final containerHeight = scrollableHeight + 30;  // Blue box 30px taller than red
                             debugPrint('DEBUG: screenHeight=$screenHeight, _currentSheetHeight=$sheetHeight, scrollableHeight=$scrollableHeight, gridContentHeight=$gridContentHeight');
 
-                            return SizedBox(
+                            return Container(
                               height: containerHeight,
+                              color: Colors.transparent,
                               child: settingsProvider.boxHeightMode == BoxHeightMode.fillContainer
                                 ? GestureDetector(
                                     onVerticalDragUpdate: (details) {

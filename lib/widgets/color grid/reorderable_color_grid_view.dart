@@ -208,8 +208,8 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
         final effectiveRowsForHeight = (rowsForHeight.toDouble() + modifier).clamp(1.0, maxEffectiveRows);
 
         // Calculate height per row to fill container
-        final totalSpacing = (effectiveRowsForHeight - 1) * widget.spacing;
-        final boxHeight = (availableHeight - totalSpacing) / effectiveRowsForHeight;
+        // Note: spacing comes from item padding, not mainAxisSpacing (which is 0)
+        final boxHeight = availableHeight / effectiveRowsForHeight;
 
         // Guard against invalid values - fallback to proportional if calculations fail
         if (boxHeight <= 0 || boxWidth <= 0 || !boxHeight.isFinite || !availableHeight.isFinite) {
@@ -260,7 +260,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
         ];
 
         return Padding(
-          padding: const EdgeInsets.only(top: 0, bottom: 12),
+          padding: const EdgeInsets.only(top: 0, bottom: 0),
           child: ReorderableGridView.count(
             crossAxisCount: calculatedColumns,
             crossAxisSpacing: 0,
@@ -309,7 +309,7 @@ class _ReorderableColorGridViewState extends State<ReorderableColorGridView> {
         ];
 
         return Padding(
-          padding: const EdgeInsets.only(top: 0, bottom: 12),
+          padding: const EdgeInsets.only(top: 0, bottom: 0),
           child: ReorderableGridView.count(
             crossAxisCount: widget.crossAxisCount,
             crossAxisSpacing: 0,

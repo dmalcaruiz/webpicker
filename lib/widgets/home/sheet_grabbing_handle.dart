@@ -19,7 +19,7 @@ class SheetGrabbingHandle extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: bgColor ?? Colors.white,
+        color: bgColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         border: Border(
           top: BorderSide(
